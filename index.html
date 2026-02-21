@@ -327,8 +327,8 @@ body::after {
 .stat-card.weak .stat-label { color: var(--red-500); }
 .stat-card.fuzzy .stat-num { color: var(--yellow-500); }
 .stat-card.fuzzy .stat-label { color: var(--yellow-500); }
-.stat-card.almost .stat-num { color: var(--blue-500); }
-.stat-card.almost .stat-label { color: var(--blue-500); }
+.stat-card.bookmarked .stat-num { color: var(--orange-500); }
+.stat-card.bookmarked .stat-label { color: var(--orange-500); }
 .stat-card.mastered .stat-num { color: var(--green-500); }
 .stat-card.mastered .stat-label { color: var(--green-500); }
 
@@ -358,7 +358,6 @@ body::after {
   transition: width 0.5s ease;
 }
 .progress-segment.mastered { background: var(--green-500); }
-.progress-segment.almost { background: var(--blue-400); }
 .progress-segment.fuzzy { background: var(--yellow-400); }
 .progress-segment.weak { background: var(--red-400); }
 
@@ -554,6 +553,31 @@ body::after {
 .quiz-card.revealed .answer-tap-hint { display: none; }
 .quiz-card.revealed .answer-text-area { display: block; }
 .quiz-card.revealed { cursor: default; }
+
+/* Bookmark button */
+.bookmark-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+}
+.bookmark-btn.active {
+  background: var(--orange-100);
+  opacity: 1;
+}
+
 @keyframes revealFade {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -770,7 +794,7 @@ body::after {
 .filter-tab.unlearned.active { background: var(--gray-400); }
 .filter-tab.weak.active { background: var(--red-500); }
 .filter-tab.fuzzy.active { background: var(--yellow-500); }
-.filter-tab.almost.active { background: var(--blue-500); }
+.filter-tab.bookmarked.active { background: var(--orange-500); }
 .filter-tab.mastered.active { background: var(--green-500); }
 
 .word-items {
@@ -807,7 +831,7 @@ body::after {
 .word-item .level-dot.unlearned { background: var(--gray-300); }
 .word-item .level-dot.weak { background: var(--red-500); }
 .word-item .level-dot.fuzzy { background: var(--yellow-500); }
-.word-item .level-dot.almost { background: var(--blue-500); }
+.word-item .level-dot.bookmarked { background: var(--orange-500); }
 .word-item .level-dot.mastered { background: var(--green-500); }
 .word-item .eng {
   font-family: 'DM Sans', sans-serif;
@@ -959,7 +983,7 @@ body::after {
 .badge-unlearned { background: var(--gray-200); color: var(--gray-500); }
 .badge-weak { background: #FEE2E2; color: var(--red-500); }
 .badge-fuzzy { background: #FEF9C3; color: var(--yellow-500); }
-.badge-almost { background: #DBEAFE; color: var(--blue-500); }
+.badge-bookmarked { background: var(--orange-100); color: var(--orange-500); }
 .badge-mastered { background: #DCFCE7; color: var(--green-600); }
 
 /* Confirm modal */
@@ -1102,6 +1126,10 @@ body::after {
     </div>
 
     <div class="stats-grid">
+      <div class="stat-card bookmarked" onclick="showQuizSetupWithLevel('bookmarked')" style="cursor:pointer;">
+        <div class="stat-num" id="count-bookmarked">0</div>
+        <div class="stat-label">保存済み</div>
+      </div>
       <div class="stat-card unlearned" onclick="showQuizSetupWithLevel('unlearned')" style="cursor:pointer;">
         <div class="stat-num" id="count-unlearned">0</div>
         <div class="stat-label">未学習</div>
@@ -1113,10 +1141,6 @@ body::after {
       <div class="stat-card fuzzy" onclick="showQuizSetupWithLevel('fuzzy')" style="cursor:pointer;">
         <div class="stat-num" id="count-fuzzy">0</div>
         <div class="stat-label">うろ覚え</div>
-      </div>
-      <div class="stat-card almost" onclick="showQuizSetupWithLevel('almost')" style="cursor:pointer;">
-        <div class="stat-num" id="count-almost">0</div>
-        <div class="stat-label">ほぼ覚えた</div>
       </div>
       <div class="stat-card mastered" onclick="showQuizSetupWithLevel('mastered')" style="cursor:pointer;">
         <div class="stat-num" id="count-mastered">0</div>
@@ -1130,13 +1154,6 @@ body::after {
     </div>
 
     <div class="action-section">
-      <button class="action-btn study" onclick="showQuizSetup()">
-        <div class="icon">📝</div>
-        <div class="text">
-          <h3>学習する（4択）</h3>
-          <p>4択テストで単語を覚えよう</p>
-        </div>
-      </button>
       <button class="action-btn list" onclick="showWordList()">
         <div class="icon">📖</div>
         <div class="text">
@@ -1203,6 +1220,7 @@ body::after {
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
     <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
+      <button class="bookmark-btn" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">🔖</button>
       <div class="level-badge" id="quizBadge">未学習</div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
@@ -1254,7 +1272,6 @@ const LEVELS = {
   unlearned: { label: '未学習', badge: 'badge-unlearned' },
   weak: { label: '苦手', badge: 'badge-weak' },
   fuzzy: { label: 'うろ覚え', badge: 'badge-fuzzy' },
-  almost: { label: 'ほぼ覚えた', badge: 'badge-almost' },
   mastered: { label: '覚えた', badge: 'badge-mastered' }
 };
 
@@ -1414,8 +1431,10 @@ autonomy,自律`;
 function renderDeckList() {
   const container = document.getElementById('deckList');
   container.innerHTML = decks.map(deck => {
-    const counts = { unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0 };
-    deck.words.forEach(w => counts[w.level]++);
+    const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+    deck.words.forEach(w => {
+      if (counts[w.level] !== undefined) counts[w.level]++;
+    });
     const total = deck.words.length || 1;
     const isActive = deck.id === activeDeckId;
 
@@ -1427,7 +1446,6 @@ function renderDeckList() {
           <div class="deck-meta">${deck.words.length}語</div>
           <div class="deck-mini-progress">
             <div class="mini-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
-            <div class="mini-bar" style="width:${(counts.almost/total)*100}%;background:var(--blue-400);"></div>
             <div class="mini-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
             <div class="mini-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
             <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
@@ -1480,17 +1498,23 @@ function showScreen(name) {
 // ============ DASHBOARD ============
 function updateDashboard() {
   const words = getActiveWords();
-  const counts = { unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0 };
-  words.forEach(w => counts[w.level]++);
+  const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0, bookmarked: 0 };
+  words.forEach(w => {
+    // migrate old 'almost' words to 'mastered'
+    if (w.level === 'almost') w.level = 'mastered';
+    if (counts[w.level] !== undefined) counts[w.level]++;
+    if (w.bookmarked) counts.bookmarked++;
+  });
 
-  Object.keys(counts).forEach(level => {
+  ['unlearned', 'weak', 'fuzzy', 'mastered'].forEach(level => {
     document.getElementById(`count-${level}`).textContent = counts[level];
   });
+  document.getElementById('count-bookmarked').textContent = counts.bookmarked;
 
   const total = words.length || 1;
   const bar = document.getElementById('progressBar');
   bar.innerHTML = '';
-  ['mastered', 'almost', 'fuzzy', 'weak'].forEach(level => {
+  ['mastered', 'fuzzy', 'weak'].forEach(level => {
     if (counts[level] > 0) {
       const seg = document.createElement('div');
       seg.className = `progress-segment ${level}`;
@@ -1501,46 +1525,6 @@ function updateDashboard() {
 }
 
 // ============ QUIZ SETUP ============
-function showQuizSetup(preselect) {
-  quizMode = 'quiz';
-  showScreen('quiz-setup');
-
-  const title = document.getElementById('setupTitle');
-  const desc = document.getElementById('setupDesc');
-  const optionsEl = document.getElementById('modeOptions');
-
-  title.textContent = '学習モード（4択）';
-  desc.textContent = '出題範囲を選ぼう';
-
-  const words = getActiveWords();
-  const counts = { unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0, all: words.length };
-  words.forEach(w => counts[w.level]++);
-
-  const options = [
-    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned },
-    { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
-    { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy },
-    { key: 'almost', icon: '🔵', label: 'ほぼ覚えた', count: counts.almost },
-    { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered },
-    { key: 'all', icon: '📚', label: 'すべて', count: counts.all },
-  ];
-
-  const preselectKey = preselect || options[0].key;
-  selectedRange = preselectKey;
-
-  optionsEl.innerHTML = options.map((opt) => `
-    <div class="mode-option ${opt.key === preselectKey ? 'selected' : ''}" data-key="${opt.key}" onclick="selectRange('${opt.key}', this)">
-      <div class="mode-icon">${opt.icon}</div>
-      <div class="mode-text">
-        <h4>${opt.label}</h4>
-        <p>${opt.count}語</p>
-      </div>
-    </div>
-  `).join('');
-
-  updateStartBtn();
-}
-
 function showQuizSetupWithLevel(level) {
   quizMode = 'flashcard';
   showScreen('quiz-setup');
@@ -1553,14 +1537,18 @@ function showQuizSetupWithLevel(level) {
   desc.textContent = '答えを見て 知ってる / 知らない で仕分け';
 
   const words = getActiveWords();
-  const counts = { unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0, all: words.length };
-  words.forEach(w => counts[w.level]++);
+  const bookmarkedCount = words.filter(w => w.bookmarked).length;
+  const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0, all: words.length };
+  words.forEach(w => {
+    if (w.level === 'almost') w.level = 'mastered';
+    if (counts[w.level] !== undefined) counts[w.level]++;
+  });
 
   const options = [
+    { key: 'bookmarked', icon: '🔖', label: '保存済み', count: bookmarkedCount },
     { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned },
     { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
     { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy },
-    { key: 'almost', icon: '🔵', label: 'ほぼ覚えた', count: counts.almost },
     { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered },
     { key: 'all', icon: '📚', label: 'すべて', count: counts.all },
   ];
@@ -1597,6 +1585,7 @@ function updateStartBtn() {
 function getQuizPool() {
   const words = getActiveWords();
   if (selectedRange === 'all') return [...words];
+  if (selectedRange === 'bookmarked') return words.filter(w => w.bookmarked);
   return words.filter(w => w.level === selectedRange);
 }
 
@@ -1630,15 +1619,22 @@ function showQuizQuestion() {
   document.getElementById('quizProgressText').textContent = `${q.index + 1} / ${q.words.length}`;
   document.getElementById('quizProgressFill').style.width = `${((q.index) / q.words.length) * 100}%`;
 
+  // Migrate old 'almost' level
+  if (word.level === 'almost') word.level = 'mastered';
+
   const badge = document.getElementById('quizBadge');
-  badge.textContent = LEVELS[word.level].label;
-  badge.className = `level-badge ${LEVELS[word.level].badge}`;
+  const levelInfo = LEVELS[word.level] || LEVELS.unlearned;
+  badge.textContent = levelInfo.label;
+  badge.className = `level-badge ${levelInfo.badge}`;
   document.getElementById('quizWord').textContent = word.english;
+
+  // Bookmark state
+  const bookmarkBtn = document.getElementById('bookmarkBtn');
+  bookmarkBtn.classList.toggle('active', !!word.bookmarked);
 
   // Reset card state
   const card = document.getElementById('quizCard');
   card.classList.remove('revealed');
-  card.dataset.answer = escapeHtml(word.japanese);
 
   const answerReveal = document.getElementById('answerReveal');
   const body = document.getElementById('quizBody');
@@ -1680,6 +1676,14 @@ function revealAnswer() {
   }
 }
 
+function toggleBookmark() {
+  const word = currentQuiz.words[currentQuiz.index];
+  word.bookmarked = !word.bookmarked;
+  const btn = document.getElementById('bookmarkBtn');
+  btn.classList.toggle('active', word.bookmarked);
+  saveState();
+}
+
 function generateChoices(targetWord) {
   const correct = targetWord.japanese;
   // Pull distractors from all decks for better variety
@@ -1701,11 +1705,8 @@ function answerKnowledge(known) {
       word.level = 'fuzzy';
       word.correctStreak = 1;
     } else if (word.level === 'fuzzy') {
-      word.level = 'almost';
-      word.correctStreak = 2;
-    } else if (word.level === 'almost') {
       word.level = 'mastered';
-      word.correctStreak = 3;
+      word.correctStreak = 2;
     }
     currentQuiz.results.push({ word, correct: true });
   } else {
@@ -1729,8 +1730,7 @@ function answerChoice(btn, index, isCorrect) {
     btn.classList.add('correct');
     currentQuiz.correct++;
     word.correctStreak = (word.correctStreak || 0) + 1;
-    if (word.correctStreak >= 3) word.level = 'mastered';
-    else if (word.correctStreak >= 2) word.level = 'almost';
+    if (word.correctStreak >= 2) word.level = 'mastered';
     else if (word.correctStreak >= 1) word.level = 'fuzzy';
     currentQuiz.results.push({ word, correct: true });
   } else {
@@ -1852,15 +1852,18 @@ function getWordListWords() {
 
 function renderFilterTabs() {
   const words = getWordListWords();
-  const counts = { all: words.length, unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0 };
-  words.forEach(w => counts[w.level]++);
+  const bookmarkedCount = words.filter(w => w.bookmarked).length;
+  const counts = { all: words.length, unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  words.forEach(w => {
+    if (counts[w.level] !== undefined) counts[w.level]++;
+  });
 
   const tabs = [
     { key: 'all', label: `すべて (${counts.all})` },
+    { key: 'bookmarked', label: `保存済み (${bookmarkedCount})` },
     { key: 'unlearned', label: `未学習 (${counts.unlearned})` },
     { key: 'weak', label: `苦手 (${counts.weak})` },
     { key: 'fuzzy', label: `うろ覚え (${counts.fuzzy})` },
-    { key: 'almost', label: `ほぼ覚えた (${counts.almost})` },
     { key: 'mastered', label: `覚えた (${counts.mastered})` },
   ];
 
@@ -1877,7 +1880,10 @@ function filterWords(level, el) {
 
 function renderWordList(level) {
   const words = getWordListWords();
-  const filtered = level === 'all' ? words : words.filter(w => w.level === level);
+  let filtered;
+  if (level === 'all') filtered = words;
+  else if (level === 'bookmarked') filtered = words.filter(w => w.bookmarked);
+  else filtered = words.filter(w => w.level === level);
   const items = document.getElementById('wordItems');
 
   if (filtered.length === 0) {
