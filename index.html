@@ -482,9 +482,12 @@ body::after {
   margin-bottom: 20px;
   position: relative;
   overflow: hidden;
-  min-height: 340px;
+  min-height: 55vh;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .quiz-card::before {
   content: '';
@@ -511,72 +514,46 @@ body::after {
   color: var(--gray-900);
   margin-bottom: 8px;
   letter-spacing: -0.5px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ===== Answer reveal area ===== */
 .answer-reveal {
   margin-top: auto;
   position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 80px;
 }
-.answer-tap-area {
-  background: linear-gradient(135deg, var(--orange-50), #FFF5EB);
-  border: 2px dashed var(--orange-200);
-  border-radius: 14px;
-  padding: 28px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
-  -webkit-user-select: none;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-}
-.answer-tap-area:hover {
-  border-color: var(--orange-400);
-  background: linear-gradient(135deg, var(--orange-100), var(--orange-50));
-}
-.answer-tap-area:active {
-  transform: scale(0.98);
-}
-.answer-tap-area .tap-hint {
-  font-size: 15px;
-  color: var(--orange-400);
-  font-weight: 600;
+.answer-tap-hint {
+  font-size: 14px;
+  color: var(--gray-400);
+  font-weight: 500;
+  padding: 12px 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
 }
-.answer-tap-area .tap-hint .tap-icon {
-  font-size: 20px;
+.answer-tap-hint .tap-icon {
+  font-size: 18px;
   animation: tapBounce 2s ease infinite;
 }
 @keyframes tapBounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
-.answer-tap-area.revealed {
-  border-style: solid;
-  border-color: var(--orange-300);
-  background: white;
-  cursor: default;
-}
-.answer-tap-area.revealed .tap-hint { display: none; }
-.answer-tap-area .answer-text {
+.answer-text-area {
   display: none;
   font-size: 20px;
-  color: var(--gray-700);
-  font-weight: 600;
+  color: var(--orange-500);
+  font-weight: 700;
+  padding: 12px 0 4px;
   animation: revealFade 0.3s ease;
 }
-.answer-tap-area.revealed .answer-text { display: block; }
+.quiz-card.revealed .answer-tap-hint { display: none; }
+.quiz-card.revealed .answer-text-area { display: block; }
+.quiz-card.revealed { cursor: default; }
 @keyframes revealFade {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1077,14 +1054,13 @@ body::after {
 </head>
 <body>
 <div class="app">
-  <!-- Header -->
-  <div class="header">
-    <h1><span>🍊</span> みかん単語帳</h1>
-    <p>CSVで読み込み・4択で覚える</p>
-  </div>
 
   <!-- Screen: Import -->
   <div id="screen-import" class="screen active">
+    <div class="header">
+      <h1><span>🍊</span> みかん単語帳</h1>
+      <p>CSVで読み込み・4択で覚える</p>
+    </div>
     <div class="import-area" id="dropZone">
       <div class="import-icon">📄</div>
       <h3>CSVファイルをドロップ</h3>
@@ -1106,6 +1082,9 @@ body::after {
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
+    <div class="header">
+      <h1><span>🍊</span> みかん単語帳</h1>
+    </div>
     <!-- Deck selector -->
     <div class="deck-selector">
       <h3>📚 デッキ一覧</h3>
@@ -1217,7 +1196,7 @@ body::after {
     <div class="quiz-progress-bar">
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
-    <div class="quiz-card">
+    <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
       <div class="level-badge" id="quizBadge">未学習</div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
@@ -1650,17 +1629,21 @@ function showQuizQuestion() {
   badge.className = `level-badge ${LEVELS[word.level].badge}`;
   document.getElementById('quizWord').textContent = word.english;
 
+  // Reset card state
+  const card = document.getElementById('quizCard');
+  card.classList.remove('revealed');
+  card.dataset.answer = escapeHtml(word.japanese);
+
   const answerReveal = document.getElementById('answerReveal');
   const body = document.getElementById('quizBody');
 
+  // Answer area inside card (hint + hidden answer)
+  answerReveal.innerHTML = `
+    <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
+    <div class="answer-text-area">${escapeHtml(word.japanese)}</div>
+  `;
+
   if (quizMode === 'flashcard') {
-    // 一問一答: tap to reveal answer, then know/don't-know
-    answerReveal.innerHTML = `
-      <div class="answer-tap-area" onclick="revealAnswer(this)">
-        <div class="tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
-        <div class="answer-text">${escapeHtml(word.japanese)}</div>
-      </div>
-    `;
     body.innerHTML = `
       <div class="know-buttons" id="knowButtons" style="opacity:0.3;pointer-events:none;">
         <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない 😣</button>
@@ -1668,13 +1651,6 @@ function showQuizQuestion() {
       </div>
     `;
   } else {
-    // 4択: tap to reveal answer (optional hint), then pick from 4 choices
-    answerReveal.innerHTML = `
-      <div class="answer-tap-area" onclick="revealAnswer(this)">
-        <div class="tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
-        <div class="answer-text">${escapeHtml(word.japanese)}</div>
-      </div>
-    `;
     const choices = generateChoices(word);
     body.innerHTML = `
       <div class="choices">
@@ -1686,9 +1662,10 @@ function showQuizQuestion() {
   }
 }
 
-function revealAnswer(el) {
-  if (el.classList.contains('revealed')) return;
-  el.classList.add('revealed');
+function revealAnswer() {
+  const card = document.getElementById('quizCard');
+  if (card.classList.contains('revealed')) return;
+  card.classList.add('revealed');
   // Enable the know/don't-know buttons
   const btns = document.getElementById('knowButtons');
   if (btns) {
@@ -1833,7 +1810,7 @@ function confirmQuit() {
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
-  });
+  }, '中断する');
 }
 
 // ============ WORD LIST ============
@@ -1925,9 +1902,10 @@ function toggleWordAnswer(el) {
 // ============ CONFIRM MODAL ============
 let pendingConfirmAction = null;
 
-function confirmAction(title, desc, action) {
+function confirmAction(title, desc, action, btnLabel) {
   document.getElementById('confirmTitle').textContent = title;
   document.getElementById('confirmDesc').textContent = desc;
+  document.getElementById('confirmDangerBtn').textContent = btnLabel || 'リセットする';
   pendingConfirmAction = action;
   const btn = document.getElementById('confirmDangerBtn');
   btn.onclick = function() {
