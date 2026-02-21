@@ -114,12 +114,20 @@ body::after {
   font-weight: 500;
 }
 .header { position: relative; }
+.header h1 { padding-right: 90px; }
 .header-btns {
   position: absolute;
   top: 24px;
   right: 0;
   display: flex;
   gap: 6px;
+}
+/* Import screen only has one button */
+#screen-import .header h1 { padding-right: 50px; }
+#screen-import .help-toggle {
+  position: absolute;
+  top: 24px;
+  right: 0;
 }
 .help-toggle {
   width: 40px;
@@ -154,12 +162,15 @@ body::after {
   max-height: 80vh;
   padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .help-scroll {
   padding: 28px 22px;
-  max-height: 80vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  flex: 1;
+  overscroll-behavior: contain;
 }
 .help-section {
   margin-bottom: 20px;
@@ -940,6 +951,7 @@ body::after {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  animation: lcRowSlide 0.4s ease both;
 }
 .lc-label {
   font-size: 13px;
@@ -985,13 +997,6 @@ body::after {
   0% { opacity: 0; transform: scale(0.5) translateY(8px); }
   60% { opacity: 1; transform: scale(1.2) translateY(-2px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-.lc-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  animation: lcRowSlide 0.4s ease both;
 }
 @keyframes lcRowSlide {
   from { opacity: 0; transform: translateX(-20px); }
@@ -1696,18 +1701,18 @@ body::after {
     </div>
 
     <div class="action-section">
-      <button class="action-btn list" onclick="showWordList()">
-        <div class="icon">📖</div>
-        <div class="text">
-          <h3>単語一覧</h3>
-          <p>すべての単語を確認</p>
-        </div>
-      </button>
       <button class="action-btn edit-words" onclick="showWordEditor()">
         <div class="icon">✏️</div>
         <div class="text">
           <h3>問題を編集</h3>
           <p>追加・編集・削除</p>
+        </div>
+      </button>
+      <button class="action-btn list" onclick="showWordList()">
+        <div class="icon">📖</div>
+        <div class="text">
+          <h3>単語一覧</h3>
+          <p>すべての単語を確認</p>
         </div>
       </button>
     </div>
@@ -1747,6 +1752,13 @@ body::after {
       <div class="mode-toggle" id="reverseToggle">
         <button class="mode-toggle-btn active" onclick="selectReverse(false, this)">問題→答え</button>
         <button class="mode-toggle-btn" onclick="selectReverse(true, this)">答え→問題</button>
+      </div>
+      <h4 class="setup-section-label">読み上げ</h4>
+      <div class="mode-toggle" id="ttsToggle">
+        <button class="mode-toggle-btn active" onclick="selectTTS('question', this)">問題のみ</button>
+        <button class="mode-toggle-btn" onclick="selectTTS('answer', this)">答えのみ</button>
+        <button class="mode-toggle-btn" onclick="selectTTS('both', this)">両方</button>
+        <button class="mode-toggle-btn" onclick="selectTTS('none', this)">なし</button>
       </div>
       <div class="count-selector">
         <label>出題数：</label>
@@ -1833,11 +1845,11 @@ body::after {
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="confirm-icon">✏️</div>
       <h3 id="editWordTitle">単語を編集</h3>
-      <input type="text" id="editWordEng" class="rename-input" placeholder="英語 (問題文)">
-      <input type="text" id="editWordJpn" class="rename-input" placeholder="日本語 (答え)">
+      <input type="text" id="editWordEng" class="rename-input" placeholder="問題文を入力">
+      <input type="text" id="editWordJpn" class="rename-input" placeholder="答えを入力">
       <div class="confirm-buttons">
         <button class="confirm-cancel" onclick="closeEditWord()">キャンセル</button>
-        <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="editWordSaveBtn">保存</button>
+        <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" onclick="saveWord()">保存</button>
       </div>
     </div>
   </div>
@@ -2017,35 +2029,35 @@ function playTone(freq, duration, type, vol) {
 }
 
 // Sound effects
-function sfxTap() { playTone(800, 0.08, 'sine', 0.1); }
-function sfxSelect() { playTone(600, 0.06, 'sine', 0.08); playTone(900, 0.06, 'sine', 0.08); }
+function sfxTap() { playTone(800, 0.08, 'sine', 0.18); }
+function sfxSelect() { playTone(600, 0.06, 'sine', 0.15); playTone(900, 0.06, 'sine', 0.15); }
 function sfxCorrect() {
-  playTone(523, 0.12, 'sine', 0.15);
-  setTimeout(() => playTone(659, 0.12, 'sine', 0.15), 80);
-  setTimeout(() => playTone(784, 0.18, 'sine', 0.15), 160);
+  playTone(523, 0.12, 'sine', 0.22);
+  setTimeout(() => playTone(659, 0.12, 'sine', 0.22), 80);
+  setTimeout(() => playTone(784, 0.18, 'sine', 0.22), 160);
 }
 function sfxWrong() {
-  playTone(300, 0.15, 'square', 0.08);
-  setTimeout(() => playTone(250, 0.2, 'square', 0.08), 120);
+  playTone(300, 0.15, 'square', 0.15);
+  setTimeout(() => playTone(250, 0.2, 'square', 0.15), 120);
 }
-function sfxReveal() { playTone(440, 0.1, 'triangle', 0.1); }
+function sfxReveal() { playTone(440, 0.1, 'triangle', 0.18); }
 function sfxBookmark() {
-  playTone(700, 0.08, 'sine', 0.1);
-  setTimeout(() => playTone(1050, 0.12, 'sine', 0.12), 60);
+  playTone(700, 0.08, 'sine', 0.18);
+  setTimeout(() => playTone(1050, 0.12, 'sine', 0.2), 60);
 }
 function sfxStart() {
-  playTone(523, 0.1, 'sine', 0.12);
-  setTimeout(() => playTone(659, 0.1, 'sine', 0.12), 100);
-  setTimeout(() => playTone(784, 0.1, 'sine', 0.12), 200);
-  setTimeout(() => playTone(1047, 0.2, 'sine', 0.15), 300);
+  playTone(523, 0.1, 'sine', 0.2);
+  setTimeout(() => playTone(659, 0.1, 'sine', 0.2), 100);
+  setTimeout(() => playTone(784, 0.1, 'sine', 0.2), 200);
+  setTimeout(() => playTone(1047, 0.2, 'sine', 0.22), 300);
 }
 function sfxComplete() {
   [523, 659, 784, 1047].forEach((f, i) => {
-    setTimeout(() => playTone(f, 0.2, 'sine', 0.12), i * 120);
+    setTimeout(() => playTone(f, 0.2, 'sine', 0.2), i * 120);
   });
   setTimeout(() => {
     [1047, 1319, 1568].forEach((f, i) => {
-      setTimeout(() => playTone(f, 0.25, 'sine', 0.1), i * 100);
+      setTimeout(() => playTone(f, 0.25, 'sine', 0.18), i * 100);
     });
   }, 500);
 }
@@ -2119,7 +2131,7 @@ function speakText(text) {
   const u = new SpeechSynthesisUtterance(cleanText);
   u.lang = langMap[lang] || 'en-US';
   u.rate = lang === 'en' ? 0.85 : 0.9;
-  u.volume = 0.8;
+  u.volume = 0.45;
   
   // Set voice from cache
   if (ttsVoiceCache[lang]) {
@@ -2590,7 +2602,8 @@ function showLevelSelect() {
 // ============ QUIZ SETUP ============
 let quizDrillMode = false;
 let reviewMode = false;
-let reverseMode = false; // true = show answer as question, question as answer
+let reverseMode = false;
+let ttsMode = 'question'; // 'question', 'answer', 'both', 'none'
 
 function startMissedReview() {
   const missed = currentQuiz.results.filter(r => !r.correct);
@@ -2644,6 +2657,7 @@ function showQuizSetupWithLevel(level) {
   selectedRange = level;
   quizDrillMode = false;
   reverseMode = false;
+  ttsMode = 'question';
   showScreen('quiz-setup');
 
   // Reset mode toggle UI
@@ -2652,6 +2666,9 @@ function showQuizSetupWithLevel(level) {
   });
   document.getElementById('drillDesc').style.display = 'none';
   document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
+  document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', i === 0);
   });
 
@@ -2698,6 +2715,12 @@ function selectMode(mode, el) {
 
 function selectReverse(isReverse, el) {
   reverseMode = isReverse;
+  el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectTTS(mode, el) {
+  ttsMode = mode;
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
 }
@@ -2778,8 +2801,10 @@ function showQuizQuestion() {
   // ② Auto-size: shrink font for long text
   autoSizeQuizWord(quizWordEl);
 
-  // Read the question word aloud (auto-detect language)
-  speakText(questionText);
+  // Read the question word aloud (respects ttsMode)
+  if (ttsMode === 'question' || ttsMode === 'both') {
+    speakText(questionText);
+  }
 
   // Reset card state
   const card = document.getElementById('quizCard');
@@ -2798,8 +2823,8 @@ function showQuizQuestion() {
     body.innerHTML = `
       <div class="know-buttons-wrap">
         <div class="know-buttons" id="knowButtons" style="opacity:0.3;pointer-events:none;">
-          <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない 😣</button>
-          <button class="know-btn know" onclick="answerKnowledge(true)">知ってる 😊</button>
+          <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない</button>
+          <button class="know-btn know" onclick="answerKnowledge(true)">知ってる</button>
         </div>
         <button class="bookmark-btn ${word.bookmarked ? 'active' : ''}" id="bookmarkBtn" onclick="toggleBookmark()">📌</button>
       </div>
@@ -2832,8 +2857,8 @@ function revealAnswer() {
   if (card.classList.contains('revealed')) return;
   card.classList.add('revealed');
   sfxReveal();
-  // Read the answer aloud
-  if (currentQuiz) {
+  // Read the answer aloud (respects ttsMode)
+  if (currentQuiz && (ttsMode === 'answer' || ttsMode === 'both')) {
     const word = currentQuiz.words[currentQuiz.index];
     const answerText = reverseMode ? word.english : word.japanese;
     setTimeout(() => speakText(answerText), 200);
@@ -3291,8 +3316,7 @@ function showAddWordModal() {
   document.getElementById('editWordEng').value = '';
   document.getElementById('editWordJpn').value = '';
   document.getElementById('editWordOverlay').classList.add('show');
-  document.getElementById('editWordSaveBtn').onclick = saveWord;
-  setTimeout(() => document.getElementById('editWordEng').focus(), 100);
+  setTimeout(() => document.getElementById('editWordEng').focus(), 200);
 }
 
 function showEditWordModal(index) {
@@ -3304,8 +3328,7 @@ function showEditWordModal(index) {
   document.getElementById('editWordEng').value = word.english;
   document.getElementById('editWordJpn').value = word.japanese;
   document.getElementById('editWordOverlay').classList.add('show');
-  document.getElementById('editWordSaveBtn').onclick = saveWord;
-  setTimeout(() => document.getElementById('editWordEng').focus(), 100);
+  setTimeout(() => document.getElementById('editWordEng').focus(), 200);
 }
 
 function closeEditWord() {
