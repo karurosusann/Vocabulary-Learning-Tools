@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>田中の一問一答！</title>
+<title>田中の一問一答</title>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="田中の一問一答！">
+<meta name="apple-mobile-web-app-title" content="田中の一問一答">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#FF8C00">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -263,6 +263,23 @@ body::after {
   font-size: 11px;
   color: var(--gray-400);
   margin-top: 2px;
+}
+.deck-card .deck-edit {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.deck-card .deck-edit:hover {
+  background: var(--orange-100);
 }
 .deck-card .deck-delete {
   width: 28px;
@@ -735,6 +752,16 @@ body::after {
   background: var(--orange-600);
   transform: translateY(-1px);
 }
+.result-btn.review-btn {
+  background: white;
+  color: var(--orange-500);
+  border: 2px solid var(--orange-500);
+  box-shadow: none;
+  margin-bottom: 10px;
+}
+.result-btn.review-btn:hover {
+  background: var(--orange-50);
+}
 .missed-section {
   text-align: left;
   margin: 20px 0;
@@ -771,6 +798,62 @@ body::after {
   color: var(--red-400);
   font-size: 13px;
 }
+
+/* Level change summary */
+.level-change-section {
+  width: 100%;
+  margin: 20px 0;
+  text-align: left;
+}
+.level-change-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-600);
+  margin-bottom: 12px;
+  text-align: center;
+}
+.lc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.lc-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-600);
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.lc-bar-wrap {
+  flex: 1;
+  height: 28px;
+  background: var(--gray-100);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.lc-bar {
+  height: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  min-width: 28px;
+  transition: width 0.6s ease;
+}
+.lc-diff {
+  font-size: 16px;
+  font-weight: 900;
+  width: 40px;
+  flex-shrink: 0;
+}
+.lc-diff.plus { color: var(--green-500); }
+.lc-diff.minus { color: var(--red-500); }
 
 /* Search bar */
 .search-bar {
@@ -955,6 +1038,15 @@ body::after {
 }
 
 /* Quiz mode selector */
+#screen-quiz-setup {
+  display: none;
+  min-height: calc(100vh - 140px);
+  flex-direction: column;
+  justify-content: center;
+}
+#screen-quiz-setup.active {
+  display: flex;
+}
 .mode-selector {
   background: white;
   border-radius: var(--radius);
@@ -976,7 +1068,7 @@ body::after {
   margin-top: 16px;
 }
 .setup-word-list {
-  max-height: 200px;
+  max-height: 40vh;
   overflow-y: auto;
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
@@ -1031,6 +1123,42 @@ body::after {
   margin-bottom: 8px;
   font-weight: 600;
 }
+
+/* Level select screen */
+.level-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.level-select-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.level-select-card:hover { transform: translateY(-2px); }
+.level-select-card:active { transform: scale(0.97); }
+.level-select-card .ls-icon { font-size: 28px; margin-bottom: 8px; }
+.level-select-card .ls-label {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.level-select-card .ls-count {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: 'DM Sans', sans-serif;
+}
+.level-select-card.all .ls-label, .level-select-card.all .ls-count { color: var(--gray-700); }
+.level-select-card.unlearned .ls-label, .level-select-card.unlearned .ls-count { color: var(--gray-400); }
+.level-select-card.bookmarked .ls-label, .level-select-card.bookmarked .ls-count { color: var(--orange-500); }
+.level-select-card.weak .ls-label, .level-select-card.weak .ls-count { color: var(--red-500); }
+.level-select-card.fuzzy .ls-label, .level-select-card.fuzzy .ls-count { color: var(--yellow-500); }
+.level-select-card.mastered .ls-label, .level-select-card.mastered .ls-count { color: var(--green-500); }
 .mode-options {
   display: flex;
   flex-direction: column;
@@ -1210,6 +1338,19 @@ body::after {
   box-shadow: 0 4px 12px rgba(239,68,68,0.3);
 }
 .confirm-danger:hover { background: #DC2626; }
+.rename-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.rename-input:focus { border-color: var(--orange-400); }
 
 /* Reset button */
 .reset-area {
@@ -1235,7 +1376,7 @@ body::after {
   <!-- Screen: Import -->
   <div id="screen-import" class="screen active">
     <div class="header">
-      <h1>📝 田中の一問一答！</h1>
+      <h1>📝 田中の一問一答</h1>
       <p>CSVで読み込み・一問一答で覚える</p>
     </div>
     <div class="import-area" id="dropZone">
@@ -1260,7 +1401,7 @@ body::after {
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
     <div class="header">
-      <h1>📝 田中の一問一答！</h1>
+      <h1>📝 田中の一問一答</h1>
     </div>
     <!-- Deck selector -->
     <div class="deck-selector">
@@ -1299,6 +1440,16 @@ body::after {
       </div>
     </div>
 
+    <div class="action-section">
+      <button class="action-btn study" onclick="showLevelSelect()">
+        <div class="icon">📝</div>
+        <div class="text">
+          <h3>学習を始める</h3>
+          <p>範囲を選んで一問一答スタート</p>
+        </div>
+      </button>
+    </div>
+
     <div class="progress-bar-container">
       <h4>学習進捗</h4>
       <div class="progress-bar" id="progressBar"></div>
@@ -1320,10 +1471,20 @@ body::after {
     </div>
   </div>
 
+  <!-- Screen: Level Select -->
+  <div id="screen-level-select" class="screen">
+    <div class="quiz-header">
+      <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
+      <span class="quiz-progress-text">出題範囲を選択</span>
+      <div style="width:40px"></div>
+    </div>
+    <div class="level-select-grid" id="levelSelectGrid"></div>
+  </div>
+
   <!-- Screen: Quiz Setup -->
   <div id="screen-quiz-setup" class="screen">
     <div class="quiz-header">
-      <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
+      <button class="quiz-back" id="setupBackBtn" onclick="showScreen('dashboard')">←</button>
       <span class="quiz-progress-text" id="setupTitle">未学習</span>
       <div style="width:40px"></div>
     </div>
@@ -1413,6 +1574,18 @@ body::after {
     <div class="confirm-buttons">
       <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
       <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="renameOverlay" onclick="closeRename()">
+  <div class="confirm-modal" onclick="event.stopPropagation()">
+    <div class="confirm-icon">✏️</div>
+    <h3>デッキ名を変更</h3>
+    <input type="text" id="renameInput" class="rename-input" placeholder="新しい名前">
+    <div class="confirm-buttons">
+      <button class="confirm-cancel" onclick="closeRename()">キャンセル</button>
+      <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="renameConfirmBtn">変更する</button>
     </div>
   </div>
 </div>
@@ -1611,6 +1784,7 @@ function renderDeckList() {
             <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
           </div>
         </div>
+        <button class="deck-edit" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
         <button class="deck-delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
       </div>
     `;
@@ -1640,7 +1814,32 @@ function deleteDeck(id) {
       updateDashboard();
     }
     showToast('デッキを削除しました');
-  });
+  }, '削除する');
+}
+
+let renamingDeckId = null;
+
+function renameDeck(id) {
+  const deck = decks.find(d => d.id === id);
+  if (!deck) return;
+  renamingDeckId = id;
+  document.getElementById('renameInput').value = deck.name;
+  document.getElementById('renameOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('renameInput').focus(), 100);
+  document.getElementById('renameConfirmBtn').onclick = function() {
+    const newName = document.getElementById('renameInput').value.trim();
+    if (!newName) return;
+    deck.name = newName;
+    saveState();
+    renderDeckList();
+    closeRename();
+    showToast('デッキ名を変更しました');
+  };
+}
+
+function closeRename() {
+  document.getElementById('renameOverlay').classList.remove('show');
+  renamingDeckId = null;
 }
 
 function escapeHtml(str) {
@@ -1685,14 +1884,96 @@ function updateDashboard() {
   });
 }
 
+// ============ LEVEL SELECT ============
+function showLevelSelect() {
+  showScreen('level-select');
+  const words = getActiveWords();
+  const bookmarkedCount = words.filter(w => w.bookmarked).length;
+  const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  words.forEach(w => {
+    if (w.level === 'almost') w.level = 'mastered';
+    if (counts[w.level] !== undefined) counts[w.level]++;
+  });
+
+  const options = [
+    { key: 'all', icon: '📚', label: '全て', count: words.length, cls: 'all' },
+    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
+    { key: 'bookmarked', icon: '🔖', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
+    { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak, cls: 'weak' },
+    { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy, cls: 'fuzzy' },
+    { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
+  ];
+
+  document.getElementById('levelSelectGrid').innerHTML = options.map(opt => `
+    <div class="level-select-card ${opt.cls}" onclick="showQuizSetupWithLevel('${opt.key}')">
+      <div class="ls-icon">${opt.icon}</div>
+      <div class="ls-label">${opt.label}</div>
+      <div class="ls-count">${opt.count}語</div>
+    </div>
+  `).join('');
+}
+
 // ============ QUIZ SETUP ============
-let quizDrillMode = false; // false = normal, true = drill
+let quizDrillMode = false;
+let reviewMode = false; // true = no level changes (復習モード)
+
+function startMissedReview() {
+  const missed = currentQuiz.results.filter(r => !r.correct);
+  const seen = new Set();
+  const pool = missed.filter(r => {
+    if (seen.has(r.word.english)) return false;
+    seen.add(r.word.english);
+    return true;
+  }).map(r => r.word);
+
+  if (pool.length === 0) return;
+
+  pool.sort(() => Math.random() - 0.5);
+
+  reviewMode = true;
+  quizMode = 'flashcard';
+  quizDrillMode = true;
+
+  // Save current levels (won't be changed)
+  const beforeLevels = {};
+  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+
+  currentQuiz = {
+    words: pool,
+    index: 0,
+    correct: 0,
+    wrong: 0,
+    results: [],
+    totalCount: pool.length,
+    masteredCount: 0,
+    beforeLevels: beforeLevels
+  };
+
+  showScreen('quiz');
+  showQuizQuestion();
+} // false = normal, true = drill
+
+let quizSetupFrom = 'dashboard';
 
 function showQuizSetupWithLevel(level) {
+  // Track where we came from
+  const currentScreen = document.querySelector('.screen.active');
+  if (currentScreen && currentScreen.id === 'screen-level-select') {
+    quizSetupFrom = 'level-select';
+  } else {
+    quizSetupFrom = 'dashboard';
+  }
+
   quizMode = 'flashcard';
   selectedRange = level;
   quizDrillMode = false;
   showScreen('quiz-setup');
+
+  // Set back button
+  document.getElementById('setupBackBtn').onclick = function() {
+    showScreen(quizSetupFrom);
+    if (quizSetupFrom === 'level-select') showLevelSelect();
+  };
 
   // Title
   const levelNames = {
@@ -1745,6 +2026,7 @@ function getQuizPool() {
 
 // ============ QUIZ ============
 function startQuiz() {
+  reviewMode = false;
   let pool = getQuizPool();
   if (pool.length === 0) return;
 
@@ -1754,6 +2036,10 @@ function startQuiz() {
   const count = countSel === 'all' ? pool.length : Math.min(parseInt(countSel), pool.length);
   pool = pool.slice(0, count);
 
+  // Save original levels before quiz
+  const beforeLevels = {};
+  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+
   currentQuiz = {
     words: pool,
     index: 0,
@@ -1761,7 +2047,8 @@ function startQuiz() {
     wrong: 0,
     results: [],
     totalCount: pool.length,
-    masteredCount: 0
+    masteredCount: 0,
+    beforeLevels: beforeLevels
   };
 
   showScreen('quiz');
@@ -1858,28 +2145,31 @@ function answerKnowledge(known) {
 
   if (known) {
     currentQuiz.correct++;
-    if (word.level === 'unlearned') {
-      word.level = 'fuzzy';
-      word.correctStreak = 1;
-    } else if (word.level === 'weak') {
-      word.level = 'fuzzy';
-      word.correctStreak = 1;
-    } else if (word.level === 'fuzzy') {
-      word.level = 'mastered';
-      word.correctStreak = 2;
+    if (!reviewMode) {
+      if (word.level === 'unlearned') {
+        word.level = 'fuzzy';
+        word.correctStreak = 1;
+      } else if (word.level === 'weak') {
+        word.level = 'fuzzy';
+        word.correctStreak = 1;
+      } else if (word.level === 'fuzzy') {
+        word.level = 'mastered';
+        word.correctStreak = 2;
+      }
     }
     currentQuiz.results.push({ word, correct: true });
     if (quizDrillMode) currentQuiz.masteredCount++;
   } else {
     currentQuiz.wrong++;
-    word.level = 'weak';
-    word.correctStreak = 0;
+    if (!reviewMode) {
+      word.level = 'weak';
+      word.correctStreak = 0;
+    }
     currentQuiz.results.push({ word, correct: false });
 
     // Drill mode: re-queue the word later
     if (quizDrillMode) {
       const remaining = currentQuiz.words.slice(currentQuiz.index + 1);
-      // Insert at a random position 2-5 cards later
       const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
       remaining.splice(insertPos, 0, word);
       currentQuiz.words = [...currentQuiz.words.slice(0, currentQuiz.index + 1), ...remaining];
@@ -1949,12 +2239,52 @@ function showResult() {
   else if (pct >= 50) { emoji = '💪'; msg = 'もう少し頑張ろう！'; }
   else { emoji = '📚'; msg = '復習が大事！'; }
 
-  const missed = currentQuiz.results.filter(r => !r.correct);
-  // Deduplicate missed words (drill mode may have duplicates)
-  const seen = new Set();
+  // Calculate level changes
+  const levelNames = { unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた' };
+  const levelColors = { unlearned: 'var(--gray-400)', weak: 'var(--red-500)', fuzzy: 'var(--yellow-500)', mastered: 'var(--green-500)' };
+  const levelOrder = ['mastered', 'fuzzy', 'weak', 'unlearned'];
+
+  // Count before/after per level (deduplicated by word)
+  const beforeCounts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  const afterCounts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  const seenWords = new Set();
+  // Use unique words from the quiz
+  q.words.forEach(w => {
+    if (seenWords.has(w.english)) return;
+    seenWords.add(w.english);
+    const before = q.beforeLevels[w.english] || 'unlearned';
+    if (beforeCounts[before] !== undefined) beforeCounts[before]++;
+    if (afterCounts[w.level] !== undefined) afterCounts[w.level]++;
+  });
+
+  // Build level change bars
+  let levelChangeHtml = '<div class="level-change-section">';
+  levelChangeHtml += '<h4>ステータス変化</h4>';
+  const totalWords = seenWords.size || 1;
+  levelOrder.forEach(level => {
+    const before = beforeCounts[level];
+    const after = afterCounts[level];
+    const diff = after - before;
+    const diffStr = diff > 0 ? `<span class="lc-diff plus">+${diff}</span>` : diff < 0 ? `<span class="lc-diff minus">${diff}</span>` : '';
+    const barWidth = Math.round((after / totalWords) * 100);
+    levelChangeHtml += `
+      <div class="lc-row">
+        <div class="lc-label">${levelNames[level]}</div>
+        <div class="lc-bar-wrap">
+          <div class="lc-bar" style="width:${barWidth}%;background:${levelColors[level]}">${after}</div>
+        </div>
+        ${diffStr}
+      </div>
+    `;
+  });
+  levelChangeHtml += '</div>';
+
+  // Missed words
+  const missed = q.results.filter(r => !r.correct);
+  const seenMissed = new Set();
   const uniqueMissed = missed.filter(r => {
-    if (seen.has(r.word.english)) return false;
-    seen.add(r.word.english);
+    if (seenMissed.has(r.word.english)) return false;
+    seenMissed.add(r.word.english);
     return true;
   });
 
@@ -1993,7 +2323,9 @@ function showResult() {
         <div class="label">正答率</div>
       </div>
     </div>
+    ${levelChangeHtml}
     ${missedHtml}
+    ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">間違えた単語を復習する</button>' : ''}
     <button class="result-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">ホームに戻る</button>
   `;
 }
