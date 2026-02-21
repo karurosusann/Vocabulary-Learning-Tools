@@ -113,21 +113,23 @@ body::after {
   margin-top: 4px;
   font-weight: 500;
 }
-.header { position: relative; }
+.header { position: relative; min-height: 40px; }
 .header h1 { padding-right: 90px; }
 .header-btns {
   position: absolute;
-  top: 24px;
+  top: 0;
   right: 0;
   display: flex;
   gap: 6px;
 }
 /* Import screen only has one button */
-#screen-import .header h1 { padding-right: 50px; }
+#screen-import .header {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 40px;
+}
 #screen-import .help-toggle {
-  position: absolute;
-  top: 24px;
-  right: 0;
+  position: static;
 }
 .help-toggle {
   width: 40px;
@@ -200,6 +202,40 @@ body::after {
 
 /* Celebration */
 .celebration-modal { text-align: center; }
+
+/* Demo picker */
+.demo-picker-modal { max-height: 80vh; }
+.demo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.demo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gray-50);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.demo-item:hover { border-color: var(--orange-400); background: var(--orange-50); }
+.demo-item span {
+  font-size: 12px;
+  color: var(--gray-400);
+  font-weight: 500;
+  flex-shrink: 0;
+}
 
 /* Format tabs */
 .format-tabs {
@@ -620,16 +656,26 @@ body::after {
   transition: width 0.4s ease;
 }
 
+#screen-quiz {
+  height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+#screen-quiz.active {
+  display: flex;
+}
 .quiz-card {
   background: white;
   border-radius: 24px;
-  padding: 32px 24px 28px;
+  padding: 24px 20px 20px;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   position: relative;
   overflow: hidden;
-  min-height: 55vh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -1126,10 +1172,10 @@ body::after {
 .word-item {
   background: white;
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s;
   cursor: pointer;
@@ -1142,6 +1188,7 @@ body::after {
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 5px;
 }
 .word-item .level-dot.unlearned { background: var(--gray-300); }
 .word-item .level-dot.weak { background: var(--red-500); }
@@ -1150,14 +1197,13 @@ body::after {
 .word-item .level-dot.mastered { background: var(--green-500); }
 .word-item .eng {
   font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--gray-800);
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  line-height: 1.4;
 }
 .word-item .jpn-container {
   position: relative;
@@ -1168,6 +1214,7 @@ body::after {
   font-size: 13px;
   color: var(--gray-500);
   transition: all 0.2s;
+  word-break: break-word;
 }
 .word-item .jpn.hidden-answer {
   color: transparent;
@@ -1192,6 +1239,23 @@ body::after {
 }
 
 /* Quiz mode selector */
+.answer-toggle-btn {
+  background: var(--gray-100);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.answer-toggle-btn.hiding {
+  background: var(--orange-500);
+  color: white;
+  border-color: var(--orange-500);
+}
 #screen-quiz-setup {
   display: none;
   min-height: calc(100vh - 140px);
@@ -1523,6 +1587,21 @@ body::after {
 .rename-input:focus { border-color: var(--orange-400); }
 
 /* Word editor */
+.editor-header {
+  padding: 0;
+  margin-bottom: 16px;
+}
+.editor-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.editor-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--gray-800);
+}
 .editor-add-btn {
   background: var(--orange-500);
   color: white;
@@ -1540,47 +1619,55 @@ body::after {
   gap: 6px;
 }
 .editor-word-item {
-  background: white;
+  position: relative;
+  overflow: hidden;
   border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2px;
+}
+.editor-word-item .ew-inner {
+  background: white;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.25s ease;
+  cursor: pointer;
 }
 .editor-word-item .ew-content {
   flex: 1;
   min-width: 0;
-  cursor: pointer;
 }
 .editor-word-item .ew-eng {
   font-size: 14px;
   font-weight: 600;
   color: var(--gray-800);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  line-height: 1.4;
 }
 .editor-word-item .ew-jpn {
   font-size: 12px;
   color: var(--gray-400);
   margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
 }
-.editor-word-item .ew-delete {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: var(--gray-100);
-  color: var(--red-500);
-  font-size: 16px;
-  cursor: pointer;
+.ew-delete-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  background: var(--red-500);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
   flex-shrink: 0;
   transition: all 0.2s;
 }
@@ -1611,7 +1698,6 @@ body::after {
   <!-- Screen: Import -->
   <div id="screen-import" class="screen active">
     <div class="header">
-      <h1>田中の一問一答！</h1>
       <button class="help-toggle" onclick="showHelp()">❓</button>
     </div>
     <div class="import-area" id="dropZone">
@@ -1625,8 +1711,10 @@ body::after {
       <div class="format-tabs">
         <button class="format-tab active" onclick="switchFormatTab(0, this)">英単語</button>
         <button class="format-tab" onclick="switchFormatTab(1, this)">歴史</button>
-        <button class="format-tab" onclick="switchFormatTab(2, this)">資格試験</button>
-        <button class="format-tab" onclick="switchFormatTab(3, this)">韓国語</button>
+        <button class="format-tab" onclick="switchFormatTab(2, this)">数学公式</button>
+        <button class="format-tab" onclick="switchFormatTab(3, this)">SPI</button>
+        <button class="format-tab" onclick="switchFormatTab(4, this)">公務員試験</button>
+        <button class="format-tab" onclick="switchFormatTab(5, this)">資格試験</button>
       </div>
       <code id="formatExample">
         abandon,見捨てる<br>
@@ -1635,17 +1723,15 @@ body::after {
       </code>
     </div>
     <div style="text-align:center;margin-top:20px;">
-      <button class="demo-btn" onclick="loadDemo()">🎯 デモデータで試す</button>
+      <button class="demo-btn" onclick="loadDemo()">デモ問題で試す</button>
     </div>
   </div>
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
     <div class="header">
-      <h1>田中の一問一答！</h1>
       <div class="header-btns">
         <button class="help-toggle" onclick="showHelp()">❓</button>
-        <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
       </div>
     </div>
     <!-- Deck selector - horizontal swipe -->
@@ -1741,7 +1827,6 @@ body::after {
       <div style="width:40px"></div>
     </div>
     <div class="mode-selector">
-      <div class="setup-word-list" id="setupWordList"></div>
       <h4 class="setup-section-label">モード</h4>
       <div class="mode-toggle" id="modeToggle">
         <button class="mode-toggle-btn active" onclick="selectMode('normal', this)">ノーマル</button>
@@ -1826,27 +1911,33 @@ body::after {
     </div>
     <div class="deck-tabs" id="deckTabs"></div>
     <div class="filter-tabs" id="filterTabs"></div>
+    <div style="text-align:right;margin-bottom:8px;">
+      <button class="answer-toggle-btn" id="answerToggleBtn" onclick="toggleAllAnswers()">答えを隠す</button>
+    </div>
     <div class="word-items" id="wordItems"></div>
   </div>
-</div>
 
   <!-- Screen: Word Editor -->
   <div id="screen-word-editor" class="screen">
-    <div class="quiz-header">
-      <button class="quiz-back" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
-      <span class="quiz-progress-text">問題を編集</span>
-      <button class="editor-add-btn" onclick="showAddWordModal()">＋追加</button>
+    <div class="editor-header">
+      <div class="editor-header-top">
+        <button class="quiz-back" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
+        <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
+      </div>
+      <h2 class="editor-title">問題を編集</h2>
     </div>
     <div class="editor-word-list" id="editorWordList"></div>
   </div>
+
+</div>
 
   <!-- Modal: Edit Word -->
   <div class="confirm-overlay" id="editWordOverlay" onclick="closeEditWord()">
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="confirm-icon">✏️</div>
       <h3 id="editWordTitle">単語を編集</h3>
-      <input type="text" id="editWordEng" class="rename-input" placeholder="問題文を入力">
-      <input type="text" id="editWordJpn" class="rename-input" placeholder="答えを入力">
+      <input type="text" id="editWordEng" class="rename-input" placeholder="問題文を入力" autocomplete="off" autocorrect="off" data-form-type="other">
+      <input type="text" id="editWordJpn" class="rename-input" placeholder="答えを入力" autocomplete="off" autocorrect="off" data-form-type="other">
       <div class="confirm-buttons">
         <button class="confirm-cancel" onclick="closeEditWord()">キャンセル</button>
         <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" onclick="saveWord()">保存</button>
@@ -1919,6 +2010,23 @@ body::after {
   </div>
 </div>
 
+<!-- Demo picker overlay -->
+<div class="confirm-overlay" id="demoPickerOverlay" onclick="closeDemoPicker()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📚 デモ問題を選択</h3>
+    <div class="demo-list">
+      <button class="demo-item" onclick="loadDemoData('korean')">🇰🇷 韓国語 中級<span>99語</span></button>
+      <button class="demo-item" onclick="loadDemoData('bank')">🏦 銀行知識<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('education_law')">📜 教育基本法・学校教育法<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('curriculum')">🏫 小学校学習指導要領<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('student_guidance')">📖 生徒指導提要<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('pe_exam')">🏃 教採 保健体育<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('kochi_exam')">✏️ 教採 教職教養<span>10語</span></button>
+    </div>
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeDemoPicker()">閉じる</button>
+  </div>
+</div>
+
 <div class="confirm-overlay" id="confirmOverlay" onclick="closeConfirm()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">⚠️</div>
@@ -1935,7 +2043,7 @@ body::after {
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">✏️</div>
     <h3>デッキ名を変更</h3>
-    <input type="text" id="renameInput" class="rename-input" placeholder="新しい名前">
+    <input type="text" id="renameInput" class="rename-input" placeholder="新しい名前" autocomplete="off" autocorrect="off" autocapitalize="off" data-form-type="other" data-1p-ignore>
     <div class="confirm-buttons">
       <button class="confirm-cancel" onclick="closeRename()">キャンセル</button>
       <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="renameConfirmBtn">変更する</button>
@@ -1964,7 +2072,7 @@ const LEVELS = {
 // ============ AUDIO SYSTEM ============
 let audioCtx = null;
 let audioEnabled = false;
-let soundMuted = localStorage.getItem('mikan_muted') === 'true';
+let soundMuted = false; // Always on
 
 function initAudio() {
   try {
@@ -1997,25 +2105,34 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Unlock audio on first user interaction (required for iOS)
-['touchstart', 'touchend', 'click'].forEach(evt => {
-  document.addEventListener(evt, function unlockAudio() {
+// Unlock and keep audio alive on every user interaction (iOS kills AudioContext in background)
+document.addEventListener('touchstart', initAudio, { passive: true });
+document.addEventListener('touchend', initAudio, { passive: true });
+document.addEventListener('click', initAudio);
+
+// Visibility change: re-init audio when coming back to foreground
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
     initAudio();
-    // Also prime TTS on iOS
-    if ('speechSynthesis' in window) {
-      const primer = new SpeechSynthesisUtterance('');
-      primer.volume = 0;
-      window.speechSynthesis.speak(primer);
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
     }
-    document.removeEventListener(evt, unlockAudio);
-  }, { once: true });
+  }
 });
 
 function playTone(freq, duration, type, vol) {
   if (soundMuted) return;
-  if (!audioCtx || audioCtx.state === 'closed') { initAudio(); }
-  if (!audioCtx || !audioEnabled) return;
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  // Always try to ensure audio context is alive
+  if (!audioCtx || audioCtx.state === 'closed') {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioEnabled = true;
+    } catch(e) { return; }
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  try {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = type || 'sine';
@@ -2026,6 +2143,7 @@ function playTone(freq, duration, type, vol) {
   gain.connect(audioCtx.destination);
   osc.start();
   osc.stop(audioCtx.currentTime + (duration || 0.2));
+  } catch(e) { /* audio context may be in bad state, ignore */ }
 }
 
 // Sound effects
@@ -2130,7 +2248,7 @@ function speakText(text) {
   
   const u = new SpeechSynthesisUtterance(cleanText);
   u.lang = langMap[lang] || 'en-US';
-  u.rate = lang === 'en' ? 0.85 : 0.9;
+  u.rate = lang === 'en' ? 0.85 : 1.1;
   u.volume = 0.45;
   
   // Set voice from cache
@@ -2271,11 +2389,11 @@ function addDeckFromCSV(text, deckName) {
   const words = [];
 
   for (const line of lines) {
-    const parts = line.split(/[,\t]/).map(s => s.trim().replace(/^["']|["']$/g, ''));
+    const parts = parseCSVLine(line);
     if (parts.length >= 2) {
-      const english = parts[0];
-      const japanese = parts[1];
-      if (english && japanese) {
+      const english = parts[0].trim();
+      const japanese = parts[1].trim();
+      if (english && japanese && english !== '問題' && english !== '韓国語') {
         words.push({ english, japanese, level: 'unlearned', correctStreak: 0 });
       }
     }
@@ -2295,12 +2413,44 @@ function addDeckFromCSV(text, deckName) {
   }
 }
 
+// Parse a single CSV line respecting quoted fields
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i+1] === '"') {
+        current += '"'; i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',' || ch === '\t') {
+        result.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+  }
+  result.push(current);
+  return result;
+}
+
 // ============ FORMAT EXAMPLES & HELP ============
 const formatExamples = [
   `abandon,見捨てる<br>accomplish,達成する<br>adequate,十分な`,
   `鎌倉幕府の成立,1185年<br>関ヶ原の戦い,1600年<br>明治維新,1868年`,
-  `CPU,中央処理装置<br>RAM,主記憶装置<br>OSS,オープンソースソフトウェア`,
-  `안녕하세요,こんにちは<br>감사합니다,ありがとう<br>사랑,愛`
+  `三角形の面積の公式,底辺×高さ÷2<br>円の面積の公式,π×r²<br>速さの公式,距離÷時間`,
+  `損益算：原価800円の品に25%の利益を見込んだ定価は？,1000円<br>仕事算：Aは12日・Bは6日で完了。一緒にやると？,4日`,
+  `行政法：行政行為の取消しと撤回の違いは？,取消しは遡及的に無効・撤回は将来に向かって効力消滅<br>憲法25条が保障する権利は？,生存権`,
+  `簿記：仕訳で借方に記入するものは？,資産の増加・費用の発生<br>宅建：重要事項説明を行えるのは？,宅地建物取引士<br>宅建：クーリングオフの期間は？,8日間`
 ];
 
 function switchFormatTab(index, el) {
@@ -2317,38 +2467,204 @@ function closeHelp() {
 }
 
 function loadDemo() {
-  const demoData = `abandon,見捨てる
-abolish,廃止する
-absorb,吸収する
-abstract,抽象的な
-abundant,豊富な
-accelerate,加速する
-accommodate,収容する
-accomplish,達成する
-accumulate,蓄積する
-accurate,正確な
-accuse,告発する
-acquire,獲得する
-adapt,適応する
-adequate,十分な
-advocate,提唱する
-agriculture,農業
-allocate,割り当てる
-ambitious,野心的な
-analogy,類似
-anticipate,予想する
-apparatus,装置
-appetite,食欲
-appropriate,適切な
-arbitrary,任意の
-assign,割り当てる
-atmosphere,雰囲気
-attribute,属性
-authentic,本物の
-authorize,権限を与える
-autonomy,自律`;
-  addDeckFromCSV(demoData, 'デモ単語');
+  document.getElementById('demoPickerOverlay').classList.add('show');
 }
+
+function closeDemoPicker() {
+  document.getElementById('demoPickerOverlay').classList.remove('show');
+}
+
+function loadDemoData(key) {
+  closeDemoPicker();
+  const data = DEMO_DECKS[key];
+  if (data) {
+    addDeckFromCSV(data.csv, data.name);
+  }
+}
+
+const DEMO_DECKS = {
+  korean: {
+    name: '韓国語 中級',
+    csv: `경제,経済
+사회,社会
+문화,文化
+경험,経験
+관계,関係
+관심,関心
+교통,交通
+교육,教育
+규칙,規則
+결과,結果
+결정,決定
+과정,過程
+노력,努力
+느낌,感じ
+능력,能力
+다양하다,多様だ
+대신,代わり
+대상,対象
+대회,大会
+도움,助け
+동기,動機
+목적,目的
+미래,未来
+바탕,基礎・土台
+발생하다,発生する
+발달,発達
+발전,発展
+방법,方法
+방향,方向
+변화,変化
+보관하다,保管する
+보호하다,保護する
+부족하다,不足する
+분야,分野
+비율,比率
+사건,事件
+사실,事実
+사업,事業
+사용하다,使用する
+상태,状態
+상황,状況
+생활,生活
+성공하다,成功する
+설명하다,説明する
+성격,性格
+습관,習慣
+시대,時代
+시설,施設
+시청,視聴・市役所
+실력,実力
+실수,失敗・ミス
+실시하다,実施する
+실용적,実用的
+심각하다,深刻だ
+아름답다,美しい
+안내하다,案内する
+안전하다,安全だ
+알아보다,調べる
+연구하다,研究する
+연기하다,延期する・演技する
+연락하다,連絡する
+연주하다,演奏する
+예방하다,予防する
+예상하다,予想する
+원인,原因
+위험하다,危険だ
+유명하다,有名だ
+유지하다,維持する
+유행하다,流行する
+의견,意見
+의미,意味
+이상,以上
+이하,以下
+이해하다,理解する
+인간,人間
+인기,人気
+인정하다,認める
+일정,日程
+자연,自然
+자료,資料
+자신,自信・自身
+자유,自由
+장점,長所
+단점,短所
+재료,材料
+적당하다,適当だ
+전문가,専門家
+전통,伝統
+정보,情報
+정상,正常・頂上
+정확하다,正確だ
+조건,条件
+조사하다,調査する
+조심하다,気をつける
+종류,種類
+주장하다,主張する
+준비하다,準備する
+증가하다,増加する
+감소하다,減少する
+지역,地域`
+  },
+  bank: {
+    name: '銀行知識',
+    csv: `"銀行の三大業務とは「預金業務」「貸出業務」ともう一つは何か。","為替業務"
+"企業が手形や小切手の支払いに利用する利息がつかない預金を何というか。","当座預金"
+"金融機関が破綻した際に預金者1人当たり元本1000万円まで保護する制度は？","預金保険制度（ペイオフ）"
+"犯罪収益などの不正な資金の洗浄を防ぐための対策を何というか。","マネー・ローンダリング対策"
+"口座開設時に金融機関が顧客の身元や取引目的を確認する手続きは？","KYC（Know Your Customer）"
+"日本銀行が金利を操作して景気や物価を安定させる政策は？","金融政策"
+"元金に対して利息が付きさらにその利息にも利息が付く計算方法は？","複利"
+"銀行が企業や個人に資金を貸し出す際に徴収する利息の割合を何というか。","貸出金利"
+"資金の貸出において返済不能となるリスクを何というか。","信用リスク（デフォルトリスク）"
+"銀行が自己資本をリスクアセットで割った比率を何というか。","自己資本比率"`
+  },
+  education_law: {
+    name: '教育基本法・学校教育法',
+    csv: `"教育基本法前文：民主的で文化的な（　）を建設して世界の平和と人類の福祉に貢献する","国家"
+"教育基本法前文：個人の尊厳を重んじ（　）と平和を希求する人間の育成を期する","真理"
+"教育基本法第1条：教育は（　）の完成を目指し行われなければならない","人格"
+"教育基本法第2条：（　）と道徳心を培うこと","豊かな情操"
+"教育基本法第4条：すべて国民は（　）に教育を受ける機会を与えられる","ひとしく"
+"教育基本法第5条：義務教育の年限は（　）年","9"
+"教育基本法第6条：法律に定める学校は（　）の性質を有するもの","公の"
+"教育基本法第9条：法律に定める学校の教員は（　）と実践的な指導力の向上に努める","絶えず研究"
+"学校教育法第21条の義務教育の目標は（　）個","10"
+"学校教育法第37条：校長は校務をつかさどり（　）を監督する","所属職員"`
+  },
+  curriculum: {
+    name: '小学校学習指導要領',
+    csv: `"学習指導要領が育成を目指すバランスのとれた力は何か","生きる力"
+"学校と社会とが共有する教育課程を何と呼ぶか","社会に開かれた教育課程"
+"教育課程を編成し実施し評価して改善を図る営みを何というか","カリキュラム・マネジメント"
+"（　）・対話的で深い学び","主体的"
+"未知の状況にも対応できる（　）・判断力・表現力等","思考力"
+"学びに向かう力・（　）等を涵養する","人間性"
+"言語能力・（　）能力・問題発見解決能力等は学習の基盤となる資質能力","情報活用"
+"プログラミングを体験しながら論理的思考力を身に付ける教育は？","プログラミング教育"
+"小学校の授業の1単位時間は原則として何分か","45分"
+"外国語活動の指導対象学年は？","第3学年及び第4学年"`
+  },
+  student_guidance: {
+    name: '生徒指導提要',
+    csv: `"生徒指導とは児童生徒の自発的・主体的な成長を支える（　）","教育活動"
+"生徒指導の目的は個性の発見とよさや可能性の伸長と（　）の育成","社会的資質・行動力"
+"児童生徒が自発的・主体的に自らを発達させていく過程を（　）という","自己指導能力"
+"生徒指導の実践上の視点として自己存在感の感受と（　）の促進","共感的な人間関係"
+"発達支持的生徒指導は（　）の児童生徒を対象とする","全て"
+"課題予防的生徒指導の第1段階は（　）的な予防教育","全体"
+"いじめ防止対策推進法におけるいじめの定義：一定の人間関係にある（　）","他の児童等が行う心理的又は物理的な影響を与える行為"
+"いじめの認知に際し「心身の苦痛を感じているもの」の判断は（　）に立つ","被害児童生徒の立場"
+"不登校児童生徒への支援の目標は（　）的自立を目指すこと","社会"
+"チーム学校として生徒指導を進める際の専門スタッフの例は？","スクールカウンセラー・スクールソーシャルワーカー"`
+  },
+  pe_exam: {
+    name: '教採 保健体育',
+    csv: `"中学校保健体育の目標：（　）の保持増進と豊かなスポーツライフの実現","心身"
+"体育分野の目標：運動の合理的な実践を通して（　）を培う","運動の楽しさや喜び"
+"保健分野で学習する内容のうち第1学年は（　）","心身の機能の発達と心の健康"
+"体つくり運動の2つの領域は体ほぐしの運動と（　）","体の動きを高める運動"
+"器械運動の種目は4種類：マット運動・鉄棒運動・平均台運動・（　）","跳び箱運動"
+"陸上競技の種目は短距離走・長距離走・（　）・走り幅跳び・走り高跳び","ハードル走"
+"水泳の泳法はクロール・平泳ぎ・背泳ぎ・（　）","バタフライ"
+"武道として中学校で指導する主な種目は柔道と（　）","剣道"
+"ダンスの領域は創作ダンス・フォークダンス・（　）","現代的なリズムのダンス"
+"体育理論で扱う内容の一つ：運動やスポーツの意義や効果と（　）","学び方や安全な行い方"`
+  },
+  kochi_exam: {
+    name: '教採 教職教養',
+    csv: `"スキナーが提唱したスモールステップで進める学習理論は？","プログラム学習"
+"ブルーナーが提唱した学習者が自ら法則を見つける学習理論は？","発見学習"
+"ヴィゴツキーの発達の最近接領域の説明は？","自力では解決できないが援助があればできる領域"
+"ピアジェの認知発達段階で具体的操作期は何歳頃か？","7〜11歳頃"
+"マズローの欲求段階説の最上位は何か？","自己実現の欲求"
+"ブルームが提唱した完全習得学習を何というか？","マスタリーラーニング"
+"デューイが重視した経験主義の学習方法は？","問題解決学習"
+"ロジャーズが提唱した学習を促進する教師の態度は？","共感的理解・無条件の肯定的配慮・自己一致"
+"バンデューラの社会的学習理論における中心的概念は？","観察学習（モデリング）"
+"PDCAサイクルのPDCAとは何の略か？","Plan・Do・Check・Action"`
+  }
+};
 
 // ============ DECK LIST ============
 function renderDeckList() {
@@ -2684,24 +3000,20 @@ function showQuizSetupWithLevel(level) {
   };
   document.getElementById('setupTitle').textContent = levelNames[level] || level;
 
-  // Word list preview
+  // Check pool availability
   const pool = getQuizPool();
-  const listEl = document.getElementById('setupWordList');
-  if (pool.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-400);font-size:14px;">単語がありません</div>';
-  } else {
-    listEl.innerHTML = pool.slice(0, 50).map(w => `
-      <div class="setup-word-item">
-        <span class="sw-eng">${escapeHtml(w.english)}</span>
-        <span class="sw-jpn">${escapeHtml(w.japanese)}</span>
-      </div>
-    `).join('') + (pool.length > 50 ? `<div style="text-align:center;padding:10px;color:var(--gray-400);font-size:12px;">他 ${pool.length - 50} 語...</div>` : '');
-  }
 
   // Reset mode toggle
-  document.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.mode-toggle-btn').classList.add('active');
+  document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
   document.getElementById('drillDesc').style.display = 'none';
+  document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
+  document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
 
   updateStartBtn();
 }
@@ -3027,7 +3339,7 @@ function showResult() {
   levelOrder.forEach((level, idx) => {
     const count = afterCumulative[level];
     const diff = diffs[level];
-    const diffStr = diff > 0 ? `<span class="lc-diff plus">+${diff}</span>` : diff < 0 ? `<span class="lc-diff minus">${diff}</span>` : '';
+    const diffStr = diff > 0 ? `<span class="lc-diff plus">+${diff}</span>` : diff < 0 ? `<span class="lc-diff minus">${diff}</span>` : `<span class="lc-diff"></span>`;
     const barWidth = Math.round((count / totalWords) * 100);
     // Before width for animation
     const beforeCount = count - diff;
@@ -3164,7 +3476,9 @@ let wordListDeckId = null; // track which deck is shown in word list
 function showWordList() {
   wordListDeckId = activeDeckId;
   showScreen('wordlist');
-  // Reset search
+  answersHidden = false;
+  const btn = document.getElementById('answerToggleBtn');
+  if (btn) { btn.textContent = '答えを隠す'; btn.classList.remove('hiding'); }
   const searchInput = document.getElementById('wordSearchInput');
   if (searchInput) { searchInput.value = ''; }
   document.getElementById('searchClear')?.classList.remove('show');
@@ -3238,6 +3552,18 @@ function filterWords(level, el) {
   renderWordList(level);
 }
 
+let answersHidden = false;
+
+function toggleAllAnswers() {
+  answersHidden = !answersHidden;
+  const btn = document.getElementById('answerToggleBtn');
+  btn.textContent = answersHidden ? '答えを表示' : '答えを隠す';
+  btn.classList.toggle('hiding', answersHidden);
+  document.querySelectorAll('#wordItems .jpn').forEach(el => {
+    el.classList.toggle('hidden-answer', answersHidden);
+  });
+}
+
 function renderWordList(level) {
   currentWordFilter = level;
   const words = getWordListWords();
@@ -3265,7 +3591,7 @@ function renderWordList(level) {
     <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}" onclick="toggleWordAnswer(this)">
       <div class="level-dot ${w.level}"></div>
       <div class="eng">${escapeHtml(w.english)}</div>
-      <div class="jpn-container"><div class="jpn hidden-answer" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
+      <div class="jpn-container"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
     </div>
   `).join('');
 }
@@ -3300,23 +3626,72 @@ function renderEditorList() {
     return;
   }
   el.innerHTML = words.map((w, i) => `
-    <div class="editor-word-item">
-      <div class="ew-content" onclick="showEditWordModal(${i})">
-        <div class="ew-eng">${escapeHtml(w.english)}</div>
-        <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
+    <div class="editor-word-item" data-index="${i}">
+      <div class="ew-delete-bg" onclick="deleteWord(${i})">削除</div>
+      <div class="ew-inner" onclick="showEditWordModal(${i})">
+        <div class="ew-content">
+          <div class="ew-eng">${escapeHtml(w.english)}</div>
+          <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
+        </div>
       </div>
-      <button class="ew-delete" onclick="deleteWord(${i})">🗑</button>
     </div>
   `).join('');
+
+  // Attach swipe handlers
+  el.querySelectorAll('.editor-word-item').forEach(initSwipeToDelete);
 }
 
-function showAddWordModal() {
+function initSwipeToDelete(item) {
+  const inner = item.querySelector('.ew-inner');
+  let startX = 0, currentX = 0, swiping = false;
+
+  inner.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    currentX = 0;
+    swiping = true;
+    inner.style.transition = 'none';
+  }, { passive: true });
+
+  inner.addEventListener('touchmove', (e) => {
+    if (!swiping) return;
+    const dx = e.touches[0].clientX - startX;
+    currentX = Math.min(0, Math.max(-80, dx));
+    inner.style.transform = `translateX(${currentX}px)`;
+  }, { passive: true });
+
+  inner.addEventListener('touchend', () => {
+    swiping = false;
+    inner.style.transition = 'transform 0.25s ease';
+    if (currentX < -40) {
+      inner.style.transform = 'translateX(-80px)';
+    } else {
+      inner.style.transform = 'translateX(0)';
+    }
+  });
+
+  // Click on inner to edit (but not when swiped open)
+  inner.addEventListener('click', (e) => {
+    if (inner.style.transform === 'translateX(-80px)') {
+      e.stopPropagation();
+      inner.style.transform = 'translateX(0)';
+    }
+  });
+}
+
+function addWordDirect() {
   editingWordIndex = null;
   document.getElementById('editWordTitle').textContent = '単語を追加';
   document.getElementById('editWordEng').value = '';
   document.getElementById('editWordJpn').value = '';
-  document.getElementById('editWordOverlay').classList.add('show');
-  setTimeout(() => document.getElementById('editWordEng').focus(), 200);
+  const overlay = document.getElementById('editWordOverlay');
+  overlay.classList.add('show');
+  setTimeout(() => {
+    document.getElementById('editWordEng').focus();
+  }, 300);
+}
+
+function showAddWordModal() {
+  addWordDirect();
 }
 
 function showEditWordModal(index) {
@@ -3327,8 +3702,9 @@ function showEditWordModal(index) {
   document.getElementById('editWordTitle').textContent = '単語を編集';
   document.getElementById('editWordEng').value = word.english;
   document.getElementById('editWordJpn').value = word.japanese;
-  document.getElementById('editWordOverlay').classList.add('show');
-  setTimeout(() => document.getElementById('editWordEng').focus(), 200);
+  const overlay = document.getElementById('editWordOverlay');
+  overlay.classList.add('show');
+  setTimeout(() => document.getElementById('editWordEng').focus(), 300);
 }
 
 function closeEditWord() {
