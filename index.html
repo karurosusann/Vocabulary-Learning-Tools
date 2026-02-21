@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>みかん単語帳</title>
+<title>田中の一問一答！</title>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="みかん単語帳">
+<meta name="apple-mobile-web-app-title" content="田中の一問一答！">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#FF8C00">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -297,7 +297,7 @@ body::after {
 /* Dashboard */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-bottom: 20px;
 }
@@ -321,6 +321,8 @@ body::after {
   margin-top: 4px;
   letter-spacing: -0.2px;
 }
+.stat-card.all .stat-num { color: var(--gray-700); }
+.stat-card.all .stat-label { color: var(--gray-700); }
 .stat-card.unlearned .stat-num { color: var(--gray-400); }
 .stat-card.unlearned .stat-label { color: var(--gray-400); }
 .stat-card.weak .stat-num { color: var(--red-500); }
@@ -521,7 +523,7 @@ body::after {
 
 /* ===== Answer reveal area ===== */
 .answer-reveal {
-  margin-top: auto;
+  margin-top: 16px;
   position: relative;
 }
 .answer-tap-hint {
@@ -544,10 +546,10 @@ body::after {
 }
 .answer-text-area {
   display: none;
-  font-size: 20px;
+  font-size: 24px;
   color: var(--orange-500);
   font-weight: 700;
-  padding: 12px 0 4px;
+  padding: 8px 0 4px;
   animation: revealFade 0.3s ease;
 }
 .quiz-card.revealed .answer-tap-hint { display: none; }
@@ -556,25 +558,24 @@ body::after {
 
 /* Bookmark button */
 .bookmark-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: none;
-  background: var(--gray-100);
-  font-size: 18px;
+  border: 2px solid var(--gray-200);
+  background: white;
+  font-size: 20px;
   cursor: pointer;
   z-index: 10;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.5;
+  opacity: 0.6;
+  flex-shrink: 0;
 }
 .bookmark-btn.active {
-  background: var(--orange-100);
+  background: var(--orange-500);
+  border-color: var(--orange-500);
   opacity: 1;
 }
 
@@ -637,10 +638,18 @@ body::after {
 }
 
 /* Know / Don't Know buttons */
+.know-buttons-wrap {
+  margin-top: 20px;
+}
 .know-buttons {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+.know-buttons-wrap .bookmark-btn {
+  margin: 12px auto 0;
+  display: flex;
 }
 .know-btn {
   flex: 1;
@@ -726,6 +735,81 @@ body::after {
   background: var(--orange-600);
   transform: translateY(-1px);
 }
+.missed-section {
+  text-align: left;
+  margin: 20px 0;
+  width: 100%;
+}
+.missed-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--red-500);
+  margin-bottom: 10px;
+  text-align: center;
+}
+.missed-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  -webkit-overflow-scrolling: touch;
+}
+.missed-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+.missed-item:last-child { border-bottom: none; }
+.missed-eng {
+  font-weight: 600;
+  color: var(--gray-800);
+}
+.missed-jpn {
+  color: var(--red-400);
+  font-size: 13px;
+}
+
+/* Search bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--gray-200);
+  transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--orange-400); }
+.search-bar .search-icon { font-size: 16px; margin-right: 8px; }
+.search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  background: transparent;
+  color: var(--gray-800);
+}
+.search-bar input::placeholder { color: var(--gray-300); }
+.search-clear {
+  display: none;
+  border: none;
+  background: var(--gray-200);
+  color: var(--gray-500);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+.search-clear.show { display: flex; }
 
 /* Deck tabs in word list */
 .deck-tabs {
@@ -874,7 +958,7 @@ body::after {
 .mode-selector {
   background: white;
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--shadow-lg);
   margin-bottom: 20px;
 }
@@ -883,6 +967,69 @@ body::after {
   font-weight: 700;
   margin-bottom: 16px;
   text-align: center;
+}
+.setup-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-500);
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+.setup-word-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.setup-word-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+.setup-word-item:last-child { border-bottom: none; }
+.setup-word-item .sw-eng {
+  flex: 1;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+.setup-word-item .sw-jpn {
+  color: var(--gray-400);
+  font-size: 13px;
+}
+.mode-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--gray-200);
+  margin-bottom: 8px;
+}
+.mode-toggle-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  background: white;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-toggle-btn.active {
+  background: var(--orange-500);
+  color: white;
+}
+.drill-desc {
+  font-size: 12px;
+  color: var(--orange-500);
+  text-align: center;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 .mode-options {
   display: flex;
@@ -1088,8 +1235,8 @@ body::after {
   <!-- Screen: Import -->
   <div id="screen-import" class="screen active">
     <div class="header">
-      <h1><span>🍊</span> みかん単語帳</h1>
-      <p>CSVで読み込み・4択で覚える</p>
+      <h1>📝 田中の一問一答！</h1>
+      <p>CSVで読み込み・一問一答で覚える</p>
     </div>
     <div class="import-area" id="dropZone">
       <div class="import-icon">📄</div>
@@ -1113,7 +1260,7 @@ body::after {
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
     <div class="header">
-      <h1><span>🍊</span> みかん単語帳</h1>
+      <h1>📝 田中の一問一答！</h1>
     </div>
     <!-- Deck selector -->
     <div class="deck-selector">
@@ -1126,13 +1273,17 @@ body::after {
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card bookmarked" onclick="showQuizSetupWithLevel('bookmarked')" style="cursor:pointer;">
-        <div class="stat-num" id="count-bookmarked">0</div>
-        <div class="stat-label">保存済み</div>
+      <div class="stat-card all" onclick="showQuizSetupWithLevel('all')" style="cursor:pointer;">
+        <div class="stat-num" id="count-all">0</div>
+        <div class="stat-label">全て</div>
       </div>
       <div class="stat-card unlearned" onclick="showQuizSetupWithLevel('unlearned')" style="cursor:pointer;">
         <div class="stat-num" id="count-unlearned">0</div>
         <div class="stat-label">未学習</div>
+      </div>
+      <div class="stat-card bookmarked" onclick="showQuizSetupWithLevel('bookmarked')" style="cursor:pointer;">
+        <div class="stat-num" id="count-bookmarked">0</div>
+        <div class="stat-label">保存済み</div>
       </div>
       <div class="stat-card weak" onclick="showQuizSetupWithLevel('weak')" style="cursor:pointer;">
         <div class="stat-num" id="count-weak">0</div>
@@ -1173,12 +1324,17 @@ body::after {
   <div id="screen-quiz-setup" class="screen">
     <div class="quiz-header">
       <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
-      <span class="quiz-progress-text" id="setupTitle">学習設定</span>
+      <span class="quiz-progress-text" id="setupTitle">未学習</span>
       <div style="width:40px"></div>
     </div>
     <div class="mode-selector">
-      <h3 id="setupDesc">出題範囲を選ぼう</h3>
-      <div class="mode-options" id="modeOptions"></div>
+      <div class="setup-word-list" id="setupWordList"></div>
+      <h4 class="setup-section-label">モード</h4>
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-toggle-btn active" onclick="selectMode('normal', this)">ノーマル</button>
+        <button class="mode-toggle-btn" onclick="selectMode('drill', this)">特訓</button>
+      </div>
+      <div class="drill-desc" id="drillDesc" style="display:none;">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
       <div class="count-selector">
         <label>出題数：</label>
         <select id="quizCount">
@@ -1220,7 +1376,6 @@ body::after {
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
     <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
-      <button class="bookmark-btn" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">🔖</button>
       <div class="level-badge" id="quizBadge">未学習</div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
@@ -1238,6 +1393,11 @@ body::after {
     <div class="word-list-header">
       <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
       <h2>単語一覧</h2>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="wordSearchInput" placeholder="単語を検索..." oninput="onWordSearch()">
+      <button class="search-clear" id="searchClear" onclick="clearWordSearch()">✕</button>
     </div>
     <div class="deck-tabs" id="deckTabs"></div>
     <div class="filter-tabs" id="filterTabs"></div>
@@ -1510,6 +1670,7 @@ function updateDashboard() {
     document.getElementById(`count-${level}`).textContent = counts[level];
   });
   document.getElementById('count-bookmarked').textContent = counts.bookmarked;
+  document.getElementById('count-all').textContent = words.length;
 
   const total = words.length || 1;
   const bar = document.getElementById('progressBar');
@@ -1525,54 +1686,47 @@ function updateDashboard() {
 }
 
 // ============ QUIZ SETUP ============
+let quizDrillMode = false; // false = normal, true = drill
+
 function showQuizSetupWithLevel(level) {
   quizMode = 'flashcard';
+  selectedRange = level;
+  quizDrillMode = false;
   showScreen('quiz-setup');
 
-  const title = document.getElementById('setupTitle');
-  const desc = document.getElementById('setupDesc');
-  const optionsEl = document.getElementById('modeOptions');
+  // Title
+  const levelNames = {
+    unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた', bookmarked: '保存済み'
+  };
+  document.getElementById('setupTitle').textContent = levelNames[level] || level;
 
-  title.textContent = '一問一答モード';
-  desc.textContent = '答えを見て 知ってる / 知らない で仕分け';
-
-  const words = getActiveWords();
-  const bookmarkedCount = words.filter(w => w.bookmarked).length;
-  const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0, all: words.length };
-  words.forEach(w => {
-    if (w.level === 'almost') w.level = 'mastered';
-    if (counts[w.level] !== undefined) counts[w.level]++;
-  });
-
-  const options = [
-    { key: 'bookmarked', icon: '🔖', label: '保存済み', count: bookmarkedCount },
-    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned },
-    { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
-    { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy },
-    { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered },
-    { key: 'all', icon: '📚', label: 'すべて', count: counts.all },
-  ];
-
-  selectedRange = level;
-
-  optionsEl.innerHTML = options.map((opt) => `
-    <div class="mode-option ${opt.key === level ? 'selected' : ''}" data-key="${opt.key}" onclick="selectRange('${opt.key}', this)">
-      <div class="mode-icon">${opt.icon}</div>
-      <div class="mode-text">
-        <h4>${opt.label}</h4>
-        <p>${opt.count}語</p>
+  // Word list preview
+  const pool = getQuizPool();
+  const listEl = document.getElementById('setupWordList');
+  if (pool.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-400);font-size:14px;">単語がありません</div>';
+  } else {
+    listEl.innerHTML = pool.slice(0, 50).map(w => `
+      <div class="setup-word-item">
+        <span class="sw-eng">${escapeHtml(w.english)}</span>
+        <span class="sw-jpn">${escapeHtml(w.japanese)}</span>
       </div>
-    </div>
-  `).join('');
+    `).join('') + (pool.length > 50 ? `<div style="text-align:center;padding:10px;color:var(--gray-400);font-size:12px;">他 ${pool.length - 50} 語...</div>` : '');
+  }
+
+  // Reset mode toggle
+  document.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.mode-toggle-btn').classList.add('active');
+  document.getElementById('drillDesc').style.display = 'none';
 
   updateStartBtn();
 }
 
-function selectRange(key, el) {
-  selectedRange = key;
-  el.parentElement.querySelectorAll('.mode-option').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  updateStartBtn();
+function selectMode(mode, el) {
+  quizDrillMode = (mode === 'drill');
+  el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
 }
 
 function updateStartBtn() {
@@ -1605,7 +1759,9 @@ function startQuiz() {
     index: 0,
     correct: 0,
     wrong: 0,
-    results: []
+    results: [],
+    totalCount: pool.length,
+    masteredCount: 0
   };
 
   showScreen('quiz');
@@ -1616,8 +1772,13 @@ function showQuizQuestion() {
   const q = currentQuiz;
   const word = q.words[q.index];
 
-  document.getElementById('quizProgressText').textContent = `${q.index + 1} / ${q.words.length}`;
-  document.getElementById('quizProgressFill').style.width = `${((q.index) / q.words.length) * 100}%`;
+  if (quizDrillMode) {
+    document.getElementById('quizProgressText').textContent = `${q.masteredCount} / ${q.totalCount}`;
+    document.getElementById('quizProgressFill').style.width = `${(q.masteredCount / q.totalCount) * 100}%`;
+  } else {
+    document.getElementById('quizProgressText').textContent = `${q.index + 1} / ${q.totalCount}`;
+    document.getElementById('quizProgressFill').style.width = `${(q.index / q.totalCount) * 100}%`;
+  }
 
   // Migrate old 'almost' level
   if (word.level === 'almost') word.level = 'mastered';
@@ -1627,10 +1788,6 @@ function showQuizQuestion() {
   badge.textContent = levelInfo.label;
   badge.className = `level-badge ${levelInfo.badge}`;
   document.getElementById('quizWord').textContent = word.english;
-
-  // Bookmark state
-  const bookmarkBtn = document.getElementById('bookmarkBtn');
-  bookmarkBtn.classList.toggle('active', !!word.bookmarked);
 
   // Reset card state
   const card = document.getElementById('quizCard');
@@ -1647,9 +1804,12 @@ function showQuizQuestion() {
 
   if (quizMode === 'flashcard') {
     body.innerHTML = `
-      <div class="know-buttons" id="knowButtons" style="opacity:0.3;pointer-events:none;">
-        <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない 😣</button>
-        <button class="know-btn know" onclick="answerKnowledge(true)">知ってる 😊</button>
+      <div class="know-buttons-wrap">
+        <div class="know-buttons" id="knowButtons" style="opacity:0.3;pointer-events:none;">
+          <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない 😣</button>
+          <button class="know-btn know" onclick="answerKnowledge(true)">知ってる 😊</button>
+        </div>
+        <button class="bookmark-btn ${word.bookmarked ? 'active' : ''}" id="bookmarkBtn" onclick="toggleBookmark()">🔖</button>
       </div>
     `;
   } else {
@@ -1709,11 +1869,21 @@ function answerKnowledge(known) {
       word.correctStreak = 2;
     }
     currentQuiz.results.push({ word, correct: true });
+    if (quizDrillMode) currentQuiz.masteredCount++;
   } else {
     currentQuiz.wrong++;
     word.level = 'weak';
     word.correctStreak = 0;
     currentQuiz.results.push({ word, correct: false });
+
+    // Drill mode: re-queue the word later
+    if (quizDrillMode) {
+      const remaining = currentQuiz.words.slice(currentQuiz.index + 1);
+      // Insert at a random position 2-5 cards later
+      const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
+      remaining.splice(insertPos, 0, word);
+      currentQuiz.words = [...currentQuiz.words.slice(0, currentQuiz.index + 1), ...remaining];
+    }
   }
 
   saveState();
@@ -1750,17 +1920,28 @@ function answerChoice(btn, index, isCorrect) {
 
 function nextQuestion() {
   currentQuiz.index++;
-  if (currentQuiz.index >= currentQuiz.words.length) {
-    showResult();
+  if (quizDrillMode) {
+    if (currentQuiz.masteredCount >= currentQuiz.totalCount) {
+      showResult();
+    } else if (currentQuiz.index >= currentQuiz.words.length) {
+      showResult();
+    } else {
+      showQuizQuestion();
+    }
   } else {
-    showQuizQuestion();
+    if (currentQuiz.index >= currentQuiz.words.length) {
+      showResult();
+    } else {
+      showQuizQuestion();
+    }
   }
 }
 
 function showResult() {
   showScreen('result');
   const q = currentQuiz;
-  const pct = Math.round((q.correct / q.words.length) * 100);
+  const totalAnswered = quizDrillMode ? q.totalCount : q.words.length;
+  const pct = Math.round((q.correct / totalAnswered) * 100);
 
   let emoji, msg;
   if (pct >= 90) { emoji = '🎉'; msg = 'すばらしい！'; }
@@ -1768,10 +1949,36 @@ function showResult() {
   else if (pct >= 50) { emoji = '💪'; msg = 'もう少し頑張ろう！'; }
   else { emoji = '📚'; msg = '復習が大事！'; }
 
+  const missed = currentQuiz.results.filter(r => !r.correct);
+  // Deduplicate missed words (drill mode may have duplicates)
+  const seen = new Set();
+  const uniqueMissed = missed.filter(r => {
+    if (seen.has(r.word.english)) return false;
+    seen.add(r.word.english);
+    return true;
+  });
+
+  let missedHtml = '';
+  if (uniqueMissed.length > 0) {
+    missedHtml = `
+      <div class="missed-section">
+        <h4>間違えた単語（${uniqueMissed.length}語）</h4>
+        <div class="missed-list">
+          ${uniqueMissed.map(r => `
+            <div class="missed-item">
+              <span class="missed-eng">${escapeHtml(r.word.english)}</span>
+              <span class="missed-jpn">${escapeHtml(r.word.japanese)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   document.getElementById('resultContent').innerHTML = `
     <div class="result-icon">${emoji}</div>
     <h2>${msg}</h2>
-    <p>${q.words.length}問中 ${q.correct}問正解</p>
+    <p>${totalAnswered}問中 ${q.correct}問正解</p>
     <div class="result-stats">
       <div class="result-stat">
         <div class="num" style="color:var(--green-500)">${q.correct}</div>
@@ -1786,10 +1993,8 @@ function showResult() {
         <div class="label">正答率</div>
       </div>
     </div>
+    ${missedHtml}
     <button class="result-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">ホームに戻る</button>
-    <div style="margin-top:12px;">
-      <button class="reset-btn" style="font-size:13px;color:var(--blue-500)" onclick="showMissedWords()">間違えた単語を確認</button>
-    </div>
   `;
 }
 
@@ -1825,6 +2030,11 @@ let wordListDeckId = null; // track which deck is shown in word list
 function showWordList() {
   wordListDeckId = activeDeckId;
   showScreen('wordlist');
+  // Reset search
+  const searchInput = document.getElementById('wordSearchInput');
+  if (searchInput) { searchInput.value = ''; }
+  document.getElementById('searchClear')?.classList.remove('show');
+  currentWordFilter = 'all';
   renderDeckTabs();
   renderFilterTabs();
   renderWordList('all');
@@ -1872,18 +2082,44 @@ function renderFilterTabs() {
   `).join('');
 }
 
+let currentWordFilter = 'all';
+
+function onWordSearch() {
+  const input = document.getElementById('wordSearchInput');
+  const clearBtn = document.getElementById('searchClear');
+  clearBtn.classList.toggle('show', input.value.length > 0);
+  renderWordList(currentWordFilter);
+}
+
+function clearWordSearch() {
+  document.getElementById('wordSearchInput').value = '';
+  document.getElementById('searchClear').classList.remove('show');
+  renderWordList(currentWordFilter);
+}
+
 function filterWords(level, el) {
   el.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  currentWordFilter = level;
   renderWordList(level);
 }
 
 function renderWordList(level) {
+  currentWordFilter = level;
   const words = getWordListWords();
   let filtered;
   if (level === 'all') filtered = words;
   else if (level === 'bookmarked') filtered = words.filter(w => w.bookmarked);
   else filtered = words.filter(w => w.level === level);
+
+  // Apply search filter
+  const query = (document.getElementById('wordSearchInput')?.value || '').trim().toLowerCase();
+  if (query) {
+    filtered = filtered.filter(w =>
+      w.english.toLowerCase().includes(query) || w.japanese.includes(query)
+    );
+  }
+
   const items = document.getElementById('wordItems');
 
   if (filtered.length === 0) {
