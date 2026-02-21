@@ -114,10 +114,27 @@ body::after {
   font-weight: 500;
 }
 .header { position: relative; }
-.sound-toggle {
+.header-btns {
   position: absolute;
   top: 24px;
   right: 0;
+  display: flex;
+  gap: 6px;
+}
+.help-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.sound-toggle {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -131,6 +148,72 @@ body::after {
   transition: all 0.2s;
 }
 .sound-toggle.muted { opacity: 0.4; }
+
+/* Help modal */
+.help-modal {
+  max-height: 80vh;
+  padding: 0;
+  overflow: hidden;
+}
+.help-scroll {
+  padding: 28px 22px;
+  max-height: 80vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.help-section {
+  margin-bottom: 20px;
+}
+.help-section h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--orange-600);
+}
+.help-section p {
+  font-size: 13px;
+  color: var(--gray-600);
+  line-height: 1.7;
+  margin-bottom: 6px;
+}
+.help-prompt {
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--gray-700);
+  margin: 6px 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Celebration */
+.celebration-modal { text-align: center; }
+
+/* Format tabs */
+.format-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.format-tab {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--gray-200);
+  background: white;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.format-tab.active {
+  background: var(--orange-500);
+  color: white;
+  border-color: var(--orange-500);
+}
 
 /* Screen transitions */
 .screen { display: none; animation: fadeIn 0.3s ease; }
@@ -219,40 +302,63 @@ body::after {
 }
 
 /* ===== Deck Selector ===== */
-.deck-selector {
+.deck-picker {
   margin-bottom: 20px;
 }
-.deck-selector h3 {
+.deck-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.deck-picker-header h3 {
   font-size: 14px;
   font-weight: 700;
   color: var(--gray-500);
-  margin-bottom: 10px;
 }
-.deck-list {
+.deck-picker-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-400);
+}
+.deck-picker-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+}
+.deck-picker-scroll::-webkit-scrollbar { display: none; }
+.deck-picker-list {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 4px 0;
 }
 .deck-card {
   background: white;
   border: 2px solid var(--gray-200);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   padding: 14px 16px;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  min-width: 260px;
+  max-width: 300px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
 }
 .deck-card:hover {
   border-color: var(--orange-300);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
 .deck-card.active {
   border-color: var(--orange-500);
   background: var(--orange-50);
   box-shadow: 0 0 0 3px rgba(255,140,0,0.12);
+}
+.deck-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .deck-card .deck-icon {
   width: 40px;
@@ -282,7 +388,13 @@ body::after {
   color: var(--gray-400);
   margin-top: 2px;
 }
-.deck-card .deck-edit {
+.deck-card-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.deck-card .deck-edit,
+.deck-card .deck-delete {
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -296,23 +408,10 @@ body::after {
   transition: all 0.2s;
   flex-shrink: 0;
 }
-.deck-card .deck-edit:hover {
-  background: var(--orange-100);
-}
+.deck-card .deck-edit:hover { background: var(--orange-100); }
 .deck-card .deck-delete {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
   color: var(--gray-300);
   font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
 }
 .deck-card .deck-delete:hover {
   background: #FEE2E2;
@@ -436,6 +535,7 @@ body::after {
 .action-btn.study .icon { background: linear-gradient(135deg, var(--orange-400), var(--orange-600)); }
 .action-btn.review .icon { background: linear-gradient(135deg, var(--blue-400), var(--blue-500)); }
 .action-btn.list .icon { background: linear-gradient(135deg, var(--green-400), var(--green-600)); }
+.action-btn.edit-words .icon { background: linear-gradient(135deg, var(--gray-400), var(--gray-600)); }
 .action-btn .text h3 {
   font-size: 16px;
   font-weight: 700;
@@ -554,6 +654,11 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  max-height: 35vh;
+  overflow: hidden;
 }
 
 /* ===== Answer reveal area ===== */
@@ -862,16 +967,36 @@ body::after {
   font-weight: 700;
   color: white;
   min-width: 28px;
-  transition: width 0.6s ease;
+}
+.lc-count {
+  font-size: 13px;
+  font-weight: 700;
 }
 .lc-diff {
   font-size: 16px;
   font-weight: 900;
   width: 40px;
   flex-shrink: 0;
+  opacity: 0;
 }
 .lc-diff.plus { color: var(--green-500); }
 .lc-diff.minus { color: var(--red-500); }
+@keyframes diffPop {
+  0% { opacity: 0; transform: scale(0.5) translateY(8px); }
+  60% { opacity: 1; transform: scale(1.2) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.lc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  animation: lcRowSlide 0.4s ease both;
+}
+@keyframes lcRowSlide {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 
 /* Search bar */
 .search-bar {
@@ -1392,6 +1517,71 @@ body::after {
 }
 .rename-input:focus { border-color: var(--orange-400); }
 
+/* Word editor */
+.editor-add-btn {
+  background: var(--orange-500);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.editor-word-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.editor-word-item {
+  background: white;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.editor-word-item .ew-content {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.editor-word-item .ew-eng {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-word-item .ew-jpn {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-word-item .ew-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  color: var(--red-500);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.editor-word-item .ew-delete:hover { background: #FEE2E2; }
+.edit-word-modal .rename-input { margin-bottom: 10px; }
+
 /* Reset button */
 .reset-area {
   margin-top: 20px;
@@ -1417,17 +1607,23 @@ body::after {
   <div id="screen-import" class="screen active">
     <div class="header">
       <h1>田中の一問一答！</h1>
-      <p>CSVで読み込み・一問一答で覚える</p>
+      <button class="help-toggle" onclick="showHelp()">❓</button>
     </div>
     <div class="import-area" id="dropZone">
       <div class="import-icon">📄</div>
-      <h3>CSVファイルをドロップ</h3>
-      <p>またはタップしてファイルを選択<br><small>英語,日本語 の形式</small></p>
+      <h3>CSVファイルを読み込む</h3>
+      <p>タップしてファイルを選択<br><small>左に問題、右に答え のCSV形式</small></p>
       <input type="file" id="fileInput" accept=".csv,.txt">
     </div>
     <div class="format-hint">
-      <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--gray-600);">📋 CSVフォーマット例</h4>
-      <code>
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--gray-600);">📋 CSVフォーマット例（左:問題, 右:答え）</h4>
+      <div class="format-tabs">
+        <button class="format-tab active" onclick="switchFormatTab(0, this)">英単語</button>
+        <button class="format-tab" onclick="switchFormatTab(1, this)">歴史</button>
+        <button class="format-tab" onclick="switchFormatTab(2, this)">資格試験</button>
+        <button class="format-tab" onclick="switchFormatTab(3, this)">韓国語</button>
+      </div>
+      <code id="formatExample">
         abandon,見捨てる<br>
         accomplish,達成する<br>
         adequate,十分な
@@ -1442,12 +1638,20 @@ body::after {
   <div id="screen-dashboard" class="screen">
     <div class="header">
       <h1>田中の一問一答！</h1>
-      <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+      <div class="header-btns">
+        <button class="help-toggle" onclick="showHelp()">❓</button>
+        <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+      </div>
     </div>
-    <!-- Deck selector -->
-    <div class="deck-selector">
-      <h3>📚 デッキ一覧</h3>
-      <div class="deck-list" id="deckList"></div>
+    <!-- Deck selector - horizontal swipe -->
+    <div class="deck-picker">
+      <div class="deck-picker-header">
+        <h3>📚 デッキ</h3>
+        <span class="deck-picker-count" id="deckPickerCount">1/1</span>
+      </div>
+      <div class="deck-picker-scroll" id="deckPickerScroll">
+        <div class="deck-picker-list" id="deckList"></div>
+      </div>
       <div style="margin-top:10px;">
         <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
         <input type="file" id="fileInputAdd" accept=".csv,.txt" style="display:none" onchange="handleFileAdd(this.files[0])">
@@ -1499,6 +1703,13 @@ body::after {
           <p>すべての単語を確認</p>
         </div>
       </button>
+      <button class="action-btn edit-words" onclick="showWordEditor()">
+        <div class="icon">✏️</div>
+        <div class="text">
+          <h3>問題を編集</h3>
+          <p>追加・編集・削除</p>
+        </div>
+      </button>
     </div>
 
     <div class="reset-area">
@@ -1532,6 +1743,11 @@ body::after {
         <button class="mode-toggle-btn" onclick="selectMode('drill', this)">特訓</button>
       </div>
       <div class="drill-desc" id="drillDesc" style="display:none;">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
+      <h4 class="setup-section-label">出題形式</h4>
+      <div class="mode-toggle" id="reverseToggle">
+        <button class="mode-toggle-btn active" onclick="selectReverse(false, this)">問題→答え</button>
+        <button class="mode-toggle-btn" onclick="selectReverse(true, this)">答え→問題</button>
+      </div>
       <div class="count-selector">
         <label>出題数：</label>
         <select id="quizCount">
@@ -1602,6 +1818,95 @@ body::after {
   </div>
 </div>
 
+  <!-- Screen: Word Editor -->
+  <div id="screen-word-editor" class="screen">
+    <div class="quiz-header">
+      <button class="quiz-back" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
+      <span class="quiz-progress-text">問題を編集</span>
+      <button class="editor-add-btn" onclick="showAddWordModal()">＋追加</button>
+    </div>
+    <div class="editor-word-list" id="editorWordList"></div>
+  </div>
+
+  <!-- Modal: Edit Word -->
+  <div class="confirm-overlay" id="editWordOverlay" onclick="closeEditWord()">
+    <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
+      <div class="confirm-icon">✏️</div>
+      <h3 id="editWordTitle">単語を編集</h3>
+      <input type="text" id="editWordEng" class="rename-input" placeholder="英語 (問題文)">
+      <input type="text" id="editWordJpn" class="rename-input" placeholder="日本語 (答え)">
+      <div class="confirm-buttons">
+        <button class="confirm-cancel" onclick="closeEditWord()">キャンセル</button>
+        <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="editWordSaveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+<!-- Help overlay -->
+<div class="confirm-overlay" id="helpOverlay" onclick="closeHelp()">
+  <div class="confirm-modal help-modal" onclick="event.stopPropagation()">
+    <div class="help-scroll">
+      <h2 style="text-align:center;margin-bottom:16px;">📖 使い方ガイド</h2>
+
+      <div class="help-section">
+        <h3>🤖 AIでCSVファイルを作る</h3>
+        <p>ChatGPT、Gemini、Claudeなどに以下のように頼むと問題集を作れます：</p>
+        <div class="help-prompt">「TOEIC頻出英単語100個を『英単語,日本語訳』の形式でCSVにしてください」</div>
+        <p>他にも：</p>
+        <div class="help-prompt">「日本史の重要年号50個を『出来事,年号』のCSVにして」</div>
+        <div class="help-prompt">「ITパスポートの用語30個を『用語,意味』のCSVにして」</div>
+      </div>
+
+      <div class="help-section">
+        <h3>💾 CSVファイルの保存方法</h3>
+        <p><strong>スマホの場合：</strong></p>
+        <p>AIの回答をコピー → メモ帳アプリに貼り付け → 共有メニューから「ファイルに保存」で <code>.txt</code> または <code>.csv</code> で保存</p>
+        <p><strong>PCの場合：</strong></p>
+        <p>メモ帳に貼り付け →「名前を付けて保存」→ ファイル名を <code>〇〇.csv</code> にして保存</p>
+      </div>
+
+      <div class="help-section">
+        <h3>📥 ファイルの取り込み方</h3>
+        <p>ホーム画面の「＋ 新しいCSVを追加」をタップ → 保存したファイルを選択するだけ！</p>
+      </div>
+
+      <div class="help-section">
+        <h3>📋 CSVの形式</h3>
+        <p>1行に「問題,答え」をカンマ区切りで書きます：</p>
+        <code style="display:block;margin:8px 0;">apple,りんご<br>鎌倉幕府の成立,1185年<br>TCP/IP,通信プロトコル</code>
+      </div>
+
+      <div class="help-section">
+        <h3>📝 学習の使い方</h3>
+        <p><strong>ステータスカード：</strong> 各状態（未学習・苦手など）をタップで直接学習開始</p>
+        <p><strong>ノーマルモード：</strong> 知ってる/知らないで仕分け。正解で状態がアップ</p>
+        <p><strong>特訓モード：</strong> 間違えた問題を覚えるまで繰り返し出題</p>
+        <p><strong>📌 保存：</strong> 気になる単語をピンして後でまとめて復習</p>
+      </div>
+
+      <div class="help-section">
+        <h3>🔊 音声機能</h3>
+        <p>問題・答えの読み上げは自動で言語を判別します。右上の🔊ボタンでON/OFF切替</p>
+      </div>
+
+      <button class="result-btn" style="width:100%;margin-top:16px;" onclick="closeHelp()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Celebration overlay -->
+<canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
+<div class="confirm-overlay" id="celebrationOverlay">
+  <div class="confirm-modal celebration-modal" onclick="event.stopPropagation()">
+    <div style="font-size:60px;margin-bottom:12px;">🎊</div>
+    <h2 style="color:var(--orange-500);margin-bottom:8px;">完全制覇！</h2>
+    <p style="font-size:15px;color:var(--gray-600);margin-bottom:4px;"><strong id="celebrationDeck"></strong></p>
+    <p style="font-size:28px;font-weight:900;color:var(--green-500);margin-bottom:8px;"><span id="celebrationCount">0</span>語 すべて覚えた！</p>
+    <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.6;">本当にすごい！あなたの努力の成果です。<br>この調子で次のデッキにも挑戦しよう！</p>
+    <button class="result-btn" onclick="closeCelebration()">ありがとう！💪</button>
+  </div>
+</div>
+
 <div class="confirm-overlay" id="confirmOverlay" onclick="closeConfirm()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">⚠️</div>
@@ -1650,9 +1955,13 @@ let audioEnabled = false;
 let soundMuted = localStorage.getItem('mikan_muted') === 'true';
 
 function initAudio() {
-  if (audioCtx) return;
   try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx || audioCtx.state === 'closed') {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
     audioEnabled = true;
   } catch(e) { audioEnabled = false; }
 }
@@ -1664,6 +1973,7 @@ function toggleSound() {
   btn.textContent = soundMuted ? '🔇' : '🔊';
   btn.classList.toggle('muted', soundMuted);
   if (!soundMuted) { initAudio(); sfxTap(); }
+  if (soundMuted) stopAllAudio();
 }
 
 // Initialize toggle button state
@@ -1676,11 +1986,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Unlock audio on first user interaction (required for iOS)
-document.addEventListener('touchstart', initAudio, { once: true });
-document.addEventListener('click', initAudio, { once: true });
+['touchstart', 'touchend', 'click'].forEach(evt => {
+  document.addEventListener(evt, function unlockAudio() {
+    initAudio();
+    // Also prime TTS on iOS
+    if ('speechSynthesis' in window) {
+      const primer = new SpeechSynthesisUtterance('');
+      primer.volume = 0;
+      window.speechSynthesis.speak(primer);
+    }
+    document.removeEventListener(evt, unlockAudio);
+  }, { once: true });
+});
 
 function playTone(freq, duration, type, vol) {
-  if (soundMuted || !audioCtx || !audioEnabled) return;
+  if (soundMuted) return;
+  if (!audioCtx || audioCtx.state === 'closed') { initAudio(); }
+  if (!audioCtx || !audioEnabled) return;
   if (audioCtx.state === 'suspended') audioCtx.resume();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
@@ -1730,37 +2052,117 @@ function sfxComplete() {
 function sfxBack() { playTone(500, 0.06, 'sine', 0.06); }
 
 // ============ TTS (Text-to-Speech) ============
-function speakEN(text) {
-  if (soundMuted || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = 0.9;
-  u.volume = 0.8;
-  // Try to find English voice
+let ttsVoicesLoaded = false;
+let ttsVoiceCache = {};
+
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
   const voices = window.speechSynthesis.getVoices();
-  const enVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Samantha'))
-    || voices.find(v => v.lang.startsWith('en-US'))
-    || voices.find(v => v.lang.startsWith('en'));
-  if (enVoice) u.voice = enVoice;
-  window.speechSynthesis.speak(u);
+  if (voices.length > 0) {
+    ttsVoicesLoaded = true;
+    // Cache best voice per language
+    ttsVoiceCache['en'] = voices.find(v => v.lang === 'en-US' && !v.localService)
+      || voices.find(v => v.lang === 'en-US')
+      || voices.find(v => v.lang.startsWith('en'));
+    ttsVoiceCache['ja'] = voices.find(v => v.lang === 'ja-JP' && !v.localService)
+      || voices.find(v => v.lang === 'ja-JP')
+      || voices.find(v => v.lang.startsWith('ja'));
+    ttsVoiceCache['ko'] = voices.find(v => v.lang === 'ko-KR' && !v.localService)
+      || voices.find(v => v.lang === 'ko-KR')
+      || voices.find(v => v.lang.startsWith('ko'));
+    ttsVoiceCache['zh'] = voices.find(v => v.lang === 'zh-CN' && !v.localService)
+      || voices.find(v => v.lang.startsWith('zh'));
+    ttsVoiceCache['fr'] = voices.find(v => v.lang.startsWith('fr'));
+    ttsVoiceCache['de'] = voices.find(v => v.lang.startsWith('de'));
+    ttsVoiceCache['es'] = voices.find(v => v.lang.startsWith('es'));
+  }
 }
-function speakJP(text) {
-  if (soundMuted || !('speechSynthesis' in window)) return;
+
+// Auto-detect language from text
+function detectLang(text) {
+  if (!text) return 'en';
+  // Korean: Hangul block
+  if (/[\uAC00-\uD7AF\u1100-\u11FF]/.test(text)) return 'ko';
+  // Japanese: Hiragana, Katakana → definitely Japanese
+  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) return 'ja';
+  // CJK ideographs only (kanji only) → default to Japanese (this app's primary use)
+  // Chinese would need explicit detection via simplified-only chars
+  if (/[\u4E00-\u9FFF]/.test(text)) {
+    // Check for simplified Chinese-only characters (not used in Japanese)
+    if (/[\u4E07\u4E1C\u4E60\u4E66\u4E86\u4EA7\u4EEC\u4F1A\u5173\u51FA\u5BF9\u5C14\u6001\u62A5\u65F6\u8FD9\u8FC7\u8BF7\u8BA9\u8BDD\u7ECF\u8D5E]/.test(text)) return 'zh';
+    return 'ja';
+  }
+  // French common patterns
+  if (/[àâçéèêëîïôùûüÿœæ]/.test(text.toLowerCase())) return 'fr';
+  // German common patterns
+  if (/[äöüß]/.test(text.toLowerCase())) return 'de';
+  // Spanish
+  if (/[ñ¿¡]/.test(text)) return 'es';
+  // If mostly ASCII letters → English
+  if (/^[a-zA-Z\s\-'.,;:!?()\d/]+$/.test(text)) return 'en';
+  return 'en';
+}
+
+function speakText(text) {
+  if (soundMuted || !('speechSynthesis' in window) || !text) return;
+  // Stop any ongoing speech
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ja-JP';
-  u.rate = 0.9;
+  
+  // Clean text: remove emojis, special markers, numbers-only prefixes
+  let cleanText = text.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
+  // Skip if text is just numbers or symbols
+  if (/^[\d\s.,:;!?()\/\-]+$/.test(cleanText)) return;
+  
+  const lang = detectLang(cleanText);
+  const langMap = { en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
+  
+  const u = new SpeechSynthesisUtterance(cleanText);
+  u.lang = langMap[lang] || 'en-US';
+  u.rate = lang === 'en' ? 0.85 : 0.9;
   u.volume = 0.8;
-  const voices = window.speechSynthesis.getVoices();
-  const jpVoice = voices.find(v => v.lang.startsWith('ja'));
-  if (jpVoice) u.voice = jpVoice;
+  
+  // Set voice from cache
+  if (ttsVoiceCache[lang]) {
+    u.voice = ttsVoiceCache[lang];
+  }
+  
+  // iOS workaround: speechSynthesis can get stuck, resume it
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
+  
   window.speechSynthesis.speak(u);
+  
+  // iOS Safari bug workaround: keep alive with periodic resume
+  let iosKeepAlive = setInterval(() => {
+    if (!window.speechSynthesis.speaking) {
+      clearInterval(iosKeepAlive);
+    } else {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+    }
+  }, 5000);
+  u.onend = () => clearInterval(iosKeepAlive);
+  u.onerror = () => clearInterval(iosKeepAlive);
 }
+
+// Convenience aliases
+function speakEN(text) { speakText(text); }
+function speakJP(text) { speakText(text); }
+
+// Stop all audio (TTS + SFX)
+function stopAllAudio() {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
 // Preload voices
 if ('speechSynthesis' in window) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  // Some browsers need a delay
+  setTimeout(loadVoices, 500);
 }
 
 function getActiveDeck() {
@@ -1881,6 +2283,27 @@ function addDeckFromCSV(text, deckName) {
   }
 }
 
+// ============ FORMAT EXAMPLES & HELP ============
+const formatExamples = [
+  `abandon,見捨てる<br>accomplish,達成する<br>adequate,十分な`,
+  `鎌倉幕府の成立,1185年<br>関ヶ原の戦い,1600年<br>明治維新,1868年`,
+  `CPU,中央処理装置<br>RAM,主記憶装置<br>OSS,オープンソースソフトウェア`,
+  `안녕하세요,こんにちは<br>감사합니다,ありがとう<br>사랑,愛`
+];
+
+function switchFormatTab(index, el) {
+  el.parentElement.querySelectorAll('.format-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('formatExample').innerHTML = formatExamples[index];
+}
+
+function showHelp() {
+  document.getElementById('helpOverlay').classList.add('show');
+}
+function closeHelp() {
+  document.getElementById('helpOverlay').classList.remove('show');
+}
+
 function loadDemo() {
   const demoData = `abandon,見捨てる
 abolish,廃止する
@@ -1928,22 +2351,41 @@ function renderDeckList() {
 
     return `
       <div class="deck-card ${isActive ? 'active' : ''}" onclick="selectDeck('${deck.id}')">
-        <div class="deck-icon">📖</div>
-        <div class="deck-info">
-          <div class="deck-name">${escapeHtml(deck.name)}</div>
-          <div class="deck-meta">${deck.words.length}語</div>
-          <div class="deck-mini-progress">
-            <div class="mini-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
-            <div class="mini-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
-            <div class="mini-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
-            <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
+        <div class="deck-card-top">
+          <div class="deck-icon">📖</div>
+          <div class="deck-info">
+            <div class="deck-name">${escapeHtml(deck.name)}</div>
+            <div class="deck-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
+          </div>
+          <div class="deck-card-actions">
+            <button class="deck-edit" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
+            <button class="deck-delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
           </div>
         </div>
-        <button class="deck-edit" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
-        <button class="deck-delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
+        <div class="deck-mini-progress" style="margin-top:10px;">
+          <div class="mini-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
+          <div class="mini-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
+          <div class="mini-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
+          <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
+        </div>
       </div>
     `;
   }).join('');
+
+  // Update counter
+  const countEl = document.getElementById('deckPickerCount');
+  if (countEl) {
+    const idx = decks.findIndex(d => d.id === activeDeckId) + 1;
+    countEl.textContent = `${idx || 1} / ${decks.length}`;
+  }
+
+  // Scroll active deck into view
+  setTimeout(() => {
+    const activeCard = container.querySelector('.deck-card.active');
+    if (activeCard) {
+      activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, 100);
 }
 
 function selectDeck(id) {
@@ -2007,6 +2449,7 @@ function escapeHtml(str) {
 // ============ SCREENS ============
 function showScreen(name) {
   sfxTap();
+  stopAllAudio();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
 }
@@ -2016,7 +2459,6 @@ function updateDashboard() {
   const words = getActiveWords();
   const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0, bookmarked: 0 };
   words.forEach(w => {
-    // migrate old 'almost' words to 'mastered'
     if (w.level === 'almost') w.level = 'mastered';
     if (counts[w.level] !== undefined) counts[w.level]++;
     if (w.bookmarked) counts.bookmarked++;
@@ -2030,15 +2472,90 @@ function updateDashboard() {
 
   const total = words.length || 1;
   const bar = document.getElementById('progressBar');
-  bar.innerHTML = '';
-  ['mastered', 'fuzzy', 'weak'].forEach(level => {
-    if (counts[level] > 0) {
-      const seg = document.createElement('div');
-      seg.className = `progress-segment ${level}`;
-      seg.style.width = `${(counts[level] / total) * 100}%`;
-      bar.appendChild(seg);
-    }
-  });
+  if (bar) {
+    bar.innerHTML = '';
+    ['mastered', 'fuzzy', 'weak'].forEach(level => {
+      if (counts[level] > 0) {
+        const seg = document.createElement('div');
+        seg.className = `progress-segment ${level}`;
+        seg.style.width = `${(counts[level] / total) * 100}%`;
+        bar.appendChild(seg);
+      }
+    });
+  }
+
+  // ① Celebration: all words mastered!
+  if (words.length > 0 && counts.mastered === words.length) {
+    showCelebration();
+  }
+}
+
+function showCelebration() {
+  // Only show once per deck completion
+  const deck = getActiveDeck();
+  if (!deck) return;
+  const key = 'celebrated_' + deck.id;
+  if (localStorage.getItem(key) === String(deck.words.length)) return;
+  localStorage.setItem(key, String(deck.words.length));
+
+  const overlay = document.getElementById('celebrationOverlay');
+  if (!overlay) return;
+  const deckName = deck.name;
+  document.getElementById('celebrationDeck').textContent = deckName;
+  document.getElementById('celebrationCount').textContent = deck.words.length;
+  overlay.classList.add('show');
+  sfxComplete();
+  setTimeout(() => sfxComplete(), 800);
+
+  // Confetti
+  launchConfetti();
+}
+
+function closeCelebration() {
+  document.getElementById('celebrationOverlay').classList.remove('show');
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = ['#FF8C00','#22C55E','#3B82F6','#EF4444','#FACC15','#A855F7','#EC4899'];
+  const pieces = [];
+  for (let i = 0; i < 100; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 200,
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vy: 2 + Math.random() * 3,
+      vx: (Math.random() - 0.5) * 3,
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10
+    });
+  }
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.y += p.vy;
+      p.x += p.vx;
+      p.rot += p.rotSpeed;
+      p.vy += 0.05;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
 }
 
 // ============ LEVEL SELECT ============
@@ -2072,7 +2589,8 @@ function showLevelSelect() {
 
 // ============ QUIZ SETUP ============
 let quizDrillMode = false;
-let reviewMode = false; // true = no level changes (復習モード)
+let reviewMode = false;
+let reverseMode = false; // true = show answer as question, question as answer
 
 function startMissedReview() {
   const missed = currentQuiz.results.filter(r => !r.correct);
@@ -2125,7 +2643,17 @@ function showQuizSetupWithLevel(level) {
   quizMode = 'flashcard';
   selectedRange = level;
   quizDrillMode = false;
+  reverseMode = false;
   showScreen('quiz-setup');
+
+  // Reset mode toggle UI
+  document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
+  document.getElementById('drillDesc').style.display = 'none';
+  document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
 
   // Set back button
   document.getElementById('setupBackBtn').onclick = function() {
@@ -2166,6 +2694,12 @@ function selectMode(mode, el) {
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
+}
+
+function selectReverse(isReverse, el) {
+  reverseMode = isReverse;
+  el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
 }
 
 function updateStartBtn() {
@@ -2233,9 +2767,19 @@ function showQuizQuestion() {
   const levelInfo = LEVELS[word.level] || LEVELS.unlearned;
   badge.textContent = levelInfo.label;
   badge.className = `level-badge ${levelInfo.badge}`;
-  document.getElementById('quizWord').textContent = word.english;
-  // Read the question word aloud
-  speakEN(word.english);
+
+  // ③ Reverse mode: swap question/answer display
+  const questionText = reverseMode ? word.japanese : word.english;
+  const answerText = reverseMode ? word.english : word.japanese;
+
+  const quizWordEl = document.getElementById('quizWord');
+  quizWordEl.textContent = questionText;
+
+  // ② Auto-size: shrink font for long text
+  autoSizeQuizWord(quizWordEl);
+
+  // Read the question word aloud (auto-detect language)
+  speakText(questionText);
 
   // Reset card state
   const card = document.getElementById('quizCard');
@@ -2247,7 +2791,7 @@ function showQuizQuestion() {
   // Answer area inside card (hint + hidden answer)
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
-    <div class="answer-text-area">${escapeHtml(word.japanese)}</div>
+    <div class="answer-text-area">${escapeHtml(answerText)}</div>
   `;
 
   if (quizMode === 'flashcard') {
@@ -2262,13 +2806,24 @@ function showQuizQuestion() {
     `;
   } else {
     const choices = generateChoices(word);
+    const correctAnswer = word.japanese;
     body.innerHTML = `
       <div class="choices">
         ${choices.map((c, i) => `
-          <button class="choice-btn" onclick="answerChoice(this, ${i}, ${c === word.japanese})">${escapeHtml(c)}</button>
+          <button class="choice-btn" onclick="answerChoice(this, ${i}, ${c === correctAnswer})">${escapeHtml(c)}</button>
         `).join('')}
       </div>
     `;
+  }
+}
+
+// ② Auto-size quiz question text to fit within card
+function autoSizeQuizWord(el) {
+  el.style.fontSize = '';
+  const sizes = [32, 26, 22, 18, 15, 13];
+  for (const size of sizes) {
+    el.style.fontSize = size + 'px';
+    if (el.scrollHeight <= el.clientHeight + 4) return;
   }
 }
 
@@ -2280,7 +2835,8 @@ function revealAnswer() {
   // Read the answer aloud
   if (currentQuiz) {
     const word = currentQuiz.words[currentQuiz.index];
-    setTimeout(() => speakJP(word.japanese), 200);
+    const answerText = reverseMode ? word.english : word.japanese;
+    setTimeout(() => speakText(answerText), 200);
   }
   // Enable the know/don't-know buttons
   const btns = document.getElementById('knowButtons');
@@ -2412,39 +2968,52 @@ function showResult() {
   else if (pct >= 50) { emoji = '💪'; msg = 'もう少し頑張ろう！'; }
   else { emoji = '📚'; msg = '復習が大事！'; }
 
-  // Calculate level changes
-  const levelNames = { unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた' };
-  const levelColors = { unlearned: 'var(--gray-400)', weak: 'var(--red-500)', fuzzy: 'var(--yellow-500)', mastered: 'var(--green-500)' };
-  const levelOrder = ['mastered', 'fuzzy', 'weak', 'unlearned'];
+  // Calculate cumulative counts (all words in active deck) for AFTER
+  const allWords = getActiveWords();
+  const afterCumulative = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  allWords.forEach(w => {
+    if (w.level === 'almost') w.level = 'mastered';
+    if (afterCumulative[w.level] !== undefined) afterCumulative[w.level]++;
+  });
 
-  // Count before/after per level (deduplicated by word)
-  const beforeCounts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
-  const afterCounts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  // Calculate diffs: what changed during this quiz
   const seenWords = new Set();
-  // Use unique words from the quiz
+  const diffs = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
   q.words.forEach(w => {
     if (seenWords.has(w.english)) return;
     seenWords.add(w.english);
     const before = q.beforeLevels[w.english] || 'unlearned';
-    if (beforeCounts[before] !== undefined) beforeCounts[before]++;
-    if (afterCounts[w.level] !== undefined) afterCounts[w.level]++;
+    const after = w.level;
+    if (before !== after) {
+      if (diffs[before] !== undefined) diffs[before]--;
+      if (diffs[after] !== undefined) diffs[after]++;
+    }
   });
 
-  // Build level change bars
+  const levelNames = { unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた' };
+  const levelColors = { unlearned: 'var(--gray-400)', weak: 'var(--red-500)', fuzzy: 'var(--yellow-500)', mastered: 'var(--green-500)' };
+  const levelOrder = ['mastered', 'fuzzy', 'weak', 'unlearned'];
+
+  const totalWords = allWords.length || 1;
+
+  // Build level change bars with animation data
   let levelChangeHtml = '<div class="level-change-section">';
   levelChangeHtml += '<h4>ステータス変化</h4>';
-  const totalWords = seenWords.size || 1;
-  levelOrder.forEach(level => {
-    const before = beforeCounts[level];
-    const after = afterCounts[level];
-    const diff = after - before;
+  levelOrder.forEach((level, idx) => {
+    const count = afterCumulative[level];
+    const diff = diffs[level];
     const diffStr = diff > 0 ? `<span class="lc-diff plus">+${diff}</span>` : diff < 0 ? `<span class="lc-diff minus">${diff}</span>` : '';
-    const barWidth = Math.round((after / totalWords) * 100);
+    const barWidth = Math.round((count / totalWords) * 100);
+    // Before width for animation
+    const beforeCount = count - diff;
+    const beforeWidth = Math.round((beforeCount / totalWords) * 100);
     levelChangeHtml += `
-      <div class="lc-row">
+      <div class="lc-row" style="animation-delay:${idx * 0.15}s">
         <div class="lc-label">${levelNames[level]}</div>
         <div class="lc-bar-wrap">
-          <div class="lc-bar" style="width:${barWidth}%;background:${levelColors[level]}">${after}</div>
+          <div class="lc-bar" data-before="${beforeWidth}" data-after="${barWidth}" style="width:${beforeWidth}%;background:${levelColors[level]}">
+            <span class="lc-count" data-from="${beforeCount}" data-to="${count}">${beforeCount}</span>
+          </div>
         </div>
         ${diffStr}
       </div>
@@ -2468,7 +3037,7 @@ function showResult() {
         <h4>まちがえた問題（${uniqueMissed.length}語）</h4>
         <div class="missed-list">
           ${uniqueMissed.map(r => `
-            <div class="missed-item">
+            <div class="missed-item" onclick="speakText('${escapeHtml(r.word.english)}')" style="cursor:pointer;">
               <span class="missed-eng">${escapeHtml(r.word.english)}</span>
               <span class="missed-jpn">${escapeHtml(r.word.japanese)}</span>
             </div>
@@ -2499,8 +3068,43 @@ function showResult() {
     ${levelChangeHtml}
     ${missedHtml}
     ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">まちがえた問題を復習する</button>' : ''}
-    <button class="result-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">ホームに戻る</button>
+    <button class="result-btn" onclick="showScreen(\'dashboard\'); renderDeckList(); updateDashboard();">ホームに戻る</button>
   `;
+
+  // Animate bars and counters after render
+  setTimeout(() => animateLevelBars(), 400);
+}
+
+function animateLevelBars() {
+  document.querySelectorAll('.lc-bar').forEach(bar => {
+    const beforeW = parseInt(bar.dataset.before);
+    const afterW = parseInt(bar.dataset.after);
+    bar.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+    bar.style.width = afterW + '%';
+
+    // Animate counter
+    const countEl = bar.querySelector('.lc-count');
+    if (countEl) {
+      const from = parseInt(countEl.dataset.from);
+      const to = parseInt(countEl.dataset.to);
+      if (from !== to) {
+        const duration = 800;
+        const start = performance.now();
+        function tick(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - t, 3);
+          countEl.textContent = Math.round(from + (to - from) * ease);
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+    }
+  });
+
+  // Animate diff badges
+  document.querySelectorAll('.lc-diff').forEach((el, i) => {
+    el.style.animation = `diffPop 0.4s ease ${0.6 + i * 0.15}s both`;
+  });
 }
 
 function showMissedWords() {
@@ -2513,7 +3117,7 @@ function showMissedWords() {
   const items = document.getElementById('wordItems');
   document.getElementById('filterTabs').innerHTML = '';
   items.innerHTML = missed.map(r => `
-    <div class="word-item" onclick="toggleWordAnswer(this)">
+    <div class="word-item" data-eng="${escapeHtml(r.word.english)}" data-jpn="${escapeHtml(r.word.japanese)}" onclick="toggleWordAnswer(this)">
       <div class="level-dot ${r.word.level}"></div>
       <div class="eng">${escapeHtml(r.word.english)}</div>
       <div class="jpn-container"><div class="jpn">${escapeHtml(r.word.japanese)}</div></div>
@@ -2633,7 +3237,7 @@ function renderWordList(level) {
   }
 
   items.innerHTML = filtered.map(w => `
-    <div class="word-item" onclick="toggleWordAnswer(this)">
+    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}" onclick="toggleWordAnswer(this)">
       <div class="level-dot ${w.level}"></div>
       <div class="eng">${escapeHtml(w.english)}</div>
       <div class="jpn-container"><div class="jpn hidden-answer" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
@@ -2645,10 +3249,101 @@ function toggleWordAnswer(el) {
   const jpn = el.querySelector('.jpn');
   if (!jpn) return;
   if (jpn.classList.contains('hidden-answer')) {
+    // Revealing answer - speak the question first, then answer
     jpn.classList.remove('hidden-answer');
+    speakText(el.dataset.jpn);
   } else {
+    // Hiding answer - speak the question
     jpn.classList.add('hidden-answer');
+    speakText(el.dataset.eng);
   }
+}
+
+// ============ WORD EDITOR ============
+let editingWordIndex = null;
+
+function showWordEditor() {
+  showScreen('word-editor');
+  renderEditorList();
+}
+
+function renderEditorList() {
+  const words = getActiveWords();
+  const el = document.getElementById('editorWordList');
+  if (words.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">単語がありません</div>';
+    return;
+  }
+  el.innerHTML = words.map((w, i) => `
+    <div class="editor-word-item">
+      <div class="ew-content" onclick="showEditWordModal(${i})">
+        <div class="ew-eng">${escapeHtml(w.english)}</div>
+        <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
+      </div>
+      <button class="ew-delete" onclick="deleteWord(${i})">🗑</button>
+    </div>
+  `).join('');
+}
+
+function showAddWordModal() {
+  editingWordIndex = null;
+  document.getElementById('editWordTitle').textContent = '単語を追加';
+  document.getElementById('editWordEng').value = '';
+  document.getElementById('editWordJpn').value = '';
+  document.getElementById('editWordOverlay').classList.add('show');
+  document.getElementById('editWordSaveBtn').onclick = saveWord;
+  setTimeout(() => document.getElementById('editWordEng').focus(), 100);
+}
+
+function showEditWordModal(index) {
+  const words = getActiveWords();
+  const word = words[index];
+  if (!word) return;
+  editingWordIndex = index;
+  document.getElementById('editWordTitle').textContent = '単語を編集';
+  document.getElementById('editWordEng').value = word.english;
+  document.getElementById('editWordJpn').value = word.japanese;
+  document.getElementById('editWordOverlay').classList.add('show');
+  document.getElementById('editWordSaveBtn').onclick = saveWord;
+  setTimeout(() => document.getElementById('editWordEng').focus(), 100);
+}
+
+function closeEditWord() {
+  document.getElementById('editWordOverlay').classList.remove('show');
+}
+
+function saveWord() {
+  const eng = document.getElementById('editWordEng').value.trim();
+  const jpn = document.getElementById('editWordJpn').value.trim();
+  if (!eng || !jpn) {
+    showToast('問題文と答えを両方入力してください');
+    return;
+  }
+  const words = getActiveWords();
+  if (editingWordIndex === null) {
+    // Add new word
+    words.push({ english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 });
+    showToast('追加しました！');
+  } else {
+    // Edit existing word
+    words[editingWordIndex].english = eng;
+    words[editingWordIndex].japanese = jpn;
+    showToast('保存しました！');
+  }
+  saveState();
+  closeEditWord();
+  renderEditorList();
+}
+
+function deleteWord(index) {
+  const words = getActiveWords();
+  const word = words[index];
+  confirmAction('単語を削除', `「${word.english}」を削除しますか？`, function() {
+    words.splice(index, 1);
+    saveState();
+    renderEditorList();
+    showToast('削除しました');
+  }, '削除する');
 }
 
 // ============ RESET ============
