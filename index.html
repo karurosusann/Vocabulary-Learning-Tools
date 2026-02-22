@@ -485,50 +485,89 @@ body::after {
 }
 
 /* Dashboard */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+.donut-section {
   margin-bottom: 20px;
-}
-.stat-card {
   background: white;
-  border-radius: var(--radius-sm);
-  padding: 12px 6px;
-  text-align: center;
+  border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s;
+  padding: 20px 16px;
 }
-.stat-card:hover { transform: translateY(-2px); }
-.stat-num {
-  font-size: 22px;
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.donut-chart {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+}
+.donut-chart svg {
+  width: 130px;
+  height: 130px;
+  transform: rotate(-90deg);
+}
+.donut-chart .donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.donut-center .donut-pct {
+  font-size: 26px;
   font-weight: 900;
   font-family: 'DM Sans', sans-serif;
+  color: var(--green-500);
+  line-height: 1;
 }
-.stat-label {
+.donut-center .donut-pct-label {
   font-size: 10px;
   font-weight: 700;
-  margin-top: 4px;
-  letter-spacing: -0.2px;
+  color: var(--gray-400);
+  margin-top: 2px;
 }
-.stat-card.disabled {
-  opacity: 0.35;
-  cursor: default;
+.donut-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.donut-legend-item:active {
+  background: var(--gray-100);
+}
+.donut-legend-item.disabled {
+  opacity: 0.3;
   pointer-events: none;
 }
-.stat-card.disabled:hover { transform: none; }
-.stat-card.all .stat-num { color: var(--gray-700); }
-.stat-card.all .stat-label { color: var(--gray-700); }
-.stat-card.unlearned .stat-num { color: var(--gray-400); }
-.stat-card.unlearned .stat-label { color: var(--gray-400); }
-.stat-card.weak .stat-num { color: var(--red-500); }
-.stat-card.weak .stat-label { color: var(--red-500); }
-.stat-card.fuzzy .stat-num { color: var(--yellow-500); }
-.stat-card.fuzzy .stat-label { color: var(--yellow-500); }
-.stat-card.bookmarked .stat-num { color: var(--orange-500); }
-.stat-card.bookmarked .stat-label { color: var(--orange-500); }
-.stat-card.mastered .stat-num { color: var(--green-500); }
-.stat-card.mastered .stat-label { color: var(--green-500); }
+.donut-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.donut-legend-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  flex: 1;
+}
+.donut-legend-count {
+  font-size: 14px;
+  font-weight: 800;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--gray-700);
+}
 
 /* Progress bar */
 .progress-bar-container {
@@ -1387,19 +1426,25 @@ body::after {
 
 /* Level select screen */
 .level-select-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: none;
 }
+.level-select-grid::-webkit-scrollbar { display: none; }
 .level-select-card {
   background: white;
-  border-radius: var(--radius);
-  padding: 24px 16px;
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
   text-align: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  min-width: 72px;
+  flex-shrink: 0;
 }
 .level-select-card:hover { transform: translateY(-2px); }
 .level-select-card:active { transform: scale(0.97); }
@@ -1409,14 +1454,14 @@ body::after {
   pointer-events: none;
 }
 .level-select-card.disabled:hover { transform: none; }
-.level-select-card .ls-icon { font-size: 28px; margin-bottom: 8px; }
+.level-select-card .ls-icon { font-size: 20px; margin-bottom: 4px; }
 .level-select-card .ls-label {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .level-select-card .ls-count {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1839,30 +1884,16 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card all" style="cursor:pointer;">
-        <div class="stat-num" id="count-all">0</div>
-        <div class="stat-label">全て</div>
-      </div>
-      <div class="stat-card unlearned" style="cursor:pointer;">
-        <div class="stat-num" id="count-unlearned">0</div>
-        <div class="stat-label">未学習</div>
-      </div>
-      <div class="stat-card bookmarked" style="cursor:pointer;">
-        <div class="stat-num" id="count-bookmarked">0</div>
-        <div class="stat-label">保存済み</div>
-      </div>
-      <div class="stat-card weak" style="cursor:pointer;">
-        <div class="stat-num" id="count-weak">0</div>
-        <div class="stat-label">苦手</div>
-      </div>
-      <div class="stat-card fuzzy" style="cursor:pointer;">
-        <div class="stat-num" id="count-fuzzy">0</div>
-        <div class="stat-label">うろ覚え</div>
-      </div>
-      <div class="stat-card mastered" style="cursor:pointer;">
-        <div class="stat-num" id="count-mastered">0</div>
-        <div class="stat-label">覚えた</div>
+    <div class="donut-section" id="donutSection">
+      <div class="donut-wrap">
+        <div class="donut-chart">
+          <svg viewBox="0 0 100 100"><g id="donutRings"></g></svg>
+          <div class="donut-center">
+            <div class="donut-pct" id="donutPct">0%</div>
+            <div class="donut-pct-label">マスター率</div>
+          </div>
+        </div>
+        <div class="donut-legend" id="donutLegend"></div>
       </div>
     </div>
 
@@ -2883,6 +2914,7 @@ function showScreen(name) {
   stopAllAudio();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
 }
 
 // ============ DASHBOARD ============
@@ -2895,31 +2927,68 @@ function updateDashboard() {
     if (w.bookmarked) counts.bookmarked++;
   });
 
-  ['unlearned', 'weak', 'fuzzy', 'mastered'].forEach(level => {
-    const el = document.getElementById(`count-${level}`);
-    el.textContent = counts[level];
-    const card = el.closest('.stat-card');
-    if (card) {
-      card.classList.toggle('disabled', counts[level] === 0);
-      card.onclick = counts[level] > 0 ? () => showQuizSetupWithLevel(level) : null;
-    }
-  });
-  const bkEl = document.getElementById('count-bookmarked');
-  bkEl.textContent = counts.bookmarked;
-  const bkCard = bkEl.closest('.stat-card');
-  if (bkCard) {
-    bkCard.classList.toggle('disabled', counts.bookmarked === 0);
-    bkCard.onclick = counts.bookmarked > 0 ? () => showQuizSetupWithLevel('bookmarked') : null;
-  }
-  const allEl = document.getElementById('count-all');
-  allEl.textContent = words.length;
-  const allCard = allEl.closest('.stat-card');
-  if (allCard) {
-    allCard.classList.toggle('disabled', words.length === 0);
-    allCard.onclick = words.length > 0 ? () => showQuizSetupWithLevel('all') : null;
+  const total = words.length || 1;
+  const pct = Math.round((counts.mastered / total) * 100);
+
+  // Update donut center
+  const pctEl = document.getElementById('donutPct');
+  if (pctEl) {
+    pctEl.textContent = pct + '%';
+    // Color transitions: red→yellow→green based on percentage
+    if (pct >= 80) pctEl.style.color = 'var(--green-500)';
+    else if (pct >= 40) pctEl.style.color = 'var(--yellow-500)';
+    else pctEl.style.color = 'var(--gray-500)';
   }
 
-  const total = words.length || 1;
+  // Draw donut rings (SVG)
+  const ringsEl = document.getElementById('donutRings');
+  if (ringsEl) {
+    const segments = [
+      { level: 'mastered', count: counts.mastered, color: '#22C55E' },
+      { level: 'fuzzy', count: counts.fuzzy, color: '#EAB308' },
+      { level: 'weak', count: counts.weak, color: '#EF4444' },
+      { level: 'unlearned', count: counts.unlearned, color: '#D1D5DB' },
+    ];
+    const R = 40, STROKE = 14;
+    const C = 2 * Math.PI * R;
+    let offset = 0;
+    let svg = '';
+    // Background ring
+    svg += `<circle cx="50" cy="50" r="${R}" fill="none" stroke="#F3F4F6" stroke-width="${STROKE}"/>`;
+    segments.forEach(seg => {
+      if (seg.count <= 0) return;
+      const len = (seg.count / total) * C;
+      svg += `<circle cx="50" cy="50" r="${R}" fill="none"
+        stroke="${seg.color}" stroke-width="${STROKE}"
+        stroke-dasharray="${len} ${C - len}"
+        stroke-dashoffset="${-offset}"
+        stroke-linecap="butt"
+        style="transition: stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease;"/>`;
+      offset += len;
+    });
+    ringsEl.innerHTML = svg;
+  }
+
+  // Draw legend
+  const legendEl = document.getElementById('donutLegend');
+  if (legendEl) {
+    const items = [
+      { key: 'mastered', label: '覚えた', color: '#22C55E', count: counts.mastered },
+      { key: 'fuzzy', label: 'うろ覚え', color: '#EAB308', count: counts.fuzzy },
+      { key: 'weak', label: '苦手', color: '#EF4444', count: counts.weak },
+      { key: 'unlearned', label: '未学習', color: '#D1D5DB', count: counts.unlearned },
+    ];
+    legendEl.innerHTML = items.map(it => `
+      <div class="donut-legend-item ${it.count === 0 ? 'disabled' : ''}"
+           onclick="${it.count > 0 ? `showQuizSetupWithLevel('${it.key}')` : ''}">
+        <div class="donut-legend-dot" style="background:${it.color}"></div>
+        <span class="donut-legend-name">${it.label}</span>
+        <span class="donut-legend-count">${it.count}</span>
+      </div>
+    `).join('');
+  }
+
+  // Update progress bar
   const bar = document.getElementById('progressBar');
   if (bar) {
     bar.innerHTML = '';
@@ -2933,7 +3002,7 @@ function updateDashboard() {
     });
   }
 
-  // ① Celebration: all words mastered!
+  // Celebration: all words mastered!
   if (words.length > 0 && counts.mastered === words.length) {
     showCelebration();
   }
@@ -3020,8 +3089,8 @@ function showLevelSelect() {
 
   const options = [
     { key: 'all', icon: '📚', label: '全て', count: words.length, cls: 'all' },
-    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
     { key: 'bookmarked', icon: '📌', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
+    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak, cls: 'weak' },
     { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy, cls: 'fuzzy' },
     { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
