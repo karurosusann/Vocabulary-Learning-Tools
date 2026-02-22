@@ -1458,7 +1458,7 @@ body::after {
   font-family: 'DM Sans', sans-serif;
 }
 .level-select-card.all .ls-label, .level-select-card.all .ls-count { color: var(--gray-700); }
-.level-select-card.unlearned .ls-label, .level-select-card.unlearned .ls-count { color: var(--gray-400); }
+.level-select-card.unlearned .ls-label, .level-select-card.unlearned .ls-count { color: var(--gray-600); }
 .level-select-card.bookmarked .ls-label, .level-select-card.bookmarked .ls-count { color: var(--orange-500); }
 .level-select-card.weak .ls-label, .level-select-card.weak .ls-count { color: var(--red-500); }
 .level-select-card.fuzzy .ls-label, .level-select-card.fuzzy .ls-count { color: var(--yellow-500); }
@@ -1949,7 +1949,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <button class="action-btn list" onclick="showWordList()">
         <div class="icon">📖</div>
         <div class="text">
-          <h3>単語一覧</h3>
+          <h3>問題一覧</h3>
           <p>すべての単語を確認</p>
         </div>
       </button>
@@ -2061,7 +2061,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   <div id="screen-wordlist" class="screen">
     <div class="word-list-header">
       <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
-      <h2>単語一覧</h2>
+      <h2>問題一覧</h2>
     </div>
     <div class="search-bar">
       <span class="search-icon">🔍</span>
@@ -2180,11 +2180,11 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <h3 style="text-align:center;margin-bottom:16px;">📚 デモ問題を選択</h3>
     <div class="demo-list">
       <button class="demo-item" onclick="loadDemoData('korean')">🇰🇷 韓国語 中級<span>99語</span></button>
-      <button class="demo-item" onclick="loadDemoData('education_law')">📜 教育基本法・学校教育法<span>10語</span></button>
-      <button class="demo-item" onclick="loadDemoData('curriculum')">🏫 小学校学習指導要領<span>10語</span></button>
-      <button class="demo-item" onclick="loadDemoData('student_guidance')">📖 生徒指導提要<span>10語</span></button>
-      <button class="demo-item" onclick="loadDemoData('pe_exam')">🏃 教採 保健体育<span>10語</span></button>
-      <button class="demo-item" onclick="loadDemoData('kochi_exam')">✏️ 教採 教職教養<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('education_law')">📜 教育基本法・学校教育法<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('curriculum')">🏫 小学校学習指導要領<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('student_guidance')">📖 生徒指導提要<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('pe_exam')">🏃 教採 保健体育<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('kochi_exam')">✏️ 教採 教職教養<span>10問</span></button>
     </div>
     <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeDemoPicker()">閉じる</button>
   </div>
@@ -2831,7 +2831,7 @@ function renderDeckList() {
           <div class="di-top-row">
             <div class="di-info">
               <div class="di-name">${escapeHtml(deck.name)}</div>
-              <div class="di-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
+              <div class="di-meta">${deck.words.length}問 ・ 覚えた ${counts.mastered}問</div>
             </div>
             <div class="di-actions">
               <button class="di-btn" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
@@ -3123,7 +3123,7 @@ function showLevelSelect() {
   const options = [
     { key: 'all', icon: allMastered ? '👑' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allMastered },
     { key: 'bookmarked', icon: '📌', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
-    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
+    { key: 'unlearned', icon: '📋', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak, cls: 'weak' },
     { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy, cls: 'fuzzy' },
     { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
@@ -3151,14 +3151,14 @@ function showLevelSelect() {
       <div class="level-select-card ${opt.cls} locked" onclick="showLockedMessage()">
         <div class="ls-icon">${opt.icon}</div>
         <div class="ls-label">${opt.label}</div>
-        <div class="ls-count">${opt.count}語</div>
+        <div class="ls-count">${opt.count}問</div>
       </div>`;
     }
     return `
     <div class="level-select-card ${opt.cls} ${disabled ? 'disabled' : ''}" ${disabled ? '' : `onclick="showQuizSetupWithLevel('${opt.key}')"`}>
       <div class="ls-icon">${opt.icon}</div>
       <div class="ls-label">${opt.label}</div>
-      <div class="ls-count">${opt.count}語</div>
+      <div class="ls-count">${opt.count}問</div>
     </div>`;
   }).join('');
   html += '</div>';
@@ -4136,15 +4136,22 @@ function initDragToReorder(item) {
   // Mouse events
   handle.addEventListener('mousedown', (e) => {
     e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
     longPressTimer = setTimeout(() => {
       isDragging = true;
       startDrag(item, e.clientY);
     }, 250);
 
     const onMouseMove = (ev) => {
+      // Only cancel long press if moved significantly (>10px)
       if (longPressTimer && !isDragging) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (Math.sqrt(dx*dx + dy*dy) > 10) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
       }
       if (isDragging && dragState) {
         ev.preventDefault();
