@@ -652,14 +652,15 @@ body::after {
 .quiz-card {
   background: white;
   border-radius: 24px;
-  padding: 24px 20px 20px;
+  padding: 20px 18px 16px;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   position: relative;
   overflow: hidden;
   flex: 1;
   min-height: 0;
+  max-height: calc(100vh - 250px);
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -1854,8 +1855,8 @@ body::after {
       </div>
       <h4 class="setup-section-label">読み上げ</h4>
       <div class="mode-toggle" id="ttsToggle">
-        <button class="mode-toggle-btn active" onclick="selectTTS('question', this)">問題のみ</button>
-        <button class="mode-toggle-btn" onclick="selectTTS('answer', this)">答えのみ</button>
+        <button class="mode-toggle-btn" onclick="selectTTS('question', this)">問題のみ</button>
+        <button class="mode-toggle-btn active" onclick="selectTTS('answer', this)">答えのみ</button>
         <button class="mode-toggle-btn" onclick="selectTTS('both', this)">両方</button>
         <button class="mode-toggle-btn" onclick="selectTTS('none', this)">なし</button>
       </div>
@@ -2266,7 +2267,7 @@ function speakText(text) {
   
   const u = new SpeechSynthesisUtterance(cleanText);
   u.lang = langMap[lang] || 'en-US';
-  u.rate = lang === 'en' ? 0.85 : 1.1;
+  u.rate = lang === 'en' ? 0.85 : 1.0;
   u.volume = 0.45;
   
   // Set voice from cache
@@ -2930,7 +2931,7 @@ function showLevelSelect() {
 let quizDrillMode = false;
 let reviewMode = false;
 let reverseMode = false;
-let ttsMode = 'question'; // 'question', 'answer', 'both', 'none'
+let ttsMode = 'answer'; // 'question', 'answer', 'both', 'none'
 
 function startMissedReview() {
   const missed = currentQuiz.results.filter(r => !r.correct);
@@ -2984,7 +2985,7 @@ function showQuizSetupWithLevel(level) {
   selectedRange = level;
   quizDrillMode = false;
   reverseMode = false;
-  ttsMode = 'question';
+  ttsMode = 'answer';
   showScreen('quiz-setup');
 
   // Reset mode toggle UI
@@ -2996,7 +2997,7 @@ function showQuizSetupWithLevel(level) {
     b.classList.toggle('active', i === 0);
   });
   document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0);
+    b.classList.toggle('active', i === 1); // index 1 = 答えのみ
   });
 
   // Set back button
@@ -3288,6 +3289,8 @@ function answerChoice(btn, index, isCorrect) {
 }
 
 function nextQuestion() {
+  // Always cancel speech before transitioning
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   currentQuiz.index++;
   if (quizDrillMode) {
     if (currentQuiz.masteredCount >= currentQuiz.totalCount) {
@@ -3307,9 +3310,20 @@ function nextQuestion() {
 }
 
 function showResult() {
-  // Stop any ongoing speech/audio
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  // Aggressively stop all speech (iOS needs multiple cancel calls)
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
+  }
+  stopAllAudio();
   showScreen('result');
+  // Cancel again after screen transition in case iOS queued speech
+  setTimeout(() => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, 100);
+  setTimeout(() => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, 500);
   sfxComplete();
   const q = currentQuiz;
   const totalAnswered = quizDrillMode ? q.totalCount : q.words.length;
@@ -3618,42 +3632,37 @@ function renderWordList(level) {
   }
 
   items.innerHTML = filtered.map(w => `
-    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}" onclick="toggleWordAnswer(this)">
+    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
       <div class="level-dot ${w.level}"></div>
-      <div class="eng ${questionsHidden ? 'hidden-question' : ''}">${escapeHtml(w.english)}</div>
-      <div class="jpn-container"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
+      <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtml(w.english)}</div>
+      <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
     </div>
   `).join('');
 }
 
-function toggleWordAnswer(el) {
+function onTapEng(el) {
   const eng = el.querySelector('.eng');
+  if (!eng) return;
+  if (questionsHidden && eng.classList.contains('hidden-question')) {
+    eng.classList.remove('hidden-question');
+    speakText(el.dataset.eng);
+  } else if (questionsHidden && !eng.classList.contains('hidden-question')) {
+    eng.classList.add('hidden-question');
+  } else {
+    speakText(el.dataset.eng);
+  }
+}
+
+function onTapJpn(el) {
   const jpn = el.querySelector('.jpn');
   if (!jpn) return;
-  
-  if (answersHidden || questionsHidden) {
-    // In hidden mode: tap reveals/hides and speaks the revealed part
-    if (answersHidden && jpn.classList.contains('hidden-answer')) {
-      jpn.classList.remove('hidden-answer');
-      speakText(el.dataset.jpn);
-      return;
-    }
-    if (answersHidden && !jpn.classList.contains('hidden-answer')) {
-      jpn.classList.add('hidden-answer');
-      return;
-    }
-    if (questionsHidden && eng && eng.classList.contains('hidden-question')) {
-      eng.classList.remove('hidden-question');
-      speakText(el.dataset.eng);
-      return;
-    }
-    if (questionsHidden && eng && !eng.classList.contains('hidden-question')) {
-      eng.classList.add('hidden-question');
-      return;
-    }
+  if (answersHidden && jpn.classList.contains('hidden-answer')) {
+    jpn.classList.remove('hidden-answer');
+    speakText(el.dataset.jpn);
+  } else if (answersHidden && !jpn.classList.contains('hidden-answer')) {
+    jpn.classList.add('hidden-answer');
   } else {
-    // Both shown: speak question, then answer sequentially
-    speakTextSequence(el.dataset.eng, el.dataset.jpn);
+    speakText(el.dataset.jpn);
   }
 }
 
@@ -3672,7 +3681,7 @@ function speakTextSequence(text1, text2) {
     const langMap = { en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
     const u = new SpeechSynthesisUtterance(cleanText);
     u.lang = langMap[lang] || 'en-US';
-    u.rate = lang === 'en' ? 0.85 : 1.1;
+    u.rate = lang === 'en' ? 0.85 : 1.0;
     u.volume = 0.45;
     if (ttsVoiceCache[lang]) u.voice = ttsVoiceCache[lang];
     
