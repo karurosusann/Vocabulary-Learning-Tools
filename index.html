@@ -652,15 +652,15 @@ body::after {
 .quiz-card {
   background: white;
   border-radius: 24px;
-  padding: 20px 18px 16px;
+  padding: 18px 18px 14px;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   position: relative;
   overflow: hidden;
   flex: 1;
   min-height: 0;
-  max-height: calc(100vh - 250px);
+  max-height: calc(100vh - 280px);
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -1587,22 +1587,45 @@ body::after {
   box-sizing: border-box;
 }
 .rename-input:focus { border-color: var(--orange-400); }
+input[type="search"].rename-input::-webkit-search-decoration,
+input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
 
 /* Word editor */
+#screen-word-editor {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+#screen-word-editor.active {
+  display: flex;
+}
 .editor-header {
   padding: 0;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  background: var(--bg);
+  z-index: 5;
 }
 .editor-header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .editor-title {
   font-size: 22px;
   font-weight: 900;
   color: var(--gray-800);
+}
+.editor-word-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 40px;
 }
 .editor-add-btn {
   background: var(--orange-500);
@@ -1614,11 +1637,6 @@ body::after {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-}
-.editor-word-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 .editor-word-item {
   position: relative;
@@ -1681,16 +1699,21 @@ body::after {
   -webkit-user-select: none;
 }
 .editor-word-item.dragging {
-  opacity: 0.85;
+  opacity: 0.4;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-  transform: scale(1.02);
+  background: var(--orange-50);
+  border: 2px dashed var(--orange-400);
+  border-radius: var(--radius-sm);
 }
 .editor-word-item.drag-over-top {
-  border-top: 2.5px solid var(--orange-500);
+  box-shadow: 0 -3px 0 0 var(--orange-500);
+  margin-top: 6px;
+  transition: margin 0.15s;
 }
 .editor-word-item.drag-over-bottom {
-  border-bottom: 2.5px solid var(--orange-500);
+  box-shadow: 0 3px 0 0 var(--orange-500);
+  margin-bottom: 6px;
+  transition: margin 0.15s;
 }
 .edit-word-modal .rename-input { margin-bottom: 10px; }
 
@@ -1936,7 +1959,7 @@ body::after {
 
   <!-- Screen: Word Editor -->
   <div id="screen-word-editor" class="screen">
-    <div class="editor-header">
+    <div class="editor-header" id="editorHeader">
       <div class="editor-header-top">
         <button class="quiz-back" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
         <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
@@ -2063,7 +2086,7 @@ body::after {
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">✏️</div>
     <h3>デッキ名を変更</h3>
-    <input type="text" id="renameInput" class="rename-input" placeholder="新しい名前" autocomplete="off" autocorrect="off" autocapitalize="off" data-form-type="other" data-1p-ignore>
+    <input type="search" id="renameInput" class="rename-input" placeholder="新しい名前" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="done">
     <div class="confirm-buttons">
       <button class="confirm-cancel" onclick="closeRename()">キャンセル</button>
       <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="renameConfirmBtn">変更する</button>
@@ -3024,7 +3047,7 @@ function showQuizSetupWithLevel(level) {
     b.classList.toggle('active', i === 0);
   });
   document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0);
+    b.classList.toggle('active', i === 1); // index 1 = 答えのみ
   });
 
   updateStartBtn();
@@ -3821,28 +3844,41 @@ function initDragToReorder(item) {
   const handle = item.querySelector('.ew-drag-handle');
   if (!handle) return;
   let longPressTimer = null;
+  let isDragging = false;
 
   handle.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const touch = e.touches[0];
     longPressTimer = setTimeout(() => {
+      isDragging = true;
       startDrag(item, touch.clientY);
-    }, 300);
+    }, 250);
   });
 
   handle.addEventListener('touchmove', (e) => {
-    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    if (dragState && dragState.el === item) {
+    if (longPressTimer && !isDragging) {
+      // Check if moved too much before long press triggers
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    if (isDragging && dragState) {
       e.preventDefault();
       moveDrag(e.touches[0].clientY);
     }
   });
 
-  handle.addEventListener('touchend', (e) => {
+  handle.addEventListener('touchend', () => {
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    if (dragState && dragState.el === item) {
+    if (isDragging && dragState) {
       endDrag();
     }
+    isDragging = false;
+  });
+
+  handle.addEventListener('touchcancel', () => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    if (isDragging && dragState) { cancelDrag(); }
+    isDragging = false;
   });
 }
 
@@ -3851,20 +3887,12 @@ function startDrag(item, startY) {
     showToast('検索中は並べ替えできません');
     return;
   }
-  const list = document.getElementById('editorWordList');
-  const items = Array.from(list.querySelectorAll('.editor-word-item'));
-  const rect = item.getBoundingClientRect();
-
   item.classList.add('dragging');
   dragState = {
     el: item,
     fromIndex: parseInt(item.dataset.index),
-    startY: startY,
-    offsetY: startY - rect.top,
-    items: items
+    targetIndex: parseInt(item.dataset.index)
   };
-
-  // Haptic feedback if available
   if (navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -3872,26 +3900,50 @@ function moveDrag(clientY) {
   if (!dragState) return;
   const list = document.getElementById('editorWordList');
   const items = Array.from(list.querySelectorAll('.editor-word-item'));
+  const fromIdx = dragState.fromIndex;
 
   // Clear all indicators
-  items.forEach(it => {
-    it.classList.remove('drag-over-top', 'drag-over-bottom');
-  });
+  items.forEach(it => it.classList.remove('drag-over-top', 'drag-over-bottom'));
 
-  // Find which item we're over
-  for (const it of items) {
-    if (it === dragState.el) continue;
+  // Find target position
+  let targetIdx = fromIdx;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const idx = parseInt(it.dataset.index);
+    if (idx === fromIdx) continue;
     const rect = it.getBoundingClientRect();
     const mid = rect.top + rect.height / 2;
-    if (clientY >= rect.top && clientY <= rect.bottom) {
-      if (clientY < mid) {
-        it.classList.add('drag-over-top');
-      } else {
-        it.classList.add('drag-over-bottom');
-      }
+    if (clientY < mid && clientY >= rect.top - 10) {
+      // Insert before this item
+      it.classList.add('drag-over-top');
+      targetIdx = idx;
+      break;
+    } else if (clientY >= mid && clientY <= rect.bottom + 10) {
+      // Insert after this item
+      it.classList.add('drag-over-bottom');
+      targetIdx = idx + 1;
       break;
     }
   }
+  // Handle dragging below last item
+  if (targetIdx === fromIdx && items.length > 0) {
+    const lastItem = items[items.length - 1];
+    const lastIdx = parseInt(lastItem.dataset.index);
+    const lastRect = lastItem.getBoundingClientRect();
+    if (clientY > lastRect.bottom) {
+      lastItem.classList.add('drag-over-bottom');
+      targetIdx = lastIdx + 1;
+    }
+    // Handle dragging above first item
+    const firstItem = items[0];
+    const firstRect = firstItem.getBoundingClientRect();
+    if (clientY < firstRect.top) {
+      firstItem.classList.add('drag-over-top');
+      targetIdx = parseInt(firstItem.dataset.index);
+    }
+  }
+
+  dragState.targetIndex = targetIdx;
 }
 
 function endDrag() {
@@ -3899,32 +3951,16 @@ function endDrag() {
   const list = document.getElementById('editorWordList');
   const items = Array.from(list.querySelectorAll('.editor-word-item'));
   const fromIdx = dragState.fromIndex;
+  const targetIdx = dragState.targetIndex;
 
-  // Find drop target
-  let toIdx = fromIdx;
-  for (const it of items) {
-    if (it === dragState.el) continue;
-    const idx = parseInt(it.dataset.index);
-    if (it.classList.contains('drag-over-top')) {
-      toIdx = idx < fromIdx ? idx : idx;
-      break;
-    }
-    if (it.classList.contains('drag-over-bottom')) {
-      toIdx = idx < fromIdx ? idx + 1 : idx;
-      break;
-    }
-  }
+  // Clean up
+  items.forEach(it => it.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
 
-  // Clean up visual state
-  items.forEach(it => {
-    it.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging');
-  });
-
-  // Perform the move
-  if (toIdx !== fromIdx) {
+  // Perform move
+  if (targetIdx !== fromIdx && targetIdx !== fromIdx + 1) {
     const words = getActiveWords();
     const [moved] = words.splice(fromIdx, 1);
-    const insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
+    const insertAt = targetIdx > fromIdx ? targetIdx - 1 : targetIdx;
     words.splice(insertAt, 0, moved);
     saveState();
     showToast('並べ替えました');
@@ -3932,6 +3968,15 @@ function endDrag() {
 
   dragState = null;
   renderEditorList();
+}
+
+function cancelDrag() {
+  if (!dragState) return;
+  const list = document.getElementById('editorWordList');
+  Array.from(list.querySelectorAll('.editor-word-item')).forEach(it => {
+    it.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging');
+  });
+  dragState = null;
 }
 
 // --- Add word with position ---
