@@ -372,6 +372,7 @@ body::after {
   max-height: 200px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   border-radius: var(--radius);
   border: 1.5px solid var(--gray-200);
   background: var(--gray-50);
@@ -382,27 +383,39 @@ body::after {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   cursor: pointer;
   transition: all 0.15s;
   border-bottom: 1px solid var(--gray-100);
+  background: white;
 }
 .deck-item:last-child { border-bottom: none; }
-.deck-item:hover { background: var(--orange-50); }
 .deck-item.active {
-  background: white;
+  background: var(--orange-50);
   box-shadow: inset 3px 0 0 var(--orange-500);
 }
 .deck-item .di-icon {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+  background: var(--gray-200);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
+}
+.deck-item.active .di-icon {
+  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+}
+.deck-item .di-body {
+  flex: 1;
+  min-width: 0;
+}
+.deck-item .di-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .deck-item .di-info {
   flex: 1;
@@ -411,10 +424,13 @@ body::after {
 .deck-item .di-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--gray-800);
+  color: var(--gray-500);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.deck-item.active .di-name {
+  color: var(--gray-800);
 }
 .deck-item .di-meta {
   font-size: 11px;
@@ -442,6 +458,20 @@ body::after {
 .deck-item .di-btn:hover { background: var(--gray-100); }
 .deck-item .di-btn.delete { color: var(--gray-300); font-size: 14px; }
 .deck-item .di-btn.delete:hover { background: #FEE2E2; color: var(--red-500); }
+.deck-item .di-progress {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--gray-200);
+}
+.deck-item .di-progress .dp-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
 .deck-mini-progress {
   display: flex;
   gap: 3px;
@@ -1589,6 +1619,26 @@ body::after {
 .rename-input:focus { border-color: var(--orange-400); }
 input[type="search"].rename-input::-webkit-search-decoration,
 input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.rename-editable {
+  min-height: 20px;
+  line-height: 1.4;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.rename-editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--gray-300);
+  pointer-events: none;
+}
+.rename-editable:focus {
+  outline: none;
+  border-color: var(--orange-400);
+}
+.rename-editable br { display: none; }
+.rename-editable * { display: inline; }
 
 /* Word editor */
 #screen-word-editor {
@@ -2086,7 +2136,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">✏️</div>
     <h3>デッキ名を変更</h3>
-    <input type="search" id="renameInput" class="rename-input" placeholder="新しい名前" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="done">
+    <div id="renameInput" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="新しい名前"></div>
     <div class="confirm-buttons">
       <button class="confirm-cancel" onclick="closeRename()">キャンセル</button>
       <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="renameConfirmBtn">変更する</button>
@@ -2702,17 +2752,27 @@ function renderDeckList() {
   container.innerHTML = decks.map(deck => {
     const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
     deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
+    const total = deck.words.length || 1;
     const isActive = deck.id === activeDeckId;
     return `
       <div class="deck-item ${isActive ? 'active' : ''}" onclick="selectDeck('${deck.id}')">
         <div class="di-icon">📖</div>
-        <div class="di-info">
-          <div class="di-name">${escapeHtml(deck.name)}</div>
-          <div class="di-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
-        </div>
-        <div class="di-actions">
-          <button class="di-btn" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
-          <button class="di-btn delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
+        <div class="di-body">
+          <div class="di-top-row">
+            <div class="di-info">
+              <div class="di-name">${escapeHtml(deck.name)}</div>
+              <div class="di-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
+            </div>
+            <div class="di-actions">
+              <button class="di-btn" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
+              <button class="di-btn delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
+            </div>
+          </div>
+          <div class="di-progress">
+            <div class="dp-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
+            <div class="dp-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
+            <div class="dp-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
+          </div>
         </div>
       </div>
     `;
@@ -2764,11 +2824,31 @@ function renameDeck(id) {
   const deck = decks.find(d => d.id === id);
   if (!deck) return;
   renamingDeckId = id;
-  document.getElementById('renameInput').value = deck.name;
+  const input = document.getElementById('renameInput');
+  input.textContent = deck.name;
   document.getElementById('renameOverlay').classList.add('show');
-  setTimeout(() => document.getElementById('renameInput').focus(), 100);
+  setTimeout(() => {
+    input.focus();
+    // Place cursor at end
+    const range = document.createRange();
+    range.selectNodeContents(input);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }, 100);
+  // Prevent Enter key from adding line break
+  input.onkeydown = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('renameConfirmBtn').click(); }
+  };
+  // Prevent paste from adding HTML
+  input.onpaste = function(e) {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
   document.getElementById('renameConfirmBtn').onclick = function() {
-    const newName = document.getElementById('renameInput').value.trim();
+    const newName = input.textContent.trim();
     if (!newName) return;
     deck.name = newName;
     saveState();
