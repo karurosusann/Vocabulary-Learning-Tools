@@ -349,184 +349,224 @@ body::after {
 }
 
 /* ===== Deck Selector ===== */
-.deck-list-section {
-  margin-bottom: 20px;
+/* Horizontal Deck Carousel */
+.deck-carousel-section {
+  margin-bottom: 12px;
 }
-.deck-list-header {
+.deck-carousel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
-.deck-list-header h3 {
+.deck-carousel-header h3 {
   font-size: 14px;
   font-weight: 700;
   color: var(--gray-500);
 }
-.deck-list-count {
+.deck-carousel-count {
   font-size: 12px;
   font-weight: 600;
   color: var(--gray-400);
 }
-
-/* iOS Drum Roller Picker */
-.deck-picker-wrap {
+.deck-carousel-vp {
   position: relative;
-  border-radius: var(--radius);
-  border: 1.5px solid var(--gray-200);
-  background: var(--gray-50);
   overflow: hidden;
-}
-.deck-picker-viewport {
-  height: 180px;
-  overflow: hidden;
-  position: relative;
   -webkit-user-select: none;
   user-select: none;
-  cursor: grab;
+  padding: 8px 0;
+  margin: 0 -20px;
 }
-.deck-picker-viewport:active {
-  cursor: grabbing;
-}
-.deck-picker-roller {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
+.deck-carousel-track {
+  display: flex;
   will-change: transform;
-}
-.deck-picker-item {
-  height: 60px;
-  display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  position: relative;
-  opacity: 0.35;
-  transition: opacity 0.2s;
 }
-.deck-picker-item.selected {
+.deck-card {
+  flex-shrink: 0;
+  width: 130px;
+  margin: 0 6px;
+  background: white;
+  border-radius: 16px;
+  border: 2.5px solid var(--gray-150, #E5E7EB);
+  padding: 14px 8px 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.35s cubic-bezier(.23,1,.32,1), opacity 0.35s, border-color 0.35s, box-shadow 0.35s;
+  opacity: 0.4;
+  transform: scale(0.85);
+  cursor: pointer;
+}
+.deck-card.active {
+  border-color: var(--orange-400);
+  box-shadow: 0 4px 20px rgba(255,140,0,0.18), 0 0 0 1px var(--orange-200);
   opacity: 1;
+  transform: scale(1);
 }
-.deck-picker-item .dpi-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--gray-300), var(--gray-400));
+.deck-card .dc-donut {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 8px;
+  position: relative;
+}
+.deck-card .dc-donut svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.dc-donut circle {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.deck-card .dc-donut-center {
+  position: absolute;
+  inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-  transition: all 0.2s;
 }
-.deck-picker-item.selected .dpi-icon {
-  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+.deck-card .dc-pct {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gray-700);
+  line-height: 1;
 }
-.deck-picker-item .dpi-body {
-  flex: 1;
-  min-width: 0;
-}
-.deck-picker-item .dpi-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--gray-800);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.deck-picker-item .dpi-meta {
-  font-size: 11px;
+.deck-card .dc-pct-label {
+  font-size: 7px;
   color: var(--gray-400);
   margin-top: 1px;
 }
-.deck-picker-item .dpi-progress {
-  display: flex;
-  gap: 2px;
-  margin-top: 3px;
-  height: 3px;
-  border-radius: 2px;
-  overflow: hidden;
-  background: var(--gray-200);
-}
-.deck-picker-item .dpi-progress .dp-bar {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-/* Selection highlight band - sits behind items */
-.deck-picker-highlight {
-  position: absolute;
-  top: 60px;
-  left: 6px;
-  right: 6px;
-  height: 60px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.06), 0 0 0 1.5px var(--orange-200);
-  pointer-events: none;
-  z-index: 2;
-}
-/* Fade gradients at top and bottom - sit above everything */
-.deck-picker-fade-top,
-.deck-picker-fade-bottom {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 60px;
-  pointer-events: none;
-  z-index: 4;
-}
-.deck-picker-fade-top {
-  top: 0;
-  background: linear-gradient(to bottom, var(--gray-50) 5%, transparent);
-}
-.deck-picker-fade-bottom {
-  bottom: 0;
-  background: linear-gradient(to top, var(--gray-50) 5%, transparent);
-}
-
-/* Deck action buttons row */
-.deck-actions-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 14px 10px;
-  border-top: 1px solid var(--gray-100);
-  background: white;
-}
-.deck-action-pill {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 20px;
-  background: var(--gray-50);
+.deck-card .dc-name {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--gray-500);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  font-weight: 700;
+  color: var(--gray-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
-.deck-action-pill:hover {
-  background: var(--gray-100);
+.deck-card.active .dc-name {
+  color: var(--gray-800);
 }
-.deck-action-pill:active {
-  transform: scale(0.96);
-}
-.deck-action-pill.delete {
+.deck-card .dc-meta {
+  font-size: 10px;
   color: var(--gray-400);
 }
-.deck-action-pill.delete:hover {
-  background: #FEE2E2;
+/* Fade edges */
+.deck-carousel-vp::before,
+.deck-carousel-vp::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 28px;
+  z-index: 2;
+  pointer-events: none;
+}
+.deck-carousel-vp::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), transparent);
+}
+.deck-carousel-vp::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), transparent);
+}
+
+/* Deck edit overlay */
+.deck-edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeInOverlay 0.2s ease;
+}
+.deck-edit-overlay.show { display: flex; }
+.deck-edit-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 24px 20px 20px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  animation: modalPop 0.25s ease;
+}
+.deck-edit-modal h3 {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--gray-800);
+  text-align: center;
+  margin-bottom: 16px;
+}
+.deck-edit-name-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.deck-edit-name-row input {
+  flex: 1;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.deck-edit-name-row input:focus {
+  border-color: var(--orange-400);
+}
+.deck-edit-name-row button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--orange-500);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.deck-edit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.deck-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--gray-50);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  text-align: left;
+}
+.deck-edit-btn:hover { background: var(--gray-100); }
+.deck-edit-btn:active { transform: scale(0.98); }
+.deck-edit-btn .de-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+.deck-edit-btn.danger {
   color: var(--red-500);
 }
-.deck-action-pill .pill-icon {
-  font-size: 13px;
+.deck-edit-btn.danger:hover {
+  background: #FEE2E2;
 }
 
 /* Reorder overlay */
@@ -1124,6 +1164,30 @@ body::after {
   padding: 40px 24px;
   text-align: center;
   box-shadow: var(--shadow-lg);
+  position: relative;
+}
+.result-close-btn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  color: var(--gray-500);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.result-close-btn:hover {
+  background: var(--gray-200);
+}
+.result-close-btn:active {
+  transform: scale(0.9);
 }
 .quiz-result .result-icon {
   font-size: 56px;
@@ -1186,6 +1250,14 @@ body::after {
 }
 .result-btn.review-btn:hover {
   background: var(--orange-50);
+}
+.result-btn.next-quiz-btn {
+  background: var(--orange-500);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255,140,0,0.3);
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
 }
 .missed-section {
   text-align: left;
@@ -2075,24 +2147,14 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
-    <!-- Deck selector - iOS drum roller style -->
-    <div class="deck-list-section">
-      <div class="deck-list-header">
+    <!-- Deck selector - horizontal carousel -->
+    <div class="deck-carousel-section">
+      <div class="deck-carousel-header">
         <h3>📚 デッキ</h3>
-        <span class="deck-list-count" id="deckPickerCount">1/1</span>
+        <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
       </div>
-      <div class="deck-picker-wrap">
-        <div class="deck-picker-viewport" id="deckPickerViewport">
-          <div class="deck-picker-highlight"></div>
-          <div class="deck-picker-roller" id="deckPickerRoller"></div>
-          <div class="deck-picker-fade-top"></div>
-          <div class="deck-picker-fade-bottom"></div>
-        </div>
-        <div class="deck-actions-row" id="deckActionsRow">
-          <button class="deck-action-pill" onclick="renameDeck(activeDeckId)"><span class="pill-icon">✏️</span> 名前変更</button>
-          <button class="deck-action-pill" onclick="openReorderModal()"><span class="pill-icon">↕️</span> 並べ替え</button>
-          <button class="deck-action-pill delete" onclick="deleteDeck(activeDeckId)"><span class="pill-icon">✕</span> 削除</button>
-        </div>
+      <div class="deck-carousel-vp" id="carouselViewport">
+        <div class="deck-carousel-track" id="carouselTrack"></div>
       </div>
       <div style="margin-top:10px;">
         <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
@@ -2411,6 +2473,21 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <div class="confirm-buttons">
       <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
       <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deck Edit overlay -->
+<div class="deck-edit-overlay" id="deckEditOverlay" onclick="closeDeckEdit()">
+  <div class="deck-edit-modal" onclick="event.stopPropagation()">
+    <h3 id="deckEditTitle">📖 デッキを編集</h3>
+    <div class="deck-edit-name-row">
+      <input type="text" id="deckEditNameInput" placeholder="デッキ名" autocomplete="off">
+      <button onclick="saveDeckName()">保存</button>
+    </div>
+    <div class="deck-edit-actions">
+      <button class="deck-edit-btn" onclick="closeDeckEdit();openReorderModal()"><span class="de-icon">↕️</span> デッキの並べ替え</button>
+      <button class="deck-edit-btn danger" onclick="closeDeckEdit();deleteDeck(activeDeckId)"><span class="de-icon">🗑️</span> このデッキを削除</button>
     </div>
   </div>
 </div>
@@ -3065,208 +3142,227 @@ const DEMO_DECKS = {
 };
 
 // ============ DECK LIST ============
-// ============ DECK DRUM ROLLER PICKER ============
-const PICKER_ITEM_H = 60;
-let pickerOffset = 0;
-let pickerVelocity = 0;
-let pickerDragging = false;
-let pickerEventsAttached = false;
+// ============ HORIZONTAL DECK CAROUSEL ============
+const CARD_W = 142; // card width + margins
+let carouselOffset = 0;
+let carouselVelocity = 0;
+let carouselDragging = false;
+let carouselEventsReady = false;
+
+function buildDonutSVG(counts, total) {
+  const t = total || 1;
+  const R = 17, C = 2 * Math.PI * R;
+  const slices = [
+    { pct: counts.mastered / t, color: '#22C55E' },
+    { pct: counts.fuzzy / t, color: '#FACC15' },
+    { pct: counts.weak / t, color: '#EF4444' },
+    { pct: counts.unlearned / t, color: '#D1D5DB' }
+  ];
+  let offset = 0;
+  let circles = '';
+  slices.forEach(s => {
+    if (s.pct <= 0) return;
+    const len = s.pct * C;
+    circles += `<circle cx="24" cy="24" r="${R}" stroke="${s.color}" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-offset}" />`;
+    offset += len;
+  });
+  if (offset === 0) circles = `<circle cx="24" cy="24" r="${R}" stroke="#D1D5DB" stroke-dasharray="${C} 0" />`;
+  const pct = Math.round((counts.mastered / t) * 100);
+  return `<svg viewBox="0 0 48 48"><g style="transform:rotate(-90deg);transform-origin:center">${circles}</g></svg>
+    <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">習得</span></div>`;
+}
 
 function renderDeckList() {
   if (decks.length === 0) return;
-  const roller = document.getElementById('deckPickerRoller');
-  if (!roller) return;
-  
-  roller.innerHTML = decks.map((deck, i) => {
+  const track = document.getElementById('carouselTrack');
+  if (!track) return;
+
+  track.innerHTML = decks.map((deck, i) => {
     const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
     deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
-    const total = deck.words.length || 1;
+    const total = deck.words.length;
+    const isActive = deck.id === activeDeckId;
     return `
-      <div class="deck-picker-item" data-index="${i}" data-id="${deck.id}">
-        <div class="dpi-icon">📖</div>
-        <div class="dpi-body">
-          <div class="dpi-name">${escapeHtml(deck.name)}</div>
-          <div class="dpi-meta">${deck.words.length}問</div>
-          <div class="dpi-progress">
-            <div class="dp-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
-            <div class="dp-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
-            <div class="dp-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
-          </div>
-        </div>
+      <div class="deck-card ${isActive ? 'active' : ''}" data-index="${i}" data-id="${deck.id}" onclick="carouselTapCard(${i})">
+        <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
+        <div class="dc-name">${escapeHtml(deck.name)}</div>
+        <div class="dc-meta">${deck.words.length}問</div>
       </div>
     `;
   }).join('');
 
-  // Jump to active deck position
   const activeIdx = decks.findIndex(d => d.id === activeDeckId);
-  pickerOffset = -(activeIdx >= 0 ? activeIdx : 0) * PICKER_ITEM_H;
-  applyPickerPosition(false);
-  updatePickerHighlight();
-  
+  carouselOffset = calcCenterOffset(activeIdx >= 0 ? activeIdx : 0);
+  applyCarousel(false);
+
   const countEl = document.getElementById('deckPickerCount');
-  if (countEl) {
-    const idx = (activeIdx >= 0 ? activeIdx : 0) + 1;
-    countEl.textContent = `${idx} / ${decks.length}`;
-  }
+  if (countEl) countEl.textContent = `${(activeIdx >= 0 ? activeIdx : 0) + 1} / ${decks.length}`;
 
-  // Attach events once
-  if (!pickerEventsAttached) {
-    initPickerEvents();
-    pickerEventsAttached = true;
+  if (!carouselEventsReady) {
+    initCarouselEvents();
+    carouselEventsReady = true;
   }
 }
 
-function applyPickerPosition(animate) {
-  const roller = document.getElementById('deckPickerRoller');
-  if (!roller) return;
-  // The highlight band is at top:60px. We want item[selectedIdx] to align there.
-  // item[i] natural top = i * 60. With translateY = offset + 60, item[i] is at (i*60 + offset + 60).
-  // For selected item to be at y=60: selectedIdx*60 + offset + 60 = 60 → offset = -selectedIdx*60
-  const ty = pickerOffset + PICKER_ITEM_H;
-  roller.style.transition = animate ? 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)' : 'none';
-  roller.style.transform = `translateY(${ty}px)`;
+function calcCenterOffset(idx) {
+  const vp = document.getElementById('carouselViewport');
+  if (!vp) return 0;
+  const vpW = vp.clientWidth;
+  return -(idx * CARD_W) + (vpW / 2) - (CARD_W / 2);
 }
 
-function snapToNearest(animate) {
-  const maxOff = 0;
-  const minOff = -((decks.length - 1) * PICKER_ITEM_H);
-  pickerOffset = Math.max(minOff, Math.min(maxOff, pickerOffset));
-  
-  // Round to nearest item
-  const idx = Math.max(0, Math.min(decks.length - 1, Math.round(-pickerOffset / PICKER_ITEM_H)));
-  pickerOffset = -idx * PICKER_ITEM_H;
-  
-  applyPickerPosition(animate !== false);
-  
-  // Update selection
-  if (decks[idx] && decks[idx].id !== activeDeckId) {
+function applyCarousel(animate) {
+  const track = document.getElementById('carouselTrack');
+  if (!track) return;
+  track.style.transition = animate ? 'transform 0.35s cubic-bezier(.23,1,.32,1)' : 'none';
+  track.style.transform = `translateX(${carouselOffset}px)`;
+  updateCarouselCards();
+}
+
+function snapCarousel(animate) {
+  const vp = document.getElementById('carouselViewport');
+  if (!vp) return;
+  const vpW = vp.clientWidth;
+  // Find which card is closest to center
+  const center = vpW / 2;
+  let bestIdx = 0, bestDist = Infinity;
+  for (let i = 0; i < decks.length; i++) {
+    const cardCenter = carouselOffset + i * CARD_W + CARD_W / 2;
+    const dist = Math.abs(cardCenter - center);
+    if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+  }
+  carouselOffset = calcCenterOffset(bestIdx);
+  applyCarousel(animate !== false);
+
+  if (decks[bestIdx] && decks[bestIdx].id !== activeDeckId) {
+    activeDeckId = decks[bestIdx].id;
+    sfxSelect();
+    saveState();
+    updateDashboard();
+  }
+  updateCarouselCards();
+  const countEl = document.getElementById('deckPickerCount');
+  if (countEl) countEl.textContent = `${bestIdx + 1} / ${decks.length}`;
+}
+
+function updateCarouselCards() {
+  const track = document.getElementById('carouselTrack');
+  if (!track) return;
+  const vp = document.getElementById('carouselViewport');
+  if (!vp) return;
+  const center = vp.clientWidth / 2;
+  track.querySelectorAll('.deck-card').forEach((card, i) => {
+    const cardCenter = carouselOffset + i * CARD_W + CARD_W / 2;
+    const dist = Math.abs(cardCenter - center);
+    const isCenter = dist < CARD_W * 0.4;
+    card.classList.toggle('active', isCenter);
+  });
+}
+
+function carouselTapCard(idx) {
+  // If tapping the already-active card, open deck edit
+  if (decks[idx] && decks[idx].id === activeDeckId) {
+    openDeckEdit(decks[idx].id);
+    return;
+  }
+  carouselOffset = calcCenterOffset(idx);
+  if (decks[idx]) {
     activeDeckId = decks[idx].id;
     sfxSelect();
     saveState();
     updateDashboard();
   }
-  updatePickerHighlight();
-  
+  applyCarousel(true);
   const countEl = document.getElementById('deckPickerCount');
   if (countEl) countEl.textContent = `${idx + 1} / ${decks.length}`;
 }
 
-function updatePickerHighlight() {
-  const roller = document.getElementById('deckPickerRoller');
-  if (!roller) return;
-  const selIdx = Math.round(-pickerOffset / PICKER_ITEM_H);
-  roller.querySelectorAll('.deck-picker-item').forEach((el, i) => {
-    el.classList.toggle('selected', i === selIdx);
-  });
-}
-
-function initPickerEvents() {
-  const vp = document.getElementById('deckPickerViewport');
+function initCarouselEvents() {
+  const vp = document.getElementById('carouselViewport');
   if (!vp) return;
+  let startX = 0, lastX = 0, lastTime = 0, startOff = 0, hasMoved = false;
 
-  let startY = 0, lastY = 0, lastTime = 0, startOffset = 0, hasMoved = false;
-
-  // --- Touch ---
   vp.addEventListener('touchstart', (e) => {
-    pickerDragging = true;
+    carouselDragging = true;
     hasMoved = false;
-    startY = lastY = e.touches[0].clientY;
+    startX = lastX = e.touches[0].clientX;
     lastTime = Date.now();
-    startOffset = pickerOffset;
-    pickerVelocity = 0;
-    const roller = document.getElementById('deckPickerRoller');
-    if (roller) roller.style.transition = 'none';
+    startOff = carouselOffset;
+    carouselVelocity = 0;
+    const track = document.getElementById('carouselTrack');
+    if (track) track.style.transition = 'none';
   }, { passive: true });
 
   vp.addEventListener('touchmove', (e) => {
-    if (!pickerDragging) return;
-    const y = e.touches[0].clientY;
-    const dy = y - startY;
-    if (Math.abs(dy) > 3) hasMoved = true;
+    if (!carouselDragging) return;
+    const x = e.touches[0].clientX;
+    if (Math.abs(x - startX) > 5) hasMoved = true;
     const now = Date.now();
-    if (now - lastTime > 0) pickerVelocity = (y - lastY) / (now - lastTime);
-    lastY = y; lastTime = now;
-
-    let raw = startOffset + dy;
-    const maxOff = 0, minOff = -((decks.length - 1) * PICKER_ITEM_H);
+    if (now - lastTime > 0) carouselVelocity = (x - lastX) / (now - lastTime);
+    lastX = x; lastTime = now;
+    let raw = startOff + (x - startX);
     // Rubber band
+    const maxOff = calcCenterOffset(0);
+    const minOff = calcCenterOffset(decks.length - 1);
     if (raw > maxOff) raw = maxOff + (raw - maxOff) * 0.25;
     else if (raw < minOff) raw = minOff + (raw - minOff) * 0.25;
-    pickerOffset = raw;
-    applyPickerPosition(false);
-    updatePickerHighlight();
+    carouselOffset = raw;
+    applyCarousel(false);
   }, { passive: true });
 
   vp.addEventListener('touchend', (e) => {
-    if (!pickerDragging) return;
-    pickerDragging = false;
-    if (!hasMoved) {
-      // Tap to select
-      const touch = e.changedTouches[0];
-      handlePickerTap(vp, touch.clientY);
-      return;
-    }
-    pickerOffset += pickerVelocity * 120;
-    snapToNearest(true);
+    if (!carouselDragging) return;
+    carouselDragging = false;
+    if (!hasMoved) return; // tap handled by onclick
+    carouselOffset += carouselVelocity * 120;
+    snapCarousel(true);
   });
 
-  // --- Mouse ---
+  // Mouse
   vp.addEventListener('mousedown', (e) => {
     e.preventDefault();
-    pickerDragging = true;
+    carouselDragging = true;
     hasMoved = false;
-    startY = lastY = e.clientY;
+    startX = lastX = e.clientX;
     lastTime = Date.now();
-    startOffset = pickerOffset;
-    pickerVelocity = 0;
-    const roller = document.getElementById('deckPickerRoller');
-    if (roller) roller.style.transition = 'none';
-
+    startOff = carouselOffset;
+    carouselVelocity = 0;
+    const track = document.getElementById('carouselTrack');
+    if (track) track.style.transition = 'none';
     const onMove = (ev) => {
-      if (!pickerDragging) return;
-      const y = ev.clientY;
-      if (Math.abs(y - startY) > 3) hasMoved = true;
+      if (!carouselDragging) return;
+      const x = ev.clientX;
+      if (Math.abs(x - startX) > 5) hasMoved = true;
       const now = Date.now();
-      if (now - lastTime > 0) pickerVelocity = (y - lastY) / (now - lastTime);
-      lastY = y; lastTime = now;
-      let raw = startOffset + (y - startY);
-      const maxOff = 0, minOff = -((decks.length - 1) * PICKER_ITEM_H);
+      if (now - lastTime > 0) carouselVelocity = (x - lastX) / (now - lastTime);
+      lastX = x; lastTime = now;
+      let raw = startOff + (x - startX);
+      const maxOff = calcCenterOffset(0);
+      const minOff = calcCenterOffset(decks.length - 1);
       if (raw > maxOff) raw = maxOff + (raw - maxOff) * 0.25;
       else if (raw < minOff) raw = minOff + (raw - minOff) * 0.25;
-      pickerOffset = raw;
-      applyPickerPosition(false);
-      updatePickerHighlight();
+      carouselOffset = raw;
+      applyCarousel(false);
     };
-    const onUp = (ev) => {
-      pickerDragging = false;
+    const onUp = () => {
+      carouselDragging = false;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      if (!hasMoved) { handlePickerTap(vp, ev.clientY); return; }
-      pickerOffset += pickerVelocity * 120;
-      snapToNearest(true);
+      if (!hasMoved) return;
+      carouselOffset += carouselVelocity * 120;
+      snapCarousel(true);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
 
-  // --- Wheel ---
+  // Wheel (horizontal scroll)
   vp.addEventListener('wheel', (e) => {
     e.preventDefault();
-    pickerOffset -= (e.deltaY > 0 ? 1 : -1) * PICKER_ITEM_H;
-    snapToNearest(true);
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    carouselOffset -= delta > 0 ? CARD_W : -CARD_W;
+    snapCarousel(true);
   }, { passive: false });
-}
-
-function handlePickerTap(vp, clientY) {
-  const rect = vp.getBoundingClientRect();
-  const tapY = clientY - rect.top;
-  // rollerTop is where the roller's y=0 currently sits visually
-  const rollerVisualTop = pickerOffset + PICKER_ITEM_H;
-  const idx = Math.floor((tapY - rollerVisualTop) / PICKER_ITEM_H);
-  if (idx >= 0 && idx < decks.length) {
-    pickerOffset = -idx * PICKER_ITEM_H;
-    snapToNearest(true);
-  }
 }
 
 function selectDeck(id) {
@@ -3317,6 +3413,35 @@ function moveDeckInList(fromIdx, direction) {
   renderReorderList();
   renderDeckList();
   updateDashboard();
+}
+
+// ============ DECK EDIT MODAL ============
+function openDeckEdit(id) {
+  const deck = decks.find(d => d.id === id);
+  if (!deck) return;
+  const input = document.getElementById('deckEditNameInput');
+  input.value = deck.name;
+  input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveDeckName(); } };
+  document.getElementById('deckEditOverlay').classList.add('show');
+  setTimeout(() => { input.focus(); input.select(); }, 200);
+}
+
+function closeDeckEdit() {
+  document.getElementById('deckEditOverlay').classList.remove('show');
+}
+
+function saveDeckName() {
+  const input = document.getElementById('deckEditNameInput');
+  const newName = input.value.trim();
+  if (!newName) return;
+  const deck = decks.find(d => d.id === activeDeckId);
+  if (deck) {
+    deck.name = newName;
+    saveState();
+    renderDeckList();
+    showToast('デッキ名を変更しました');
+  }
+  closeDeckEdit();
 }
 
 function deleteDeck(id) {
@@ -3638,6 +3763,47 @@ let reviewMode = false;
 let reverseMode = false;
 let ttsMode = 'answer'; // 'question', 'answer', 'both', 'none'
 let quizOrder = 'asc'; // 'asc', 'desc', 'random'
+
+function startNextQuiz() {
+  // Re-start a quiz with the same settings (range, mode, drill, reverse, tts, order, count)
+  reviewMode = false;
+  let pool = getQuizPool();
+  if (pool.length === 0) {
+    showToast('出題できる問題がありません');
+    return;
+  }
+
+  // Apply order
+  if (quizOrder === 'random') {
+    pool = pool.sort(() => Math.random() - 0.5);
+  } else if (quizOrder === 'desc') {
+    pool = pool.reverse();
+  }
+
+  // Use the same count as last quiz
+  const lastCount = currentQuiz ? currentQuiz.totalCount : 10;
+  const count = Math.min(lastCount, pool.length);
+  pool = pool.slice(0, count);
+
+  // Save original levels before quiz
+  const beforeLevels = {};
+  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+
+  currentQuiz = {
+    words: pool,
+    index: 0,
+    correct: 0,
+    wrong: 0,
+    results: [],
+    totalCount: pool.length,
+    masteredCount: 0,
+    beforeLevels: beforeLevels
+  };
+
+  showScreen('quiz');
+  sfxStart();
+  showQuizQuestion();
+}
 
 function startMissedReview() {
   const missed = currentQuiz.results.filter(r => !r.correct);
@@ -4161,6 +4327,7 @@ function showResult() {
   }
 
   document.getElementById('resultContent').innerHTML = `
+    <button class="result-close-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">✕</button>
     <div class="result-icon">${emoji}</div>
     <h2>${msg}</h2>
     <p>${totalAnswered}問中 ${q.correct}問正解</p>
@@ -4179,9 +4346,9 @@ function showResult() {
       </div>
     </div>
     ${levelChangeHtml}
+    <button class="result-btn next-quiz-btn" onclick="startNextQuiz()">次の問題へ ▶</button>
     ${missedHtml}
     ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">まちがえた問題を復習する</button>' : ''}
-    <button class="result-btn" onclick="showScreen(\'dashboard\'); renderDeckList(); updateDashboard();">ホームに戻る</button>
   `;
 
   // Animate bars and counters after render
@@ -4723,7 +4890,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay'];
+  const overlayIds = ['confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
