@@ -633,6 +633,8 @@ body::after {
 .action-btn.review .icon { background: linear-gradient(135deg, var(--blue-400), var(--blue-500)); }
 .action-btn.list .icon { background: linear-gradient(135deg, var(--green-400), var(--green-600)); }
 .action-btn.edit-words .icon { background: linear-gradient(135deg, var(--gray-400), var(--gray-600)); }
+.action-btn.sync-export .icon { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+.action-btn.sync-import .icon { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
 .action-btn .text h3 {
   font-size: 16px;
   font-weight: 700;
@@ -1953,6 +1955,24 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
           <p>すべての単語を確認</p>
         </div>
       </button>
+    </div>
+
+    <div class="action-section">
+      <button class="action-btn sync-export" onclick="exportAllData()">
+        <div class="icon">📤</div>
+        <div class="text">
+          <h3>データをエクスポート</h3>
+          <p>全デッキ・進捗をJSONで保存</p>
+        </div>
+      </button>
+      <button class="action-btn sync-import" onclick="document.getElementById('importJsonInput').click()">
+        <div class="icon">📥</div>
+        <div class="text">
+          <h3>データをインポート</h3>
+          <p>JSONファイルから復元</p>
+        </div>
+      </button>
+      <input type="file" id="importJsonInput" accept=".json" style="display:none;" onchange="importAllData(event)">
     </div>
 
     <div class="reset-area">
@@ -4393,6 +4413,124 @@ function doResetAll() {
   localStorage.removeItem('mikan_activeDeck');
   showScreen('import');
   showToast('すべてのデッキを削除しました');
+}
+
+// ============ EXPORT / IMPORT ============
+function exportAllData() {
+  if (decks.length === 0) {
+    showToast('エクスポートするデッキがありません');
+    return;
+  }
+  const data = {
+    version: 1,
+    app: 'CSVocab',
+    exportedAt: new Date().toISOString(),
+    activeDeckId: activeDeckId,
+    decks: decks
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `csvocab_backup_${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📤 データをエクスポートしました');
+}
+
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Validate
+      if (!data.decks || !Array.isArray(data.decks)) {
+        showToast('❌ 無効なファイル形式です');
+        return;
+      }
+
+      // Check each deck has required fields
+      for (const deck of data.decks) {
+        if (!deck.id || !deck.name || !Array.isArray(deck.words)) {
+          showToast('❌ デッキデータが不正です');
+          return;
+        }
+      }
+
+      // Ask user how to import
+      const existingCount = decks.length;
+      if (existingCount > 0) {
+        showImportChoiceModal(data);
+      } else {
+        // No existing data, just load
+        applyImportData(data, 'replace');
+      }
+    } catch (err) {
+      showToast('❌ JSONの読み込みに失敗しました');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showImportChoiceModal(data) {
+  const deckNames = data.decks.map(d => d.name).join('、');
+  const overlay = document.getElementById('confirmOverlay');
+  const modal = overlay.querySelector('.confirm-modal');
+  modal.innerHTML = `
+    <div class="confirm-icon">📥</div>
+    <h3>インポート方法を選択</h3>
+    <p style="font-size:13px;color:var(--gray-500);margin:8px 0 4px;">読み込むデッキ: ${escapeHtml(deckNames)}</p>
+    <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px;">${data.decks.length}デッキ・${data.decks.reduce((s,d) => s + d.words.length, 0)}問</p>
+    <div class="confirm-buttons" style="flex-direction:column;gap:8px;">
+      <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" onclick="applyImportData(window._importData, 'merge'); closeConfirm();">
+        既存データに追加（マージ）
+      </button>
+      <button class="confirm-danger" style="background:var(--red-500);box-shadow:0 4px 12px rgba(239,68,68,0.3);" onclick="applyImportData(window._importData, 'replace'); closeConfirm();">
+        既存データを上書き（置換）
+      </button>
+      <button class="confirm-cancel" onclick="closeConfirm();">キャンセル</button>
+    </div>
+  `;
+  window._importData = data;
+  overlay.classList.add('show');
+}
+
+function applyImportData(data, mode) {
+  if (mode === 'replace') {
+    decks = data.decks;
+    activeDeckId = data.activeDeckId || (decks.length > 0 ? decks[0].id : null);
+  } else {
+    // Merge: add new decks, update existing by ID
+    const existingIds = new Set(decks.map(d => d.id));
+    for (const importDeck of data.decks) {
+      const existing = decks.find(d => d.id === importDeck.id);
+      if (existing) {
+        // Update existing deck
+        existing.name = importDeck.name;
+        existing.words = importDeck.words;
+      } else {
+        decks.push(importDeck);
+      }
+    }
+    if (!activeDeckId && decks.length > 0) {
+      activeDeckId = decks[0].id;
+    }
+  }
+
+  saveState();
+  renderDeckList();
+  updateDashboard();
+  showToast('📥 データをインポートしました（' + data.decks.length + 'デッキ）');
+  window._importData = null;
 }
 
 // ============ TOAST ============
