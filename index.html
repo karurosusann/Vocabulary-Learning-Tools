@@ -368,106 +368,298 @@ body::after {
   font-weight: 600;
   color: var(--gray-400);
 }
-.deck-list-scroll {
-  max-height: 200px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+
+/* iOS Drum Roller Picker */
+.deck-picker-wrap {
+  position: relative;
   border-radius: var(--radius);
   border: 1.5px solid var(--gray-200);
   background: var(--gray-50);
+  overflow: hidden;
 }
-.deck-list-scroll::-webkit-scrollbar { width: 3px; }
-.deck-list-scroll::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
-.deck-item {
+.deck-picker-viewport {
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.deck-picker-viewport:active {
+  cursor: grabbing;
+}
+.deck-picker-roller {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+.deck-picker-item {
+  height: 60px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: all 0.15s;
-  border-bottom: 1px solid var(--gray-100);
-  background: white;
-  border: 2px solid transparent;
-  border-bottom: 1px solid var(--gray-100);
+  padding: 0 14px;
+  transition: opacity 0.15s, transform 0.15s;
+  position: relative;
 }
-.deck-item:last-child { border-bottom: none; }
-.deck-item.active {
-  background: var(--gray-50);
-  border: 2px solid var(--orange-400);
-  border-radius: var(--radius-sm);
-}
-.deck-item .di-icon {
+.deck-picker-item .dpi-icon {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+  background: linear-gradient(135deg, var(--gray-300), var(--gray-400));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
+  transition: all 0.2s;
 }
-.deck-item .di-body {
+.deck-picker-item.selected .dpi-icon {
+  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+}
+.deck-picker-item .dpi-body {
   flex: 1;
   min-width: 0;
 }
-.deck-item .di-top-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.deck-item .di-info {
-  flex: 1;
-  min-width: 0;
-}
-.deck-item .di-name {
+.deck-picker-item .dpi-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--gray-800);
+  color: var(--gray-400);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.2s;
 }
-.deck-item .di-meta {
+.deck-picker-item.selected .dpi-name {
+  color: var(--gray-800);
+}
+.deck-picker-item .dpi-meta {
   font-size: 11px;
-  color: var(--gray-400);
+  color: var(--gray-300);
   margin-top: 1px;
+  transition: color 0.2s;
 }
-.deck-item .di-actions {
+.deck-picker-item.selected .dpi-meta {
+  color: var(--gray-500);
+}
+.deck-picker-item .dpi-progress {
   display: flex;
   gap: 2px;
-  flex-shrink: 0;
-}
-.deck-item .di-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-.deck-item .di-btn:hover { background: var(--gray-100); }
-.deck-item .di-btn.delete { color: var(--gray-300); font-size: 14px; }
-.deck-item .di-btn.delete:hover { background: #FEE2E2; color: var(--red-500); }
-.deck-item .di-progress {
-  display: flex;
-  gap: 2px;
-  margin-top: 4px;
+  margin-top: 3px;
   height: 3px;
   border-radius: 2px;
   overflow: hidden;
   background: var(--gray-200);
 }
-.deck-item .di-progress .dp-bar {
+.deck-picker-item .dpi-progress .dp-bar {
   height: 100%;
   border-radius: 2px;
   transition: width 0.3s;
+}
+/* Selection highlight band */
+.deck-picker-highlight {
+  position: absolute;
+  top: 60px;
+  left: 6px;
+  right: 6px;
+  height: 60px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06), 0 0 0 1.5px var(--orange-200);
+  pointer-events: none;
+  z-index: 1;
+}
+/* Fade gradients at top and bottom */
+.deck-picker-fade-top,
+.deck-picker-fade-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  pointer-events: none;
+  z-index: 2;
+}
+.deck-picker-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--gray-50) 10%, transparent);
+}
+.deck-picker-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--gray-50) 10%, transparent);
+}
+
+/* Deck action buttons row */
+.deck-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--gray-100);
+  background: white;
+}
+.deck-action-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 20px;
+  background: var(--gray-50);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.deck-action-pill:hover {
+  background: var(--gray-100);
+}
+.deck-action-pill:active {
+  transform: scale(0.96);
+}
+.deck-action-pill.delete {
+  color: var(--gray-400);
+}
+.deck-action-pill.delete:hover {
+  background: #FEE2E2;
+  color: var(--red-500);
+}
+.deck-action-pill .pill-icon {
+  font-size: 13px;
+}
+
+/* Reorder overlay */
+.reorder-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeInOverlay 0.2s ease;
+}
+.reorder-overlay.show { display: flex; }
+.reorder-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 20px 16px 16px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  animation: modalPop 0.25s ease;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.reorder-modal h3 {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--gray-800);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.reorder-modal .reorder-hint {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-align: center;
+  margin-bottom: 12px;
+}
+.reorder-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid var(--gray-100);
+}
+.reorder-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: white;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background 0.15s;
+}
+.reorder-item:last-child { border-bottom: none; }
+.reorder-item.dragging {
+  background: var(--orange-50);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 10;
+  border-radius: 10px;
+}
+.reorder-item .ro-handle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: grab;
+  color: var(--gray-300);
+  font-size: 16px;
+  flex-shrink: 0;
+  touch-action: none;
+}
+.reorder-item .ro-handle:active { cursor: grabbing; color: var(--gray-500); }
+.reorder-item .ro-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reorder-item .ro-count {
+  font-size: 11px;
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+.reorder-item .ro-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.reorder-item .ro-arrow-btn {
+  width: 28px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: var(--gray-50);
+  color: var(--gray-400);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.reorder-item .ro-arrow-btn:hover { background: var(--orange-50); color: var(--orange-500); }
+.reorder-item .ro-arrow-btn:active { transform: scale(0.9); }
+.reorder-item .ro-arrow-btn:disabled { opacity: 0.2; pointer-events: none; }
+.reorder-done-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(255,140,0,0.3);
 }
 .deck-mini-progress {
   display: flex;
@@ -1392,16 +1584,16 @@ body::after {
 }
 .mode-toggle {
   display: flex;
-  gap: 0;
+  gap: 6px;
   border-radius: 12px;
-  overflow: hidden;
-  border: 2px solid var(--gray-200);
+  overflow: visible;
   margin-bottom: 8px;
 }
 .mode-toggle-btn {
   flex: 1;
   padding: 14px;
-  border: none;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
   background: white;
   font-family: inherit;
   font-size: 15px;
@@ -1411,8 +1603,10 @@ body::after {
   transition: all 0.2s;
 }
 .mode-toggle-btn.active {
-  background: var(--orange-500);
-  color: white;
+  background: white;
+  color: var(--orange-500);
+  border-color: var(--orange-400);
+  box-shadow: 0 0 0 1px var(--orange-200);
 }
 .drill-desc {
   font-size: 12px;
@@ -1902,18 +2096,28 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
-    <!-- Deck selector - compact list -->
+    <!-- Deck selector - iOS drum roller style -->
     <div class="deck-list-section">
       <div class="deck-list-header">
         <h3>📚 デッキ</h3>
         <span class="deck-list-count" id="deckPickerCount">1/1</span>
       </div>
-      <div class="deck-list-scroll" id="deckListScroll">
-        <div id="deckList"></div>
+      <div class="deck-picker-wrap">
+        <div class="deck-picker-viewport" id="deckPickerViewport">
+          <div class="deck-picker-highlight"></div>
+          <div class="deck-picker-roller" id="deckPickerRoller"></div>
+          <div class="deck-picker-fade-top"></div>
+          <div class="deck-picker-fade-bottom"></div>
+        </div>
+        <div class="deck-actions-row" id="deckActionsRow">
+          <button class="deck-action-pill" onclick="renameDeck(activeDeckId)"><span class="pill-icon">✏️</span> 名前変更</button>
+          <button class="deck-action-pill" onclick="openReorderModal()"><span class="pill-icon">↕️</span> 並べ替え</button>
+          <button class="deck-action-pill delete" onclick="deleteDeck(activeDeckId)"><span class="pill-icon">✕</span> 削除</button>
+        </div>
       </div>
       <div style="margin-top:10px;">
         <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
-        <input type="file" id="fileInputAdd" accept=".csv,.txt" style="display:none" onchange="handleFileAdd(this.files[0])">
+        <input type="file" id="fileInputAdd" accept=".csv,.txt" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="handleFileAdd(this.files[0])">
       </div>
     </div>
 
@@ -1972,7 +2176,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
           <p>JSONファイルから復元</p>
         </div>
       </button>
-      <input type="file" id="importJsonInput" accept=".json" style="display:none;" onchange="importAllData(event)">
+      <input type="file" id="importJsonInput" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
     </div>
 
     <div class="reset-area">
@@ -2210,6 +2414,16 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   </div>
 </div>
 
+<!-- Reorder overlay -->
+<div class="reorder-overlay" id="reorderOverlay" onclick="closeReorder()">
+  <div class="reorder-modal" onclick="event.stopPropagation()">
+    <h3>📚 デッキの並べ替え</h3>
+    <p class="reorder-hint">ボタンで順番を入れ替え</p>
+    <div class="reorder-list" id="reorderList"></div>
+    <button class="reorder-done-btn" onclick="closeReorder()">完了</button>
+  </div>
+</div>
+
 <div class="confirm-overlay" id="confirmOverlay" onclick="closeConfirm()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">⚠️</div>
@@ -2292,6 +2506,13 @@ document.addEventListener('visibilitychange', () => {
       audioCtx = null;
       audioEnabled = false;
     }
+    // iOS Safari fix: when returning from file picker or background,
+    // ensure no phantom focus/touch state is blocking interactions
+    setTimeout(() => {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'file') {
+        document.activeElement.blur();
+      }
+    }, 100);
   }
 });
 
@@ -2548,7 +2769,11 @@ dropZone.addEventListener('drop', (e) => {
   dropZone.classList.remove('dragover');
   if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
-fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+fileInput.addEventListener('change', (e) => { 
+  if (e.target.files.length) handleFile(e.target.files[0]); 
+  e.target.value = '';
+  e.target.blur();
+});
 
 function handleFile(file) {
   const reader = new FileReader();
@@ -2562,8 +2787,10 @@ function handleFile(file) {
 
 function handleFileAdd(file) {
   if (!file) return;
+  const fileInput = document.getElementById('fileInputAdd');
+  fileInput.value = '';
+  fileInput.blur();
   handleFile(file);
-  document.getElementById('fileInputAdd').value = '';
 }
 
 function addDeckFromCSV(text, deckName) {
@@ -2836,29 +3063,28 @@ const DEMO_DECKS = {
 };
 
 // ============ DECK LIST ============
+// ============ DECK DRUM ROLLER PICKER ============
+let pickerOffset = 0;
+let pickerAnimFrame = null;
+let pickerVelocity = 0;
+let pickerDragging = false;
+const PICKER_ITEM_H = 60;
+
 function renderDeckList() {
   if (decks.length === 0) return;
-  const container = document.getElementById('deckList');
-  container.innerHTML = decks.map(deck => {
+  const roller = document.getElementById('deckPickerRoller');
+  
+  roller.innerHTML = decks.map((deck, i) => {
     const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
     deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
     const total = deck.words.length || 1;
-    const isActive = deck.id === activeDeckId;
     return `
-      <div class="deck-item ${isActive ? 'active' : ''}" onclick="selectDeck('${deck.id}')">
-        <div class="di-icon">📖</div>
-        <div class="di-body">
-          <div class="di-top-row">
-            <div class="di-info">
-              <div class="di-name">${escapeHtml(deck.name)}</div>
-              <div class="di-meta">${deck.words.length}問 ・ 覚えた ${counts.mastered}問</div>
-            </div>
-            <div class="di-actions">
-              <button class="di-btn" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
-              <button class="di-btn delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
-            </div>
-          </div>
-          <div class="di-progress">
+      <div class="deck-picker-item" data-index="${i}" data-id="${deck.id}">
+        <div class="dpi-icon">📖</div>
+        <div class="dpi-body">
+          <div class="dpi-name">${escapeHtml(deck.name)}</div>
+          <div class="dpi-meta">${deck.words.length}問 ・ 覚えた ${counts.mastered}問</div>
+          <div class="dpi-progress">
             <div class="dp-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
             <div class="dp-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
             <div class="dp-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
@@ -2868,23 +3094,265 @@ function renderDeckList() {
     `;
   }).join('');
 
+  // Scroll to active deck
+  const activeIdx = decks.findIndex(d => d.id === activeDeckId);
+  pickerOffset = -(activeIdx >= 0 ? activeIdx : 0) * PICKER_ITEM_H;
+  applyPickerTransform(false);
+  updatePickerSelection();
+  
   const countEl = document.getElementById('deckPickerCount');
   if (countEl) {
     const idx = decks.findIndex(d => d.id === activeDeckId) + 1;
     countEl.textContent = `${idx} / ${decks.length}`;
   }
 
-  // Scroll active item into view
-  setTimeout(() => {
-    const active = container.querySelector('.deck-item.active');
-    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 50);
+  // Initialize touch/mouse events
+  initPickerEvents();
+}
+
+function applyPickerTransform(animate) {
+  const roller = document.getElementById('deckPickerRoller');
+  if (!roller) return;
+  // Offset so selected item sits in the middle slot (60px from top)
+  const translateY = pickerOffset + PICKER_ITEM_H;
+  if (animate) {
+    roller.style.transition = 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)';
+  } else {
+    roller.style.transition = 'none';
+  }
+  roller.style.transform = `translateY(${translateY}px)`;
+}
+
+function snapPicker(animate) {
+  const maxOffset = 0;
+  const minOffset = -((decks.length - 1) * PICKER_ITEM_H);
+  
+  // Clamp
+  if (pickerOffset > maxOffset) pickerOffset = maxOffset;
+  if (pickerOffset < minOffset) pickerOffset = minOffset;
+  
+  // Snap to nearest item
+  const idx = Math.round(-pickerOffset / PICKER_ITEM_H);
+  const clampedIdx = Math.max(0, Math.min(decks.length - 1, idx));
+  pickerOffset = -clampedIdx * PICKER_ITEM_H;
+  
+  applyPickerTransform(animate !== false);
+  
+  // Select the deck
+  if (decks[clampedIdx] && decks[clampedIdx].id !== activeDeckId) {
+    activeDeckId = decks[clampedIdx].id;
+    sfxSelect();
+    saveState();
+    updateDashboard();
+  }
+  updatePickerSelection();
+  
+  const countEl = document.getElementById('deckPickerCount');
+  if (countEl) countEl.textContent = `${clampedIdx + 1} / ${decks.length}`;
+}
+
+function updatePickerSelection() {
+  const roller = document.getElementById('deckPickerRoller');
+  if (!roller) return;
+  const selectedIdx = Math.round(-pickerOffset / PICKER_ITEM_H);
+  roller.querySelectorAll('.deck-picker-item').forEach((item, i) => {
+    item.classList.toggle('selected', i === selectedIdx);
+  });
+}
+
+function initPickerEvents() {
+  const viewport = document.getElementById('deckPickerViewport');
+  if (!viewport) return;
+  
+  // Remove old listeners by cloning
+  const newViewport = viewport.cloneNode(true);
+  viewport.parentNode.replaceChild(newViewport, viewport);
+  
+  // Re-acquire references after clone
+  const vp = document.getElementById('deckPickerViewport');
+  
+  let startY = 0, lastY = 0, lastTime = 0, startOffset = 0;
+  let hasMoved = false;
+  
+  // Touch events
+  vp.addEventListener('touchstart', (e) => {
+    pickerDragging = true;
+    hasMoved = false;
+    startY = e.touches[0].clientY;
+    lastY = startY;
+    lastTime = Date.now();
+    startOffset = pickerOffset;
+    pickerVelocity = 0;
+    if (pickerAnimFrame) { cancelAnimationFrame(pickerAnimFrame); pickerAnimFrame = null; }
+    const roller = document.getElementById('deckPickerRoller');
+    if (roller) roller.style.transition = 'none';
+  }, { passive: true });
+  
+  vp.addEventListener('touchmove', (e) => {
+    if (!pickerDragging) return;
+    const y = e.touches[0].clientY;
+    const dy = y - startY;
+    hasMoved = hasMoved || Math.abs(dy) > 3;
+    const now = Date.now();
+    const dt = now - lastTime;
+    if (dt > 0) pickerVelocity = (y - lastY) / dt;
+    lastY = y;
+    lastTime = now;
+    
+    // Rubber band effect at edges
+    let newOffset = startOffset + dy;
+    const maxOffset = 0;
+    const minOffset = -((decks.length - 1) * PICKER_ITEM_H);
+    if (newOffset > maxOffset) {
+      newOffset = maxOffset + (newOffset - maxOffset) * 0.3;
+    } else if (newOffset < minOffset) {
+      newOffset = minOffset + (newOffset - minOffset) * 0.3;
+    }
+    pickerOffset = newOffset;
+    applyPickerTransform(false);
+    updatePickerSelection();
+  }, { passive: true });
+  
+  vp.addEventListener('touchend', (e) => {
+    if (!pickerDragging) return;
+    pickerDragging = false;
+    
+    if (!hasMoved) {
+      // Tap - determine which item was tapped
+      const touch = e.changedTouches[0];
+      const rect = vp.getBoundingClientRect();
+      const tapY = touch.clientY - rect.top;
+      const rollerTop = pickerOffset + PICKER_ITEM_H;
+      const itemIdx = Math.floor((tapY - rollerTop) / PICKER_ITEM_H);
+      if (itemIdx >= 0 && itemIdx < decks.length) {
+        pickerOffset = -itemIdx * PICKER_ITEM_H;
+        snapPicker(true);
+      }
+      return;
+    }
+    
+    // Momentum
+    const momentum = pickerVelocity * 120;
+    pickerOffset += momentum;
+    snapPicker(true);
+  });
+  
+  // Mouse events (for desktop)
+  vp.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    pickerDragging = true;
+    hasMoved = false;
+    startY = e.clientY;
+    lastY = startY;
+    lastTime = Date.now();
+    startOffset = pickerOffset;
+    pickerVelocity = 0;
+    if (pickerAnimFrame) { cancelAnimationFrame(pickerAnimFrame); pickerAnimFrame = null; }
+    const roller = document.getElementById('deckPickerRoller');
+    if (roller) roller.style.transition = 'none';
+    
+    const onMove = (ev) => {
+      if (!pickerDragging) return;
+      const y = ev.clientY;
+      const dy = y - startY;
+      hasMoved = hasMoved || Math.abs(dy) > 3;
+      const now = Date.now();
+      const dt = now - lastTime;
+      if (dt > 0) pickerVelocity = (y - lastY) / dt;
+      lastY = y;
+      lastTime = now;
+      
+      let newOffset = startOffset + dy;
+      const maxOffset = 0;
+      const minOffset = -((decks.length - 1) * PICKER_ITEM_H);
+      if (newOffset > maxOffset) newOffset = maxOffset + (newOffset - maxOffset) * 0.3;
+      else if (newOffset < minOffset) newOffset = minOffset + (newOffset - minOffset) * 0.3;
+      pickerOffset = newOffset;
+      applyPickerTransform(false);
+      updatePickerSelection();
+    };
+    
+    const onUp = (ev) => {
+      pickerDragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      
+      if (!hasMoved) {
+        const rect = vp.getBoundingClientRect();
+        const tapY = ev.clientY - rect.top;
+        const rollerTop = pickerOffset + PICKER_ITEM_H;
+        const itemIdx = Math.floor((tapY - rollerTop) / PICKER_ITEM_H);
+        if (itemIdx >= 0 && itemIdx < decks.length) {
+          pickerOffset = -itemIdx * PICKER_ITEM_H;
+          snapPicker(true);
+        }
+        return;
+      }
+      
+      const momentum = pickerVelocity * 120;
+      pickerOffset += momentum;
+      snapPicker(true);
+    };
+    
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  
+  // Mouse wheel
+  vp.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? PICKER_ITEM_H : -PICKER_ITEM_H;
+    pickerOffset -= delta;
+    snapPicker(true);
+  }, { passive: false });
 }
 
 function selectDeck(id) {
   sfxSelect();
   activeDeckId = id;
   saveState();
+  renderDeckList();
+  updateDashboard();
+}
+
+// ============ REORDER DECKS ============
+function openReorderModal() {
+  if (decks.length < 2) {
+    showToast('並べ替えるには2つ以上のデッキが必要です');
+    return;
+  }
+  renderReorderList();
+  document.getElementById('reorderOverlay').classList.add('show');
+}
+
+function closeReorder() {
+  document.getElementById('reorderOverlay').classList.remove('show');
+}
+
+function renderReorderList() {
+  const list = document.getElementById('reorderList');
+  list.innerHTML = decks.map((deck, i) => `
+    <div class="reorder-item" data-index="${i}">
+      <div class="ro-name">${escapeHtml(deck.name)}</div>
+      <div class="ro-count">${deck.words.length}問</div>
+      <div class="ro-arrows">
+        <button class="ro-arrow-btn" onclick="moveDeckInList(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+        <button class="ro-arrow-btn" onclick="moveDeckInList(${i}, 1)" ${i === decks.length - 1 ? 'disabled' : ''}>▼</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function moveDeckInList(fromIdx, direction) {
+  const toIdx = fromIdx + direction;
+  if (toIdx < 0 || toIdx >= decks.length) return;
+  sfxTap();
+  // Swap
+  const temp = decks[fromIdx];
+  decks[fromIdx] = decks[toIdx];
+  decks[toIdx] = temp;
+  saveState();
+  renderReorderList();
   renderDeckList();
   updateDashboard();
 }
@@ -4378,11 +4846,30 @@ function deleteWord(index) {
 let pendingConfirmAction = null;
 
 function confirmAction(title, desc, action, btnLabel) {
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmDesc').textContent = desc;
-  document.getElementById('confirmDangerBtn').textContent = btnLabel || 'リセットする';
-  pendingConfirmAction = action;
+  // Ensure the confirm modal structure is intact before using it
+  if (!document.getElementById('confirmTitle')) {
+    const modal = document.querySelector('#confirmOverlay .confirm-modal');
+    if (modal) {
+      modal.innerHTML = `
+        <div class="confirm-icon">⚠️</div>
+        <h3 id="confirmTitle">本当にリセットしますか？</h3>
+        <p id="confirmDesc">この操作は取り消せません。</p>
+        <div class="confirm-buttons">
+          <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
+          <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+        </div>
+      `;
+    }
+  }
+  const titleEl = document.getElementById('confirmTitle');
+  const descEl = document.getElementById('confirmDesc');
   const btn = document.getElementById('confirmDangerBtn');
+  if (!titleEl || !descEl || !btn) return; // Safety check
+  
+  titleEl.textContent = title;
+  descEl.textContent = desc;
+  btn.textContent = btnLabel || 'リセットする';
+  pendingConfirmAction = action;
   btn.onclick = function() {
     const actionToRun = pendingConfirmAction;
     closeConfirm();
@@ -4394,6 +4881,44 @@ function confirmAction(title, desc, action, btnLabel) {
 function closeConfirm() {
   document.getElementById('confirmOverlay').classList.remove('show');
   pendingConfirmAction = null;
+  // Restore original confirm modal structure (may have been replaced by import modal)
+  const modal = document.querySelector('#confirmOverlay .confirm-modal');
+  if (!document.getElementById('confirmTitle')) {
+    modal.innerHTML = `
+      <div class="confirm-icon">⚠️</div>
+      <h3 id="confirmTitle">本当にリセットしますか？</h3>
+      <p id="confirmDesc">この操作は取り消せません。</p>
+      <div class="confirm-buttons">
+        <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
+        <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+      </div>
+    `;
+  }
+  window._importData = null;
+}
+
+// Close all overlays - used after import to ensure clean state on iOS
+function closeAllOverlays() {
+  const overlayIds = ['confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay'];
+  overlayIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  pendingConfirmAction = null;
+  window._importData = null;
+  // Restore confirm modal structure if needed
+  const modal = document.querySelector('#confirmOverlay .confirm-modal');
+  if (modal && !document.getElementById('confirmTitle')) {
+    modal.innerHTML = `
+      <div class="confirm-icon">⚠️</div>
+      <h3 id="confirmTitle">本当にリセットしますか？</h3>
+      <p id="confirmDesc">この操作は取り消せません。</p>
+      <div class="confirm-buttons">
+        <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
+        <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+      </div>
+    `;
+  }
 }
 
 function doResetCurrentDeck() {
@@ -4443,12 +4968,24 @@ function exportAllData() {
 }
 
 function importAllData(event) {
-  const file = event.target.files[0];
+  const fileInput = event.target;
+  const file = fileInput.files[0];
   if (!file) return;
-  event.target.value = '';
+
+  // iOS Safari fix: aggressively reset file input to prevent phantom overlay blocking touches
+  fileInput.value = '';
+  fileInput.blur();
+  if (document.activeElement === fileInput) {
+    document.activeElement.blur();
+  }
 
   const reader = new FileReader();
   reader.onload = function(e) {
+    // iOS Safari fix: ensure no element retains focus that could block interactions
+    if (document.activeElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
+
     try {
       const data = JSON.parse(e.target.result);
 
@@ -4491,16 +5028,29 @@ function showImportChoiceModal(data) {
     <p style="font-size:13px;color:var(--gray-500);margin:8px 0 4px;">読み込むデッキ: ${escapeHtml(deckNames)}</p>
     <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px;">${data.decks.length}デッキ・${data.decks.reduce((s,d) => s + d.words.length, 0)}問</p>
     <div class="confirm-buttons" style="flex-direction:column;gap:8px;">
-      <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" onclick="applyImportData(window._importData, 'merge'); closeConfirm();">
+      <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" id="importMergeBtn">
         既存データに追加（マージ）
       </button>
-      <button class="confirm-danger" style="background:var(--red-500);box-shadow:0 4px 12px rgba(239,68,68,0.3);" onclick="applyImportData(window._importData, 'replace'); closeConfirm();">
+      <button class="confirm-danger" style="background:var(--red-500);box-shadow:0 4px 12px rgba(239,68,68,0.3);" id="importReplaceBtn">
         既存データを上書き（置換）
       </button>
       <button class="confirm-cancel" onclick="closeConfirm();">キャンセル</button>
     </div>
   `;
   window._importData = data;
+  
+  // Use addEventListener instead of inline onclick for more reliable iOS behavior
+  document.getElementById('importMergeBtn').addEventListener('click', function() {
+    const d = window._importData;
+    closeConfirm();
+    if (d) applyImportData(d, 'merge');
+  });
+  document.getElementById('importReplaceBtn').addEventListener('click', function() {
+    const d = window._importData;
+    closeConfirm();
+    if (d) applyImportData(d, 'replace');
+  });
+  
   overlay.classList.add('show');
 }
 
@@ -4531,6 +5081,14 @@ function applyImportData(data, mode) {
   updateDashboard();
   showToast('📥 データをインポートしました（' + data.decks.length + 'デッキ）');
   window._importData = null;
+
+  // iOS Safari fix: ensure all overlays are properly closed after import
+  closeAllOverlays();
+  
+  // iOS Safari fix: reset any lingering focus/touch state
+  if (document.activeElement && document.activeElement !== document.body) {
+    document.activeElement.blur();
+  }
 }
 
 // ============ TOAST ============
