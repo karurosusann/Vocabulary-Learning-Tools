@@ -383,7 +383,6 @@ body::after {
   position: relative;
   -webkit-user-select: none;
   user-select: none;
-  touch-action: pan-y;
   cursor: grab;
 }
 .deck-picker-viewport:active {
@@ -394,6 +393,7 @@ body::after {
   top: 0;
   left: 0;
   right: 0;
+  z-index: 3;
   will-change: transform;
 }
 .deck-picker-item {
@@ -402,8 +402,12 @@ body::after {
   align-items: center;
   gap: 10px;
   padding: 0 14px;
-  transition: opacity 0.15s, transform 0.15s;
   position: relative;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+.deck-picker-item.selected {
+  opacity: 1;
 }
 .deck-picker-item .dpi-icon {
   width: 32px;
@@ -427,23 +431,15 @@ body::after {
 .deck-picker-item .dpi-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--gray-400);
+  color: var(--gray-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.2s;
-}
-.deck-picker-item.selected .dpi-name {
-  color: var(--gray-800);
 }
 .deck-picker-item .dpi-meta {
   font-size: 11px;
-  color: var(--gray-300);
+  color: var(--gray-400);
   margin-top: 1px;
-  transition: color 0.2s;
-}
-.deck-picker-item.selected .dpi-meta {
-  color: var(--gray-500);
 }
 .deck-picker-item .dpi-progress {
   display: flex;
@@ -459,7 +455,7 @@ body::after {
   border-radius: 2px;
   transition: width 0.3s;
 }
-/* Selection highlight band */
+/* Selection highlight band - sits behind items */
 .deck-picker-highlight {
   position: absolute;
   top: 60px;
@@ -470,9 +466,9 @@ body::after {
   border-radius: 12px;
   box-shadow: 0 1px 8px rgba(0,0,0,0.06), 0 0 0 1.5px var(--orange-200);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
-/* Fade gradients at top and bottom */
+/* Fade gradients at top and bottom - sit above everything */
 .deck-picker-fade-top,
 .deck-picker-fade-bottom {
   position: absolute;
@@ -480,15 +476,15 @@ body::after {
   right: 0;
   height: 60px;
   pointer-events: none;
-  z-index: 2;
+  z-index: 4;
 }
 .deck-picker-fade-top {
   top: 0;
-  background: linear-gradient(to bottom, var(--gray-50) 10%, transparent);
+  background: linear-gradient(to bottom, var(--gray-50) 5%, transparent);
 }
 .deck-picker-fade-bottom {
   bottom: 0;
-  background: linear-gradient(to top, var(--gray-50) 10%, transparent);
+  background: linear-gradient(to top, var(--gray-50) 5%, transparent);
 }
 
 /* Deck action buttons row */
@@ -2012,33 +2008,6 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   font-weight: 700;
   cursor: pointer;
 }
-.ew-drag-handle {
-  color: var(--gray-300);
-  font-size: 18px;
-  cursor: grab;
-  padding: 0 2px;
-  flex-shrink: 0;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.editor-word-item.dragging {
-  opacity: 0.4;
-  z-index: 100;
-  background: var(--orange-50);
-  border: 2px dashed var(--orange-400);
-  border-radius: var(--radius-sm);
-}
-.editor-word-item.drag-over-top {
-  box-shadow: 0 -3px 0 0 var(--orange-500);
-  margin-top: 6px;
-  transition: margin 0.15s;
-}
-.editor-word-item.drag-over-bottom {
-  box-shadow: 0 3px 0 0 var(--orange-500);
-  margin-bottom: 6px;
-  transition: margin 0.15s;
-}
 .edit-word-modal .rename-input { margin-bottom: 10px; }
 
 /* Reset button */
@@ -2091,6 +2060,16 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     </div>
     <div style="text-align:center;margin-top:20px;">
       <button class="demo-btn" onclick="loadDemo()">デモ問題で試す</button>
+    </div>
+
+    <div style="margin-top:24px;padding:16px;background:white;border-radius:var(--radius);box-shadow:var(--shadow-sm);">
+      <div style="text-align:center;margin-bottom:8px;">
+        <span style="font-size:24px;">📲</span>
+      </div>
+      <h4 style="font-size:14px;font-weight:700;color:var(--gray-700);text-align:center;margin-bottom:4px;">他の端末からデータを移行</h4>
+      <p style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:12px;line-height:1.5;">エクスポートしたJSONファイルから<br>デッキと学習進捗をまとめて復元できます</p>
+      <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('importJsonInitial').click()">📥 JSONデータをインポート</button>
+      <input type="file" id="importJsonInitial" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
     </div>
   </div>
 
@@ -2719,6 +2698,29 @@ function saveState() {
     localStorage.setItem('mikan_activeDeck', activeDeckId);
   } catch(e) {}
 }
+
+// Per-deck quiz settings persistence
+function saveDeckSettings(deckId) {
+  if (!deckId) return;
+  try {
+    const settings = {
+      drillMode: quizDrillMode,
+      reverse: reverseMode,
+      tts: ttsMode,
+      order: quizOrder
+    };
+    localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
+  } catch(e) {}
+}
+
+function loadDeckSettings(deckId) {
+  if (!deckId) return null;
+  try {
+    const raw = localStorage.getItem('mikan_deckSettings_' + deckId);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
 function loadState() {
   try {
     // Migration from old format
@@ -3064,15 +3066,16 @@ const DEMO_DECKS = {
 
 // ============ DECK LIST ============
 // ============ DECK DRUM ROLLER PICKER ============
+const PICKER_ITEM_H = 60;
 let pickerOffset = 0;
-let pickerAnimFrame = null;
 let pickerVelocity = 0;
 let pickerDragging = false;
-const PICKER_ITEM_H = 60;
+let pickerEventsAttached = false;
 
 function renderDeckList() {
   if (decks.length === 0) return;
   const roller = document.getElementById('deckPickerRoller');
+  if (!roller) return;
   
   roller.innerHTML = decks.map((deck, i) => {
     const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
@@ -3083,7 +3086,7 @@ function renderDeckList() {
         <div class="dpi-icon">📖</div>
         <div class="dpi-body">
           <div class="dpi-name">${escapeHtml(deck.name)}</div>
-          <div class="dpi-meta">${deck.words.length}問 ・ 覚えた ${counts.mastered}問</div>
+          <div class="dpi-meta">${deck.words.length}問</div>
           <div class="dpi-progress">
             <div class="dp-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
             <div class="dp-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
@@ -3094,217 +3097,176 @@ function renderDeckList() {
     `;
   }).join('');
 
-  // Scroll to active deck
+  // Jump to active deck position
   const activeIdx = decks.findIndex(d => d.id === activeDeckId);
   pickerOffset = -(activeIdx >= 0 ? activeIdx : 0) * PICKER_ITEM_H;
-  applyPickerTransform(false);
-  updatePickerSelection();
+  applyPickerPosition(false);
+  updatePickerHighlight();
   
   const countEl = document.getElementById('deckPickerCount');
   if (countEl) {
-    const idx = decks.findIndex(d => d.id === activeDeckId) + 1;
+    const idx = (activeIdx >= 0 ? activeIdx : 0) + 1;
     countEl.textContent = `${idx} / ${decks.length}`;
   }
 
-  // Initialize touch/mouse events
-  initPickerEvents();
+  // Attach events once
+  if (!pickerEventsAttached) {
+    initPickerEvents();
+    pickerEventsAttached = true;
+  }
 }
 
-function applyPickerTransform(animate) {
+function applyPickerPosition(animate) {
   const roller = document.getElementById('deckPickerRoller');
   if (!roller) return;
-  // Offset so selected item sits in the middle slot (60px from top)
-  const translateY = pickerOffset + PICKER_ITEM_H;
-  if (animate) {
-    roller.style.transition = 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)';
-  } else {
-    roller.style.transition = 'none';
-  }
-  roller.style.transform = `translateY(${translateY}px)`;
+  // The highlight band is at top:60px. We want item[selectedIdx] to align there.
+  // item[i] natural top = i * 60. With translateY = offset + 60, item[i] is at (i*60 + offset + 60).
+  // For selected item to be at y=60: selectedIdx*60 + offset + 60 = 60 → offset = -selectedIdx*60
+  const ty = pickerOffset + PICKER_ITEM_H;
+  roller.style.transition = animate ? 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)' : 'none';
+  roller.style.transform = `translateY(${ty}px)`;
 }
 
-function snapPicker(animate) {
-  const maxOffset = 0;
-  const minOffset = -((decks.length - 1) * PICKER_ITEM_H);
+function snapToNearest(animate) {
+  const maxOff = 0;
+  const minOff = -((decks.length - 1) * PICKER_ITEM_H);
+  pickerOffset = Math.max(minOff, Math.min(maxOff, pickerOffset));
   
-  // Clamp
-  if (pickerOffset > maxOffset) pickerOffset = maxOffset;
-  if (pickerOffset < minOffset) pickerOffset = minOffset;
+  // Round to nearest item
+  const idx = Math.max(0, Math.min(decks.length - 1, Math.round(-pickerOffset / PICKER_ITEM_H)));
+  pickerOffset = -idx * PICKER_ITEM_H;
   
-  // Snap to nearest item
-  const idx = Math.round(-pickerOffset / PICKER_ITEM_H);
-  const clampedIdx = Math.max(0, Math.min(decks.length - 1, idx));
-  pickerOffset = -clampedIdx * PICKER_ITEM_H;
+  applyPickerPosition(animate !== false);
   
-  applyPickerTransform(animate !== false);
-  
-  // Select the deck
-  if (decks[clampedIdx] && decks[clampedIdx].id !== activeDeckId) {
-    activeDeckId = decks[clampedIdx].id;
+  // Update selection
+  if (decks[idx] && decks[idx].id !== activeDeckId) {
+    activeDeckId = decks[idx].id;
     sfxSelect();
     saveState();
     updateDashboard();
   }
-  updatePickerSelection();
+  updatePickerHighlight();
   
   const countEl = document.getElementById('deckPickerCount');
-  if (countEl) countEl.textContent = `${clampedIdx + 1} / ${decks.length}`;
+  if (countEl) countEl.textContent = `${idx + 1} / ${decks.length}`;
 }
 
-function updatePickerSelection() {
+function updatePickerHighlight() {
   const roller = document.getElementById('deckPickerRoller');
   if (!roller) return;
-  const selectedIdx = Math.round(-pickerOffset / PICKER_ITEM_H);
-  roller.querySelectorAll('.deck-picker-item').forEach((item, i) => {
-    item.classList.toggle('selected', i === selectedIdx);
+  const selIdx = Math.round(-pickerOffset / PICKER_ITEM_H);
+  roller.querySelectorAll('.deck-picker-item').forEach((el, i) => {
+    el.classList.toggle('selected', i === selIdx);
   });
 }
 
 function initPickerEvents() {
-  const viewport = document.getElementById('deckPickerViewport');
-  if (!viewport) return;
-  
-  // Remove old listeners by cloning
-  const newViewport = viewport.cloneNode(true);
-  viewport.parentNode.replaceChild(newViewport, viewport);
-  
-  // Re-acquire references after clone
   const vp = document.getElementById('deckPickerViewport');
-  
-  let startY = 0, lastY = 0, lastTime = 0, startOffset = 0;
-  let hasMoved = false;
-  
-  // Touch events
+  if (!vp) return;
+
+  let startY = 0, lastY = 0, lastTime = 0, startOffset = 0, hasMoved = false;
+
+  // --- Touch ---
   vp.addEventListener('touchstart', (e) => {
     pickerDragging = true;
     hasMoved = false;
-    startY = e.touches[0].clientY;
-    lastY = startY;
+    startY = lastY = e.touches[0].clientY;
     lastTime = Date.now();
     startOffset = pickerOffset;
     pickerVelocity = 0;
-    if (pickerAnimFrame) { cancelAnimationFrame(pickerAnimFrame); pickerAnimFrame = null; }
     const roller = document.getElementById('deckPickerRoller');
     if (roller) roller.style.transition = 'none';
   }, { passive: true });
-  
+
   vp.addEventListener('touchmove', (e) => {
     if (!pickerDragging) return;
     const y = e.touches[0].clientY;
     const dy = y - startY;
-    hasMoved = hasMoved || Math.abs(dy) > 3;
+    if (Math.abs(dy) > 3) hasMoved = true;
     const now = Date.now();
-    const dt = now - lastTime;
-    if (dt > 0) pickerVelocity = (y - lastY) / dt;
-    lastY = y;
-    lastTime = now;
-    
-    // Rubber band effect at edges
-    let newOffset = startOffset + dy;
-    const maxOffset = 0;
-    const minOffset = -((decks.length - 1) * PICKER_ITEM_H);
-    if (newOffset > maxOffset) {
-      newOffset = maxOffset + (newOffset - maxOffset) * 0.3;
-    } else if (newOffset < minOffset) {
-      newOffset = minOffset + (newOffset - minOffset) * 0.3;
-    }
-    pickerOffset = newOffset;
-    applyPickerTransform(false);
-    updatePickerSelection();
+    if (now - lastTime > 0) pickerVelocity = (y - lastY) / (now - lastTime);
+    lastY = y; lastTime = now;
+
+    let raw = startOffset + dy;
+    const maxOff = 0, minOff = -((decks.length - 1) * PICKER_ITEM_H);
+    // Rubber band
+    if (raw > maxOff) raw = maxOff + (raw - maxOff) * 0.25;
+    else if (raw < minOff) raw = minOff + (raw - minOff) * 0.25;
+    pickerOffset = raw;
+    applyPickerPosition(false);
+    updatePickerHighlight();
   }, { passive: true });
-  
+
   vp.addEventListener('touchend', (e) => {
     if (!pickerDragging) return;
     pickerDragging = false;
-    
     if (!hasMoved) {
-      // Tap - determine which item was tapped
+      // Tap to select
       const touch = e.changedTouches[0];
-      const rect = vp.getBoundingClientRect();
-      const tapY = touch.clientY - rect.top;
-      const rollerTop = pickerOffset + PICKER_ITEM_H;
-      const itemIdx = Math.floor((tapY - rollerTop) / PICKER_ITEM_H);
-      if (itemIdx >= 0 && itemIdx < decks.length) {
-        pickerOffset = -itemIdx * PICKER_ITEM_H;
-        snapPicker(true);
-      }
+      handlePickerTap(vp, touch.clientY);
       return;
     }
-    
-    // Momentum
-    const momentum = pickerVelocity * 120;
-    pickerOffset += momentum;
-    snapPicker(true);
+    pickerOffset += pickerVelocity * 120;
+    snapToNearest(true);
   });
-  
-  // Mouse events (for desktop)
+
+  // --- Mouse ---
   vp.addEventListener('mousedown', (e) => {
     e.preventDefault();
     pickerDragging = true;
     hasMoved = false;
-    startY = e.clientY;
-    lastY = startY;
+    startY = lastY = e.clientY;
     lastTime = Date.now();
     startOffset = pickerOffset;
     pickerVelocity = 0;
-    if (pickerAnimFrame) { cancelAnimationFrame(pickerAnimFrame); pickerAnimFrame = null; }
     const roller = document.getElementById('deckPickerRoller');
     if (roller) roller.style.transition = 'none';
-    
+
     const onMove = (ev) => {
       if (!pickerDragging) return;
       const y = ev.clientY;
-      const dy = y - startY;
-      hasMoved = hasMoved || Math.abs(dy) > 3;
+      if (Math.abs(y - startY) > 3) hasMoved = true;
       const now = Date.now();
-      const dt = now - lastTime;
-      if (dt > 0) pickerVelocity = (y - lastY) / dt;
-      lastY = y;
-      lastTime = now;
-      
-      let newOffset = startOffset + dy;
-      const maxOffset = 0;
-      const minOffset = -((decks.length - 1) * PICKER_ITEM_H);
-      if (newOffset > maxOffset) newOffset = maxOffset + (newOffset - maxOffset) * 0.3;
-      else if (newOffset < minOffset) newOffset = minOffset + (newOffset - minOffset) * 0.3;
-      pickerOffset = newOffset;
-      applyPickerTransform(false);
-      updatePickerSelection();
+      if (now - lastTime > 0) pickerVelocity = (y - lastY) / (now - lastTime);
+      lastY = y; lastTime = now;
+      let raw = startOffset + (y - startY);
+      const maxOff = 0, minOff = -((decks.length - 1) * PICKER_ITEM_H);
+      if (raw > maxOff) raw = maxOff + (raw - maxOff) * 0.25;
+      else if (raw < minOff) raw = minOff + (raw - minOff) * 0.25;
+      pickerOffset = raw;
+      applyPickerPosition(false);
+      updatePickerHighlight();
     };
-    
     const onUp = (ev) => {
       pickerDragging = false;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      
-      if (!hasMoved) {
-        const rect = vp.getBoundingClientRect();
-        const tapY = ev.clientY - rect.top;
-        const rollerTop = pickerOffset + PICKER_ITEM_H;
-        const itemIdx = Math.floor((tapY - rollerTop) / PICKER_ITEM_H);
-        if (itemIdx >= 0 && itemIdx < decks.length) {
-          pickerOffset = -itemIdx * PICKER_ITEM_H;
-          snapPicker(true);
-        }
-        return;
-      }
-      
-      const momentum = pickerVelocity * 120;
-      pickerOffset += momentum;
-      snapPicker(true);
+      if (!hasMoved) { handlePickerTap(vp, ev.clientY); return; }
+      pickerOffset += pickerVelocity * 120;
+      snapToNearest(true);
     };
-    
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
-  
-  // Mouse wheel
+
+  // --- Wheel ---
   vp.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? PICKER_ITEM_H : -PICKER_ITEM_H;
-    pickerOffset -= delta;
-    snapPicker(true);
+    pickerOffset -= (e.deltaY > 0 ? 1 : -1) * PICKER_ITEM_H;
+    snapToNearest(true);
   }, { passive: false });
+}
+
+function handlePickerTap(vp, clientY) {
+  const rect = vp.getBoundingClientRect();
+  const tapY = clientY - rect.top;
+  // rollerTop is where the roller's y=0 currently sits visually
+  const rollerVisualTop = pickerOffset + PICKER_ITEM_H;
+  const idx = Math.floor((tapY - rollerVisualTop) / PICKER_ITEM_H);
+  if (idx >= 0 && idx < decks.length) {
+    pickerOffset = -idx * PICKER_ITEM_H;
+    snapToNearest(true);
+  }
 }
 
 function selectDeck(id) {
@@ -3366,6 +3328,7 @@ function deleteDeck(id) {
       activeDeckId = decks.length > 0 ? decks[0].id : null;
     }
     saveState();
+    try { localStorage.removeItem('mikan_deckSettings_' + id); } catch(e) {}
     if (decks.length === 0) {
       showScreen('import');
     } else {
@@ -3726,25 +3689,45 @@ function showQuizSetupWithLevel(level) {
 
   quizMode = 'flashcard';
   selectedRange = level;
-  quizDrillMode = false;
-  reverseMode = false;
-  ttsMode = 'answer';
-  quizOrder = 'asc';
+
+  // Load saved settings for this deck, or use defaults
+  const saved = loadDeckSettings(activeDeckId);
+  if (saved) {
+    quizDrillMode = saved.drillMode || false;
+    reverseMode = saved.reverse || false;
+    ttsMode = saved.tts || 'answer';
+    quizOrder = saved.order || 'asc';
+  } else {
+    quizDrillMode = false;
+    reverseMode = false;
+    ttsMode = 'answer';
+    quizOrder = 'asc';
+  }
+
   showScreen('quiz-setup');
 
-  // Reset mode toggle UI
+  // Apply UI to match loaded settings
+  // Mode toggle (ノーマル=0, 特訓=1)
   document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0);
+    b.classList.toggle('active', quizDrillMode ? i === 1 : i === 0);
   });
-  document.getElementById('drillDesc').style.display = 'none';
+  document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
+
+  // Reverse toggle (問題→答え=0, 答え→問題=1)
   document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0);
+    b.classList.toggle('active', reverseMode ? i === 1 : i === 0);
   });
+
+  // TTS toggle (問題のみ=0, 答えのみ=1, 両方=2, なし=3)
+  const ttsIdx = { question: 0, answer: 1, both: 2, none: 3 }[ttsMode] ?? 1;
   document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 1); // index 1 = 答えのみ
+    b.classList.toggle('active', i === ttsIdx);
   });
+
+  // Order toggle (リスト順=0, 逆順=1, ランダム=2)
+  const orderIdx = { asc: 0, desc: 1, random: 2 }[quizOrder] ?? 0;
   document.querySelectorAll('#orderToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0); // index 0 = リスト順
+    b.classList.toggle('active', i === orderIdx);
   });
 
   // Set back button
@@ -3759,24 +3742,6 @@ function showQuizSetupWithLevel(level) {
   };
   document.getElementById('setupTitle').textContent = levelNames[level] || level;
 
-  // Check pool availability
-  const pool = getQuizPool();
-
-  // Reset mode toggle
-  document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0);
-  });
-  document.getElementById('drillDesc').style.display = 'none';
-  document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0);
-  });
-  document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 1); // index 1 = 答えのみ
-  });
-  document.querySelectorAll('#orderToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === 0); // index 0 = リスト順
-  });
-
   updateStartBtn();
 }
 
@@ -3785,24 +3750,28 @@ function selectMode(mode, el) {
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
+  saveDeckSettings(activeDeckId);
 }
 
 function selectReverse(isReverse, el) {
   reverseMode = isReverse;
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  saveDeckSettings(activeDeckId);
 }
 
 function selectTTS(mode, el) {
   ttsMode = mode;
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  saveDeckSettings(activeDeckId);
 }
 
 function selectOrder(order, el) {
   quizOrder = order;
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  saveDeckSettings(activeDeckId);
 }
 
 function updateStartBtn() {
@@ -3943,12 +3912,24 @@ function autoSizeQuizWord(el) {
 
 function revealAnswer() {
   const card = document.getElementById('quizCard');
-  if (card.classList.contains('revealed')) return;
+  if (!currentQuiz) return;
+  const word = currentQuiz.words[currentQuiz.index];
+
+  // Already revealed — re-read aloud on tap
+  if (card.classList.contains('revealed')) {
+    if (ttsMode === 'none') return;
+    const questionText = reverseMode ? word.japanese : word.english;
+    const answerText = reverseMode ? word.english : word.japanese;
+    if (ttsMode === 'question') speakText(questionText);
+    else if (ttsMode === 'answer') speakText(answerText);
+    else if (ttsMode === 'both') speakTextSequence(questionText, answerText);
+    return;
+  }
+
   card.classList.add('revealed');
   sfxReveal();
   // Read the answer aloud (respects ttsMode)
-  if (currentQuiz && (ttsMode === 'answer' || ttsMode === 'both')) {
-    const word = currentQuiz.words[currentQuiz.index];
+  if (ttsMode === 'answer' || ttsMode === 'both') {
     const answerText = reverseMode ? word.english : word.japanese;
     setTimeout(() => speakText(answerText), 200);
   }
@@ -4522,7 +4503,6 @@ function renderEditorList() {
     <div class="editor-word-item" data-index="${i}">
       <div class="ew-delete-bg" onclick="deleteWord(${i})">削除</div>
       <div class="ew-inner">
-        <div class="ew-drag-handle" data-index="${i}">⠿</div>
         <div class="ew-content" onclick="showEditWordModal(${i})">
           <div class="ew-eng">${escapeHtml(w.english)}</div>
           <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
@@ -4531,10 +4511,9 @@ function renderEditorList() {
     </div>
   `).join('');
 
-  // Attach swipe + drag handlers
+  // Attach swipe handlers
   el.querySelectorAll('.editor-word-item').forEach(item => {
     initSwipeToDelete(item);
-    initDragToReorder(item);
   });
 }
 
@@ -4544,8 +4523,6 @@ function initSwipeToDelete(item) {
   let startX = 0, currentX = 0, swiping = false;
 
   inner.addEventListener('touchstart', (e) => {
-    // Don't swipe if touch started on drag handle
-    if (e.target.closest('.ew-drag-handle')) return;
     startX = e.touches[0].clientX;
     currentX = 0;
     swiping = true;
@@ -4577,184 +4554,6 @@ function initSwipeToDelete(item) {
       inner.style.transform = 'translateX(0)';
     }
   });
-}
-
-// --- Drag to reorder (long press on handle) ---
-let dragState = null;
-
-function initDragToReorder(item) {
-  const handle = item.querySelector('.ew-drag-handle');
-  if (!handle) return;
-  let longPressTimer = null;
-  let isDragging = false;
-
-  // Touch events
-  handle.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    longPressTimer = setTimeout(() => {
-      isDragging = true;
-      startDrag(item, touch.clientY);
-    }, 250);
-  });
-
-  handle.addEventListener('touchmove', (e) => {
-    if (longPressTimer && !isDragging) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
-    if (isDragging && dragState) {
-      e.preventDefault();
-      moveDrag(e.touches[0].clientY);
-    }
-  });
-
-  handle.addEventListener('touchend', () => {
-    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    if (isDragging && dragState) { endDrag(); }
-    isDragging = false;
-  });
-
-  handle.addEventListener('touchcancel', () => {
-    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    if (isDragging && dragState) { cancelDrag(); }
-    isDragging = false;
-  });
-
-  // Mouse events
-  handle.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    longPressTimer = setTimeout(() => {
-      isDragging = true;
-      startDrag(item, e.clientY);
-    }, 250);
-
-    const onMouseMove = (ev) => {
-      // Only cancel long press if moved significantly (>10px)
-      if (longPressTimer && !isDragging) {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-        if (Math.sqrt(dx*dx + dy*dy) > 10) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-      }
-      if (isDragging && dragState) {
-        ev.preventDefault();
-        moveDrag(ev.clientY);
-      }
-    };
-
-    const onMouseUp = () => {
-      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-      if (isDragging && dragState) { endDrag(); }
-      isDragging = false;
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  });
-}
-
-function startDrag(item, startY) {
-  if (editorSearchQuery) {
-    showToast('検索中は並べ替えできません');
-    return;
-  }
-  item.classList.add('dragging');
-  dragState = {
-    el: item,
-    fromIndex: parseInt(item.dataset.index),
-    targetIndex: parseInt(item.dataset.index)
-  };
-  if (navigator.vibrate) navigator.vibrate(30);
-}
-
-function moveDrag(clientY) {
-  if (!dragState) return;
-  const list = document.getElementById('editorWordList');
-  const items = Array.from(list.querySelectorAll('.editor-word-item'));
-  const fromIdx = dragState.fromIndex;
-
-  // Clear all indicators
-  items.forEach(it => it.classList.remove('drag-over-top', 'drag-over-bottom'));
-
-  // Find target position
-  let targetIdx = fromIdx;
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    const idx = parseInt(it.dataset.index);
-    if (idx === fromIdx) continue;
-    const rect = it.getBoundingClientRect();
-    const mid = rect.top + rect.height / 2;
-    if (clientY < mid && clientY >= rect.top - 10) {
-      // Insert before this item
-      it.classList.add('drag-over-top');
-      targetIdx = idx;
-      break;
-    } else if (clientY >= mid && clientY <= rect.bottom + 10) {
-      // Insert after this item
-      it.classList.add('drag-over-bottom');
-      targetIdx = idx + 1;
-      break;
-    }
-  }
-  // Handle dragging below last item
-  if (targetIdx === fromIdx && items.length > 0) {
-    const lastItem = items[items.length - 1];
-    const lastIdx = parseInt(lastItem.dataset.index);
-    const lastRect = lastItem.getBoundingClientRect();
-    if (clientY > lastRect.bottom) {
-      lastItem.classList.add('drag-over-bottom');
-      targetIdx = lastIdx + 1;
-    }
-    // Handle dragging above first item
-    const firstItem = items[0];
-    const firstRect = firstItem.getBoundingClientRect();
-    if (clientY < firstRect.top) {
-      firstItem.classList.add('drag-over-top');
-      targetIdx = parseInt(firstItem.dataset.index);
-    }
-  }
-
-  dragState.targetIndex = targetIdx;
-}
-
-function endDrag() {
-  if (!dragState) return;
-  const list = document.getElementById('editorWordList');
-  const items = Array.from(list.querySelectorAll('.editor-word-item'));
-  const fromIdx = dragState.fromIndex;
-  const targetIdx = dragState.targetIndex;
-
-  // Clean up
-  items.forEach(it => it.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
-
-  // Perform move
-  if (targetIdx !== fromIdx && targetIdx !== fromIdx + 1) {
-    const words = getActiveWords();
-    const [moved] = words.splice(fromIdx, 1);
-    const insertAt = targetIdx > fromIdx ? targetIdx - 1 : targetIdx;
-    words.splice(insertAt, 0, moved);
-    saveState();
-    showToast('並べ替えました');
-  }
-
-  dragState = null;
-  renderEditorList();
-}
-
-function cancelDrag() {
-  if (!dragState) return;
-  const list = document.getElementById('editorWordList');
-  Array.from(list.querySelectorAll('.editor-word-item')).forEach(it => {
-    it.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging');
-  });
-  dragState = null;
 }
 
 // --- Add word with position ---
@@ -4794,8 +4593,20 @@ function showEditWordModal(index) {
   document.getElementById('editWordTitle').textContent = '単語を編集';
   document.getElementById('editWordEng').value = word.english;
   document.getElementById('editWordJpn').value = word.japanese;
-  // Hide position selector for editing
-  document.getElementById('insertPositionRow').style.display = 'none';
+
+  // Show position selector for moving
+  const posRow = document.getElementById('insertPositionRow');
+  const posSel = document.getElementById('insertPosition');
+  posRow.style.display = 'block';
+  let options = '<option value="0">先頭</option>';
+  words.forEach((w, i) => {
+    const label = w.english.length > 20 ? w.english.slice(0, 20) + '…' : w.english;
+    options += `<option value="${i + 1}">${i + 1}. ${escapeHtml(label)} の後</option>`;
+  });
+  posSel.innerHTML = options;
+  // Pre-select current position (item is "after" the previous one, or "先頭" if index 0)
+  posSel.value = String(index === 0 ? 0 : index);
+
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.add('show');
   setTimeout(() => document.getElementById('editWordEng').focus(), 300);
@@ -4813,17 +4624,30 @@ function saveWord() {
     return;
   }
   const words = getActiveWords();
+  const targetPos = parseInt(document.getElementById('insertPosition').value) || 0;
+
   if (editingWordIndex === null) {
     // Add new word at selected position
-    const pos = parseInt(document.getElementById('insertPosition').value) || 0;
     const newWord = { english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 };
-    words.splice(pos, 0, newWord);
+    words.splice(targetPos, 0, newWord);
     showToast('追加しました！');
   } else {
     // Edit existing word
     words[editingWordIndex].english = eng;
     words[editingWordIndex].japanese = jpn;
-    showToast('保存しました！');
+
+    // Move if position changed
+    const currentPos = editingWordIndex;
+    // "targetPos" means "insert after position targetPos-1", i.e. at index targetPos
+    // But we need to account for the item being removed first
+    if (targetPos !== currentPos && targetPos !== currentPos + 1) {
+      const [moved] = words.splice(currentPos, 1);
+      const insertAt = targetPos > currentPos ? targetPos - 1 : targetPos;
+      words.splice(insertAt, 0, moved);
+      showToast('保存・移動しました！');
+    } else {
+      showToast('保存しました！');
+    }
   }
   saveState();
   closeEditWord();
@@ -4932,6 +4756,10 @@ function doResetCurrentDeck() {
 }
 
 function doResetAll() {
+  // Clean up per-deck settings
+  decks.forEach(d => {
+    try { localStorage.removeItem('mikan_deckSettings_' + d.id); } catch(e) {}
+  });
   decks = [];
   activeDeckId = null;
   localStorage.removeItem('mikan_decks');
