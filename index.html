@@ -2084,7 +2084,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
         <div class="import-icon">📄</div>
         <h3>CSVファイルを<br>読み込む</h3>
         <p>タップしてファイルを選択</p>
-        <input type="file" id="fileInput" accept=".csv,.txt">
+        <input type="file" id="fileInput" accept=".csv,.txt" multiple>
       </div>
       <div class="import-area import-json-area" onclick="document.getElementById('importJsonInitial').click()">
         <div class="import-icon" style="background:var(--gray-100);">📲</div>
@@ -2126,7 +2126,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <div class="deck-list-grid" id="deckListGrid"></div>
       <div style="margin-top:10px;">
         <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
-        <input type="file" id="fileInputAdd" accept=".csv,.txt" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="handleFileAdd(this.files[0])">
+        <input type="file" id="fileInputAdd" accept=".csv,.txt" multiple style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="handleFilesAdd(this.files)">
       </div>
     </div>
 
@@ -2808,13 +2808,17 @@ dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover
 dropZone.addEventListener('drop', (e) => {
   e.preventDefault();
   dropZone.classList.remove('dragover');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer.files.length) handleMultipleFiles(e.dataTransfer.files);
 });
 fileInput.addEventListener('change', (e) => { 
-  if (e.target.files.length) handleFile(e.target.files[0]); 
+  if (e.target.files.length) handleMultipleFiles(e.target.files); 
   e.target.value = '';
   e.target.blur();
 });
+
+function handleMultipleFiles(files) {
+  Array.from(files).forEach(file => handleFile(file));
+}
 
 function handleFile(file) {
   const reader = new FileReader();
@@ -2826,12 +2830,12 @@ function handleFile(file) {
   reader.readAsText(file, 'UTF-8');
 }
 
-function handleFileAdd(file) {
-  if (!file) return;
+function handleFilesAdd(files) {
+  if (!files || !files.length) return;
   const fileInput = document.getElementById('fileInputAdd');
   fileInput.value = '';
   fileInput.blur();
-  handleFile(file);
+  handleMultipleFiles(files);
 }
 
 function addDeckFromCSV(text, deckName) {
