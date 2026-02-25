@@ -411,7 +411,13 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-height: 232px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
 }
+.deck-list-grid::-webkit-scrollbar { display: none; }
 .deck-card {
   display: flex;
   align-items: center;
@@ -423,6 +429,7 @@ body::after {
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid var(--gray-200);
+  flex-shrink: 0;
 }
 .deck-card:active { transform: scale(0.98); }
 .deck-card.active {
@@ -1128,6 +1135,38 @@ body::after {
 .result-close-btn:active {
   transform: scale(0.9);
 }
+.result-fixed-btn {
+  position: fixed;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.result-fixed-btn:active {
+  transform: scale(0.9);
+}
+.result-next-btn {
+  top: 14px;
+  background: var(--orange-500);
+  color: white;
+}
+.result-review-btn {
+  top: 64px;
+  background: white;
+  color: var(--orange-500);
+  border: 2px solid var(--orange-500);
+  font-size: 20px;
+  font-weight: 700;
+}
 .quiz-result .result-icon {
   font-size: 56px;
   margin-bottom: 16px;
@@ -1179,25 +1218,6 @@ body::after {
 .result-btn:hover {
   background: var(--orange-600);
   transform: translateY(-1px);
-}
-.result-btn.next-quiz-btn {
-  background: var(--orange-500);
-  color: white;
-  box-shadow: 0 4px 15px rgba(255,140,0,0.3);
-  margin-bottom: 10px;
-  width: 100%;
-  max-width: 320px;
-  box-sizing: border-box;
-}
-.result-btn.review-btn {
-  background: white;
-  color: var(--orange-500);
-  border: 2px solid var(--orange-500);
-  box-shadow: none;
-  margin-bottom: 10px;
-  width: 100%;
-  max-width: 320px;
-  box-sizing: border-box;
 }
 .missed-section {
   text-align: left;
@@ -3119,6 +3139,12 @@ function renderDeckList() {
   const countEl = document.getElementById('deckPickerCount');
   const activeIdx = decks.findIndex(d => d.id === activeDeckId);
   if (countEl) countEl.textContent = `${(activeIdx >= 0 ? activeIdx : 0) + 1} / ${decks.length}`;
+
+  // Auto-scroll active card into view
+  const activeCard = grid.querySelector('.deck-card.active');
+  if (activeCard) {
+    setTimeout(() => activeCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 50);
+  }
 }
 
 function deckCardTap(id) {
@@ -3128,6 +3154,7 @@ function deckCardTap(id) {
     return;
   }
   // Select this deck
+  sfxSelect();
   activeDeckId = id;
   saveState();
   renderDeckList();
@@ -4064,9 +4091,9 @@ function showResult() {
       </div>
     </div>
     ${levelChangeHtml}
-    <button class="result-btn next-quiz-btn" onclick="startNextQuiz()">次の問題へ</button>
-    ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">まちがえた問題を復習する</button>' : ''}
     ${missedHtml}
+    <button class="result-fixed-btn result-next-btn" onclick="startNextQuiz()" title="次の問題へ">▶</button>
+    ${uniqueMissed.length > 0 ? '<button class="result-fixed-btn result-review-btn" onclick="startMissedReview()" title="まちがえた問題を復習する">↻</button>' : ''}
   `;
 
   // Animate bars and counters after render
@@ -4765,6 +4792,9 @@ function applyImportData(data, mode) {
   // iOS Safari fix: ensure all overlays are properly closed after import
   closeAllOverlays();
   
+  // Navigate to dashboard after import
+  showScreen('dashboard');
+
   // iOS Safari fix: reset any lingering focus/touch state
   if (document.activeElement && document.activeElement !== document.body) {
     document.activeElement.blur();
