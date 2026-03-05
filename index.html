@@ -889,6 +889,8 @@ body::after {
   display: none;
   flex-direction: column;
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 #screen-quiz.active {
   display: flex;
@@ -4107,7 +4109,7 @@ let swipeState = null;
     const isRevealed = card && card.classList.contains('revealed');
 
     // Enter / Space — reveal answer (same as tapping the card)
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowUp') {
       if (!isRevealed) {
         e.preventDefault();
         revealAnswer();
