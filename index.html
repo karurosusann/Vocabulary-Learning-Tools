@@ -1994,6 +1994,13 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   overflow-x: auto;
   padding-bottom: 4px;
   -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.deck-tabs.dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
 }
 .deck-tabs::-webkit-scrollbar { display: none; }
 .deck-tab {
@@ -6082,6 +6089,55 @@ function showToast(msg) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2500);
 }
+
+// ============ DRAG SCROLL (PC) ============
+(function initDragScroll() {
+  function setupDragScroll(el) {
+    let isDown = false, startX, scrollLeft, hasMoved;
+    el.addEventListener('mousedown', e => {
+      isDown = true;
+      hasMoved = false;
+      el.classList.add('dragging');
+      startX = e.pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    });
+    el.addEventListener('mouseleave', () => {
+      isDown = false;
+      el.classList.remove('dragging');
+    });
+    el.addEventListener('mouseup', () => {
+      isDown = false;
+      el.classList.remove('dragging');
+    });
+    el.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - el.offsetLeft;
+      const walk = x - startX;
+      if (Math.abs(walk) > 3) hasMoved = true;
+      el.scrollLeft = scrollLeft - walk;
+    });
+    // Prevent click on tabs if dragged
+    el.addEventListener('click', e => {
+      if (hasMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  }
+  // Apply to all .deck-tabs (now and future via MutationObserver)
+  document.querySelectorAll('.deck-tabs').forEach(el => {
+    el.setAttribute('data-drag', '1');
+    setupDragScroll(el);
+  });
+  const observer = new MutationObserver(() => {
+    document.querySelectorAll('.deck-tabs:not([data-drag])').forEach(el => {
+      el.setAttribute('data-drag', '1');
+      setupDragScroll(el);
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
 
 // ============ INIT ============
 loadState();
