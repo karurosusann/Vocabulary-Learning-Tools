@@ -477,6 +477,150 @@ body.dark-mode .settings-menu-item .menu-badge {
   margin-bottom: 8px;
 }
 
+/* Study stats & heatmap */
+.study-stats-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--gray-200);
+}
+body.dark-mode .study-stats-card {
+  background: #1e1a28;
+  border-color: #3a3545;
+}
+.stats-summary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-box {
+  flex: 1;
+  text-align: center;
+  padding: 10px 4px;
+  border-radius: 12px;
+  background: var(--gray-50);
+}
+body.dark-mode .stat-box {
+  background: #2a2535;
+}
+.stat-box .stat-value {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gray-800);
+  line-height: 1;
+}
+.stat-box .stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-400);
+  margin-top: 4px;
+}
+.stat-box.accent .stat-value {
+  color: var(--orange-500);
+}
+.stat-box.streak .stat-value {
+  color: var(--green-500);
+}
+.heatmap-section {
+  margin-top: 2px;
+}
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.heatmap-header h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-600);
+}
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--gray-400);
+}
+.heatmap-legend .legend-box {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.heatmap-legend .legend-box.l1 { background: #fed7aa; }
+.heatmap-legend .legend-box.l2 { background: #fdba74; }
+.heatmap-legend .legend-box.l3 { background: #fb923c; }
+.heatmap-legend .legend-box.l4 { background: #f97316; }
+.heatmap-legend .legend-box.l5 { background: #ea580c; }
+body.dark-mode .heatmap-legend .legend-box.l1 { background: #5c3a1e; }
+body.dark-mode .heatmap-legend .legend-box.l2 { background: #7a4a1e; }
+body.dark-mode .heatmap-legend .legend-box.l3 { background: #9a5a1e; }
+body.dark-mode .heatmap-legend .legend-box.l4 { background: #c06a10; }
+body.dark-mode .heatmap-legend .legend-box.l5 { background: #ea580c; }
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--gray-100);
+  min-width: 0;
+}
+body.dark-mode .heatmap-cell {
+  background: #2a2535;
+}
+.heatmap-cell.l1 { background: #fed7aa; }
+.heatmap-cell.l2 { background: #fdba74; }
+.heatmap-cell.l3 { background: #fb923c; }
+.heatmap-cell.l4 { background: #f97316; }
+.heatmap-cell.l5 { background: #ea580c; }
+body.dark-mode .heatmap-cell.l1 { background: #5c3a1e; }
+body.dark-mode .heatmap-cell.l2 { background: #7a4a1e; }
+body.dark-mode .heatmap-cell.l3 { background: #9a5a1e; }
+body.dark-mode .heatmap-cell.l4 { background: #c06a10; }
+body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
+.heatmap-cell.today {
+  outline: 2px solid var(--orange-500);
+  outline-offset: -1px;
+}
+.heatmap-months {
+  display: grid;
+  grid-template-columns: repeat(53, 1fr);
+  gap: 2px;
+  margin-bottom: 3px;
+}
+.heatmap-month-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--gray-400);
+  white-space: nowrap;
+  overflow: visible;
+}
+.heatmap-dow {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 2px;
+  margin-right: 4px;
+  font-size: 9px;
+  color: var(--gray-400);
+  font-weight: 500;
+}
+.heatmap-dow span {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+}
+.heatmap-body {
+  display: flex;
+}
+.heatmap-weeks {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(53, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  gap: 2px;
+}
+
 .app {
   max-width: 480px;
   margin: 0 auto;
@@ -2593,6 +2737,44 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <div class="dashboard-top-bar">
       <button class="hamburger-btn" onclick="openSettings()" title="設定">☰</button>
     </div>
+
+    <!-- Study stats & heatmap -->
+    <div class="study-stats-card" id="studyStatsCard">
+      <div class="stats-summary">
+        <div class="stat-box accent">
+          <div class="stat-value" id="statToday">0</div>
+          <div class="stat-label">今日</div>
+        </div>
+        <div class="stat-box streak">
+          <div class="stat-value" id="statStreak">0</div>
+          <div class="stat-label">連続日数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statWeek">0</div>
+          <div class="stat-label">今週</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-label">累計</div>
+        </div>
+      </div>
+      <div class="heatmap-section">
+        <div class="heatmap-header">
+          <h4>📅 学習カレンダー</h4>
+          <div class="heatmap-legend">
+            <span>少</span>
+            <div class="legend-box l1"></div>
+            <div class="legend-box l2"></div>
+            <div class="legend-box l3"></div>
+            <div class="legend-box l4"></div>
+            <div class="legend-box l5"></div>
+            <span>多</span>
+          </div>
+        </div>
+        <div id="heatmapContainer"></div>
+      </div>
+    </div>
+
     <!-- Deck selector - vertical list -->
     <div class="deck-carousel-section">
       <div class="deck-carousel-header">
@@ -3013,6 +3195,165 @@ function updateSettingsDarkUI() {
     if (meta) meta.setAttribute('content', '#1a1525');
   }
 })();
+
+// ============ STUDY LOG & HEATMAP ============
+const STUDY_LOG_KEY = 'csvocab_study_log';
+
+function getStudyLog() {
+  try {
+    return JSON.parse(localStorage.getItem(STUDY_LOG_KEY)) || {};
+  } catch(e) { return {}; }
+}
+
+function saveStudyLog(log) {
+  localStorage.setItem(STUDY_LOG_KEY, JSON.stringify(log));
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function recordStudySession(studied, correct) {
+  const log = getStudyLog();
+  const today = getTodayStr();
+  if (!log[today]) log[today] = { studied: 0, correct: 0, sessions: 0 };
+  log[today].studied += studied;
+  log[today].correct += correct;
+  log[today].sessions += 1;
+  saveStudyLog(log);
+}
+
+function calcStreak() {
+  const log = getStudyLog();
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let streak = 0;
+  let d = new Date(today);
+  while (true) {
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if (log[key] && log[key].studied > 0) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function calcWeekTotal() {
+  const log = getStudyLog();
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const dow = today.getDay(); // 0=Sun
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7));
+  let total = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if (log[key]) total += log[key].studied;
+  }
+  return total;
+}
+
+function calcTotalStudied() {
+  const log = getStudyLog();
+  let total = 0;
+  for (const key in log) {
+    if (log[key].studied) total += log[key].studied;
+  }
+  return total;
+}
+
+function updateStudyStats() {
+  const log = getStudyLog();
+  const today = getTodayStr();
+  const todayData = log[today];
+  document.getElementById('statToday').textContent = todayData ? todayData.studied : 0;
+  document.getElementById('statStreak').textContent = calcStreak();
+  document.getElementById('statWeek').textContent = calcWeekTotal();
+  const total = calcTotalStudied();
+  document.getElementById('statTotal').textContent = total >= 10000 ? Math.floor(total/1000) + 'k' : total;
+}
+
+function renderHeatmap() {
+  const container = document.getElementById('heatmapContainer');
+  if (!container) return;
+  const log = getStudyLog();
+
+  // Determine max for color scale
+  const values = Object.values(log).map(v => v.studied || 0);
+  const maxVal = Math.max(1, ...values);
+
+  // Build 53 weeks (371 days) ending today
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const todayStr = getTodayStr();
+
+  // Find the Saturday of this week (end of grid)
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() + (6 - today.getDay()));
+
+  // Start = 52 weeks before the start of endDate's week
+  const startDate = new Date(endDate);
+  startDate.setDate(endDate.getDate() - (53 * 7 - 1));
+
+  // Month labels
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  let monthsHtml = '';
+  let lastMonth = -1;
+  let weekIdx = 0;
+  const d = new Date(startDate);
+  while (d <= endDate) {
+    // Start of week (Sunday)
+    if (d.getDay() === 0) {
+      const m = d.getMonth();
+      if (m !== lastMonth && d.getDate() <= 7) {
+        monthsHtml += `<span class="heatmap-month-label" style="grid-column:${weekIdx+1}">${monthNames[m]}</span>`;
+        lastMonth = m;
+      }
+      weekIdx++;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  // Day of week labels
+  const dowLabels = ['', '月', '', '水', '', '金', ''];
+
+  // Build cells - grid is 7 rows x 53 columns, filled column by column (each column = 1 week)
+  const cells = [];
+  const cellDate = new Date(startDate);
+  for (let col = 0; col < 53; col++) {
+    for (let row = 0; row < 7; row++) {
+      const key = cellDate.getFullYear() + '-' + String(cellDate.getMonth()+1).padStart(2,'0') + '-' + String(cellDate.getDate()).padStart(2,'0');
+      const val = log[key] ? log[key].studied : 0;
+      let lvl = '';
+      if (val > 0) {
+        const ratio = val / maxVal;
+        if (ratio <= 0.2) lvl = 'l1';
+        else if (ratio <= 0.4) lvl = 'l2';
+        else if (ratio <= 0.6) lvl = 'l3';
+        else if (ratio <= 0.8) lvl = 'l4';
+        else lvl = 'l5';
+      }
+      const isToday = key === todayStr ? ' today' : '';
+      const title = key + (val > 0 ? `: ${val}語` : '');
+      cells.push(`<div class="heatmap-cell${lvl ? ' '+lvl : ''}${isToday}" title="${title}" style="grid-row:${row+1};grid-column:${col+1}"></div>`);
+      cellDate.setDate(cellDate.getDate() + 1);
+    }
+  }
+
+  container.innerHTML = `
+    <div class="heatmap-months" style="margin-left:24px;">${monthsHtml}</div>
+    <div class="heatmap-body">
+      <div class="heatmap-dow">${dowLabels.map(l => `<span>${l}</span>`).join('')}</div>
+      <div class="heatmap-weeks">${cells.join('')}</div>
+    </div>
+  `;
+}
 
 // ============ AUDIO SYSTEM ============
 let audioCtx = null;
@@ -3907,6 +4248,10 @@ function showScreen(name) {
   if (name === 'advanced-settings') {
     applyAdvancedSettingsUI();
   }
+  if (name === 'dashboard') {
+    updateStudyStats();
+    renderHeatmap();
+  }
 }
 
 // ============ DASHBOARD ============
@@ -4779,6 +5124,9 @@ function showResult() {
   }
   const pct = Math.round((displayCorrect / totalAnswered) * 100);
 
+  // Record study log
+  recordStudySession(totalAnswered, displayCorrect);
+
   let emoji, msg;
   if (pct >= 90) { emoji = '🎉'; msg = 'すばらしい！'; }
   else if (pct >= 70) { emoji = '😊'; msg = 'いい調子！'; }
@@ -5447,6 +5795,7 @@ function doResetAll() {
   activeDeckId = null;
   localStorage.removeItem('mikan_decks');
   localStorage.removeItem('mikan_activeDeck');
+  localStorage.removeItem(STUDY_LOG_KEY);
   showScreen('import');
   showToast('すべてのデッキを削除しました');
 }
@@ -5462,7 +5811,8 @@ function exportAllData() {
     app: 'CSVocab',
     exportedAt: new Date().toISOString(),
     activeDeckId: activeDeckId,
-    decks: decks
+    decks: decks,
+    studyLog: getStudyLog()
   };
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -5569,6 +5919,8 @@ function applyImportData(data, mode) {
   if (mode === 'replace') {
     decks = data.decks;
     activeDeckId = data.activeDeckId || (decks.length > 0 ? decks[0].id : null);
+    // Replace study log
+    if (data.studyLog) saveStudyLog(data.studyLog);
   } else {
     // Merge: add new decks, update existing by ID
     const existingIds = new Set(decks.map(d => d.id));
@@ -5584,6 +5936,20 @@ function applyImportData(data, mode) {
     }
     if (!activeDeckId && decks.length > 0) {
       activeDeckId = decks[0].id;
+    }
+    // Merge study log (add counts for same dates)
+    if (data.studyLog) {
+      const current = getStudyLog();
+      for (const date in data.studyLog) {
+        if (current[date]) {
+          current[date].studied += data.studyLog[date].studied || 0;
+          current[date].correct += data.studyLog[date].correct || 0;
+          current[date].sessions += data.studyLog[date].sessions || 0;
+        } else {
+          current[date] = data.studyLog[date];
+        }
+      }
+      saveStudyLog(current);
     }
   }
 
