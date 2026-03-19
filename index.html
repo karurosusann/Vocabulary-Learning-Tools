@@ -995,12 +995,10 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
 .deck-list-grid {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
   padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -1022,9 +1020,7 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   transition: all 0.2s;
   border: 2px solid var(--gray-200);
   flex-shrink: 0;
-  min-width: 180px;
-  max-width: 240px;
-  scroll-snap-align: start;
+  min-width: 160px;
 }
 .deck-card:active { transform: scale(0.98); }
 .deck-card.active {
