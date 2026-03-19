@@ -538,28 +538,6 @@ body.dark-mode .stat-box {
   font-weight: 700;
   color: var(--gray-600);
 }
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  color: var(--gray-400);
-}
-.heatmap-legend .legend-box {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-}
-.heatmap-legend .legend-box.l1 { background: #fed7aa; }
-.heatmap-legend .legend-box.l2 { background: #fdba74; }
-.heatmap-legend .legend-box.l3 { background: #fb923c; }
-.heatmap-legend .legend-box.l4 { background: #f97316; }
-.heatmap-legend .legend-box.l5 { background: #ea580c; }
-body.dark-mode .heatmap-legend .legend-box.l1 { background: #5c3a1e; }
-body.dark-mode .heatmap-legend .legend-box.l2 { background: #7a4a1e; }
-body.dark-mode .heatmap-legend .legend-box.l3 { background: #9a5a1e; }
-body.dark-mode .heatmap-legend .legend-box.l4 { background: #c06a10; }
-body.dark-mode .heatmap-legend .legend-box.l5 { background: #ea580c; }
 .heatmap-cell {
   aspect-ratio: 1;
   border-radius: 2px;
@@ -2745,13 +2723,13 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
           <div class="stat-value" id="statToday">0</div>
           <div class="stat-label">今日</div>
         </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTime">0分</div>
+          <div class="stat-label">学習時間</div>
+        </div>
         <div class="stat-box streak">
           <div class="stat-value" id="statStreak">0</div>
           <div class="stat-label">連続日数</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="statWeek">0</div>
-          <div class="stat-label">今週</div>
         </div>
         <div class="stat-box">
           <div class="stat-value" id="statTotal">0</div>
@@ -2761,15 +2739,6 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <div class="heatmap-section">
         <div class="heatmap-header">
           <h4>📅 学習カレンダー</h4>
-          <div class="heatmap-legend">
-            <span>少</span>
-            <div class="legend-box l1"></div>
-            <div class="legend-box l2"></div>
-            <div class="legend-box l3"></div>
-            <div class="legend-box l4"></div>
-            <div class="legend-box l5"></div>
-            <span>多</span>
-          </div>
         </div>
         <div id="heatmapContainer"></div>
       </div>
@@ -3198,6 +3167,7 @@ function updateSettingsDarkUI() {
 
 // ============ STUDY LOG & HEATMAP ============
 const STUDY_LOG_KEY = 'csvocab_study_log';
+let quizStartTime = null;
 
 function getStudyLog() {
   try {
@@ -3214,13 +3184,14 @@ function getTodayStr() {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-function recordStudySession(studied, correct) {
+function recordStudySession(studied, correct, elapsedSec) {
   const log = getStudyLog();
   const today = getTodayStr();
-  if (!log[today]) log[today] = { studied: 0, correct: 0, sessions: 0 };
+  if (!log[today]) log[today] = { studied: 0, correct: 0, sessions: 0, timeSec: 0 };
   log[today].studied += studied;
   log[today].correct += correct;
   log[today].sessions += 1;
+  log[today].timeSec = (log[today].timeSec || 0) + (elapsedSec || 0);
   saveStudyLog(log);
 }
 
@@ -3274,9 +3245,20 @@ function updateStudyStats() {
   const todayData = log[today];
   document.getElementById('statToday').textContent = todayData ? todayData.studied : 0;
   document.getElementById('statStreak').textContent = calcStreak();
-  document.getElementById('statWeek').textContent = calcWeekTotal();
+  // Today's study time
+  const todaySec = todayData ? (todayData.timeSec || 0) : 0;
+  document.getElementById('statTime').textContent = formatStudyTime(todaySec);
   const total = calcTotalStudied();
   document.getElementById('statTotal').textContent = total >= 10000 ? Math.floor(total/1000) + 'k' : total;
+}
+
+function formatStudyTime(sec) {
+  if (sec < 60) return sec + '秒';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return min + '分';
+  const hr = Math.floor(min / 60);
+  const remMin = min % 60;
+  return hr + '時間' + (remMin > 0 ? remMin + '分' : '');
 }
 
 function renderHeatmap() {
@@ -4509,6 +4491,7 @@ function startNextQuiz() {
     beforeLevels: beforeLevels,
     drillWrongSet: new Set()
   };
+  quizStartTime = Date.now();
 
   showScreen('quiz');
   sfxStart();
@@ -4547,6 +4530,7 @@ function startMissedReview() {
     beforeLevels: beforeLevels,
     drillWrongSet: new Set()
   };
+  quizStartTime = Date.now();
 
   showScreen('quiz');
   sfxStart();
@@ -4653,6 +4637,7 @@ function startQuiz() {
     beforeLevels: beforeLevels,
     drillWrongSet: new Set()
   };
+  quizStartTime = Date.now();
 
   showScreen('quiz');
   sfxStart();
@@ -5124,8 +5109,10 @@ function showResult() {
   }
   const pct = Math.round((displayCorrect / totalAnswered) * 100);
 
-  // Record study log
-  recordStudySession(totalAnswered, displayCorrect);
+  // Record study log with elapsed time
+  const elapsedSec = quizStartTime ? Math.round((Date.now() - quizStartTime) / 1000) : 0;
+  quizStartTime = null;
+  recordStudySession(totalAnswered, displayCorrect, elapsedSec);
 
   let emoji, msg;
   if (pct >= 90) { emoji = '🎉'; msg = 'すばらしい！'; }
