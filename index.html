@@ -1502,6 +1502,45 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   user-select: none;
   -webkit-user-select: none;
 }
+/* Timer bar */
+.quiz-timer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 2;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+.quiz-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--green-500), var(--orange-500), var(--red-500));
+  transform-origin: left;
+  transition: transform 0.1s linear;
+}
+.quiz-timer-fill.urgent {
+  background: var(--red-500);
+}
+.quiz-timer-text {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-400);
+  z-index: 2;
+}
+.quiz-timer-text.urgent {
+  color: var(--red-500);
+  animation: timerPulse 0.5s ease infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 .quiz-card::before {
   content: '';
   position: absolute;
@@ -2903,8 +2942,8 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 
           <h4 class="setup-section-label">読み上げ</h4>
           <div class="mode-toggle" id="ttsToggle">
-            <button class="mode-toggle-btn" onclick="selectTTS('question', this)">問題のみ</button>
-            <button class="mode-toggle-btn active" onclick="selectTTS('answer', this)">答えのみ</button>
+            <button class="mode-toggle-btn active" onclick="selectTTS('question', this)">問題のみ</button>
+            <button class="mode-toggle-btn" onclick="selectTTS('answer', this)">答えのみ</button>
             <button class="mode-toggle-btn" onclick="selectTTS('both', this)">両方</button>
             <button class="mode-toggle-btn" onclick="selectTTS('none', this)">なし</button>
           </div>
@@ -2914,6 +2953,27 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
             <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
             <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
             <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
+          </div>
+
+          <h4 class="setup-section-label">⏱️ 制限時間</h4>
+          <div class="mode-toggle" id="timerToggle">
+            <button class="mode-toggle-btn active" onclick="selectTimer(false, this)">なし</button>
+            <button class="mode-toggle-btn" onclick="selectTimer(true, this)">あり</button>
+          </div>
+          <div id="timerSecondsRow" style="display:none;margin-top:8px;">
+            <div class="count-selector" style="margin-bottom:0;">
+              <label>秒数：</label>
+              <select id="timerSeconds" onchange="changeTimerSeconds(this.value)">
+                <option value="3">3秒</option>
+                <option value="5" selected>5秒</option>
+                <option value="7">7秒</option>
+                <option value="10">10秒</option>
+                <option value="15">15秒</option>
+                <option value="20">20秒</option>
+                <option value="30">30秒</option>
+              </select>
+            </div>
+            <div class="drill-desc">時間切れで自動的に「知らない」になります</div>
           </div>
 
           <div class="count-selector">
@@ -2946,6 +3006,10 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
     <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
+      <div class="quiz-timer-bar" id="quizTimerBar" style="display:none;">
+        <div class="quiz-timer-fill" id="quizTimerFill"></div>
+      </div>
+      <span class="quiz-timer-text" id="quizTimerText" style="display:none;"></span>
       <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
       <div class="level-badge" id="quizBadge">未学習</div>
@@ -3704,7 +3768,9 @@ function saveDeckSettings(deckId) {
       drillMode: quizDrillMode,
       reverse: reverseMode,
       tts: ttsMode,
-      order: quizOrder
+      order: quizOrder,
+      timerEnabled: quizTimerEnabled,
+      timerSeconds: quizTimerSeconds
     };
     localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
   } catch(e) {}
@@ -4536,13 +4602,17 @@ function showLevelSelect() {
   if (saved) {
     quizDrillMode = saved.drillMode || false;
     reverseMode = saved.reverse || false;
-    ttsMode = saved.tts || 'answer';
+    ttsMode = saved.tts || 'question';
     quizOrder = saved.order || 'asc';
+    quizTimerEnabled = saved.timerEnabled || false;
+    quizTimerSeconds = saved.timerSeconds || 5;
   } else {
     quizDrillMode = false;
     reverseMode = false;
-    ttsMode = 'answer';
+    ttsMode = 'question';
     quizOrder = 'asc';
+    quizTimerEnabled = false;
+    quizTimerSeconds = 5;
   }
 
   // Auto-select first available range if none selected
@@ -4577,8 +4647,12 @@ let quizDrillMode = false;
 let reviewMode = false;
 let lastMainQuizCount = 10; // remembers the count from non-review quizzes
 let reverseMode = false;
-let ttsMode = 'answer'; // 'question', 'answer', 'both', 'none'
+let ttsMode = 'question'; // 'question', 'answer', 'both', 'none'
 let quizOrder = 'asc'; // 'asc', 'desc', 'random'
+let quizTimerEnabled = false;
+let quizTimerSeconds = 5;
+let quizTimerInterval = null;
+let quizTimerStartTime = 0;
 
 function startNextQuiz() {
   // Re-start a quiz with the same settings (range, mode, drill, reverse, tts, order, count)
@@ -4674,7 +4748,7 @@ function applyAdvancedSettingsUI() {
   document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', reverseMode ? i === 1 : i === 0);
   });
-  const ttsIdx = { question: 0, answer: 1, both: 2, none: 3 }[ttsMode] ?? 1;
+  const ttsIdx = { question: 0, answer: 1, both: 2, none: 3 }[ttsMode] ?? 0;
   document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', i === ttsIdx);
   });
@@ -4682,6 +4756,12 @@ function applyAdvancedSettingsUI() {
   document.querySelectorAll('#orderToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', i === orderIdx);
   });
+  // Timer UI
+  document.querySelectorAll('#timerToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', quizTimerEnabled ? i === 1 : i === 0);
+  });
+  document.getElementById('timerSecondsRow').style.display = quizTimerEnabled ? 'block' : 'none';
+  document.getElementById('timerSeconds').value = String(quizTimerSeconds);
 }
 
 function selectMode(mode, el) {
@@ -4711,6 +4791,77 @@ function selectOrder(order, el) {
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   saveDeckSettings(activeDeckId);
+}
+
+function selectTimer(enabled, el) {
+  quizTimerEnabled = enabled;
+  el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('timerSecondsRow').style.display = enabled ? 'block' : 'none';
+  saveDeckSettings(activeDeckId);
+}
+
+function changeTimerSeconds(val) {
+  quizTimerSeconds = parseInt(val) || 5;
+  saveDeckSettings(activeDeckId);
+}
+
+function startQuizTimer() {
+  stopQuizTimer();
+  if (!quizTimerEnabled) {
+    document.getElementById('quizTimerBar').style.display = 'none';
+    document.getElementById('quizTimerText').style.display = 'none';
+    return;
+  }
+  const bar = document.getElementById('quizTimerBar');
+  const fill = document.getElementById('quizTimerFill');
+  const text = document.getElementById('quizTimerText');
+  bar.style.display = 'block';
+  text.style.display = 'block';
+  fill.classList.remove('urgent');
+  text.classList.remove('urgent');
+  fill.style.transform = 'scaleX(1)';
+  text.textContent = quizTimerSeconds;
+  quizTimerStartTime = Date.now();
+  quizTimerInterval = setInterval(tickQuizTimer, 100);
+}
+
+function tickQuizTimer() {
+  const elapsed = (Date.now() - quizTimerStartTime) / 1000;
+  const remaining = Math.max(0, quizTimerSeconds - elapsed);
+  const ratio = remaining / quizTimerSeconds;
+  const fill = document.getElementById('quizTimerFill');
+  const text = document.getElementById('quizTimerText');
+  fill.style.transform = 'scaleX(' + ratio + ')';
+  text.textContent = Math.ceil(remaining);
+  if (remaining <= 3) {
+    fill.classList.add('urgent');
+    text.classList.add('urgent');
+  }
+  if (remaining <= 0) {
+    stopQuizTimer();
+    onTimerExpired();
+  }
+}
+
+function stopQuizTimer() {
+  if (quizTimerInterval) {
+    clearInterval(quizTimerInterval);
+    quizTimerInterval = null;
+  }
+}
+
+function onTimerExpired() {
+  if (!currentQuiz) return;
+  const card = document.getElementById('quizCard');
+  if (card.classList.contains('revealed')) {
+    // 答え表示済みで未回答 → 知らないとして処理
+    answerKnowledge(false);
+  } else {
+    // 答え未表示 → まず表示してから知らないとして処理
+    revealAnswer();
+    setTimeout(() => answerKnowledge(false), 600);
+  }
 }
 
 function updateStartBtn() {
@@ -4849,6 +5000,8 @@ function showQuizQuestion() {
       </div>
     `;
   }
+  // Start timer for this question
+  startQuizTimer();
 }
 
 // ② Auto-size quiz question text to fit within card
@@ -5085,6 +5238,7 @@ function generateChoices(targetWord) {
 }
 
 function answerKnowledge(known) {
+  stopQuizTimer();
   const word = currentQuiz.words[currentQuiz.index];
 
   if (known) {
@@ -5137,6 +5291,7 @@ function answerKnowledge(known) {
 }
 
 function answerChoice(btn, index, isCorrect) {
+  stopQuizTimer();
   const allBtns = btn.parentElement.querySelectorAll('.choice-btn');
   allBtns.forEach(b => b.classList.add('disabled'));
 
@@ -5205,6 +5360,7 @@ function showResult() {
     window.speechSynthesis.cancel();
   }
   stopAllAudio();
+  stopQuizTimer();
   showScreen('result');
   // Cancel again after screen transition in case iOS queued speech
   setTimeout(() => {
@@ -5414,6 +5570,7 @@ function showMissedWords() {
 }
 
 function confirmQuit() {
+  stopQuizTimer();
   confirmAction('クイズを中断', '中断しますか？ここまでの進捗は保存されます。', function() {
     showScreen('dashboard');
     renderDeckList();
