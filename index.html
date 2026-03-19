@@ -2968,6 +2968,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
         <input type="text" id="editorSearchInput" placeholder="問題を検索..." oninput="onEditorSearch()" autocomplete="off">
         <button class="search-clear" id="editorSearchClear" onclick="clearEditorSearch()">✕</button>
       </div>
+      <div class="deck-tabs" id="editorDeckTabs"></div>
     </div>
     <div class="editor-word-list" id="editorWordList"></div>
   </div>
@@ -5594,14 +5595,37 @@ function speakTextSequence(text1, text2) {
 // ============ WORD EDITOR ============
 let editingWordIndex = null;
 let editorSearchQuery = '';
+let editorDeckId = null;
 
 function showWordEditor() {
+  editorDeckId = activeDeckId;
   showScreen('word-editor');
   editorSearchQuery = '';
   const si = document.getElementById('editorSearchInput');
   if (si) si.value = '';
   document.getElementById('editorSearchClear')?.classList.remove('show');
+  renderEditorDeckTabs();
   renderEditorList();
+}
+
+function renderEditorDeckTabs() {
+  const container = document.getElementById('editorDeckTabs');
+  if (!container) return;
+  container.innerHTML = decks.map(deck => `
+    <button class="deck-tab ${deck.id === editorDeckId ? 'active' : ''}" onclick="switchEditorDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
+  `).join('');
+}
+
+function switchEditorDeck(deckId, el) {
+  editorDeckId = deckId;
+  el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderEditorList();
+}
+
+function getEditorWords() {
+  const deck = decks.find(d => d.id === editorDeckId);
+  return deck ? deck.words : [];
 }
 
 function onEditorSearch() {
@@ -5620,7 +5644,7 @@ function clearEditorSearch() {
 }
 
 function renderEditorList() {
-  const words = getActiveWords();
+  const words = getEditorWords();
   const el = document.getElementById('editorWordList');
   if (words.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">単語がありません</div>';
@@ -5667,7 +5691,7 @@ function addWordDirect() {
   const posRow = document.getElementById('insertPositionRow');
   const posSel = document.getElementById('insertPosition');
   posRow.style.display = 'block';
-  const words = getActiveWords();
+  const words = getEditorWords();
   let options = '<option value="0">先頭</option>';
   words.forEach((w, i) => {
     const label = w.english.length > 20 ? w.english.slice(0, 20) + '…' : w.english;
@@ -5686,7 +5710,7 @@ function showAddWordModal() {
 }
 
 function showEditWordModal(index) {
-  const words = getActiveWords();
+  const words = getEditorWords();
   const word = words[index];
   if (!word) return;
   editingWordIndex = index;
@@ -5725,7 +5749,7 @@ function saveWord() {
     showToast('問題文と答えを両方入力してください');
     return;
   }
-  const words = getActiveWords();
+  const words = getEditorWords();
   const targetPos = parseInt(document.getElementById('insertPosition').value) || 0;
 
   if (editingWordIndex === null) {
@@ -5753,15 +5777,17 @@ function saveWord() {
   }
   saveState();
   closeEditWord();
+  renderEditorDeckTabs();
   renderEditorList();
 }
 
 function deleteWord(index) {
-  const words = getActiveWords();
+  const words = getEditorWords();
   const word = words[index];
   confirmAction('単語を削除', `「${word.english}」を削除しますか？`, function() {
     words.splice(index, 1);
     saveState();
+    renderEditorDeckTabs();
     renderEditorList();
     showToast('削除しました');
   }, '削除する');
