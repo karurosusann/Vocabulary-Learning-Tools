@@ -549,8 +549,8 @@ body.has-bottom-nav .app {
 .study-stats-card {
   background: white;
   border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
   box-shadow: var(--shadow-sm);
   border: 1.5px solid var(--gray-200);
 }
@@ -561,13 +561,13 @@ body.dark-mode .study-stats-card {
 .stats-summary {
   display: flex;
   gap: 4px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 .stat-box {
   flex: 1;
   text-align: center;
-  padding: 10px 2px;
-  border-radius: 12px;
+  padding: 8px 2px;
+  border-radius: 10px;
   background: var(--gray-50);
   min-width: 0;
 }
@@ -576,16 +576,16 @@ body.dark-mode .stat-box {
 }
 .stat-box .stat-value {
   font-family: 'DM Sans', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--gray-800);
   line-height: 1;
 }
 .stat-box .stat-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
   color: var(--gray-400);
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .stat-box.accent .stat-value {
   color: var(--orange-500);
@@ -594,16 +594,16 @@ body.dark-mode .stat-box {
   color: var(--green-500);
 }
 .heatmap-section {
-  margin-top: 2px;
+  margin-top: 0;
 }
 .heatmap-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .heatmap-header h4 {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--gray-600);
 }
@@ -627,32 +627,32 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 2px;
 }
 .cal-dow {
   text-align: center;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--gray-400);
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 .cal-dow.sun { color: var(--red-400); }
 .cal-dow.sat { color: var(--blue-400); }
 .heatmap-cell {
-  aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--gray-100);
   min-width: 0;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 5px 0;
 }
 body.dark-mode .heatmap-cell {
   background: #2a2535;
 }
 .heatmap-cell .cal-day {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--gray-500);
   line-height: 1;
@@ -670,24 +670,24 @@ body.dark-mode .heatmap-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 .cal-month-nav button {
   border: none;
   background: none;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   color: var(--gray-500);
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 .cal-month-nav button:active { background: var(--gray-100); }
 .cal-month-nav span {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--gray-700);
-  min-width: 80px;
+  min-width: 70px;
   text-align: center;
 }
 
