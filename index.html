@@ -172,6 +172,14 @@ body.dark-mode .deck-item.active {
   background: #2a2040;
   border-color: var(--orange-500);
 }
+body.dark-mode .deck-card {
+  background: #1e1a28;
+  border-color: #3a3545;
+}
+body.dark-mode .deck-card.active {
+  background: #2a2040;
+  border-color: var(--orange-500);
+}
 body.dark-mode .word-item {
   background: #1e1a28;
 }
@@ -986,13 +994,20 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
 }
 .deck-list-grid {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  max-height: 233px;
-  overflow-y: auto;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scroll-snap-type: y proximity;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.deck-list-grid.dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
 }
 .deck-list-grid::-webkit-scrollbar { display: none; }
 .deck-card {
@@ -1001,12 +1016,15 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   gap: 12px;
   background: white;
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: 10px 14px;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid var(--gray-200);
   flex-shrink: 0;
+  min-width: 180px;
+  max-width: 240px;
+  scroll-snap-align: start;
 }
 .deck-card:active { transform: scale(0.98); }
 .deck-card.active {
@@ -4093,7 +4111,7 @@ function renderDeckList() {
   // Auto-scroll active card into view
   const activeCard = grid.querySelector('.deck-card.active');
   if (activeCard) {
-    setTimeout(() => activeCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 50);
+    setTimeout(() => activeCard.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }), 50);
   }
 }
 
@@ -6125,13 +6143,14 @@ function showToast(msg) {
       }
     }, true);
   }
-  // Apply to all .deck-tabs (now and future via MutationObserver)
-  document.querySelectorAll('.deck-tabs').forEach(el => {
+  const dragSelector = '.deck-tabs, .deck-list-grid';
+  // Apply to all scrollable containers (now and future via MutationObserver)
+  document.querySelectorAll(dragSelector).forEach(el => {
     el.setAttribute('data-drag', '1');
     setupDragScroll(el);
   });
   const observer = new MutationObserver(() => {
-    document.querySelectorAll('.deck-tabs:not([data-drag])').forEach(el => {
+    document.querySelectorAll(dragSelector.split(',').map(s => s.trim() + ':not([data-drag])').join(',')).forEach(el => {
       el.setAttribute('data-drag', '1');
       setupDragScroll(el);
     });
