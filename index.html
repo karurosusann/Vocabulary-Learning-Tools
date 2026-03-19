@@ -607,15 +607,6 @@ body.dark-mode .stat-box {
   font-weight: 700;
   color: var(--gray-600);
 }
-.heatmap-cell {
-  aspect-ratio: 1;
-  border-radius: 2px;
-  background: var(--gray-100);
-  min-width: 0;
-}
-body.dark-mode .heatmap-cell {
-  background: #2a2535;
-}
 .heatmap-cell.l1 { background: #fed7aa; }
 .heatmap-cell.l2 { background: #fdba74; }
 .heatmap-cell.l3 { background: #fb923c; }
@@ -630,42 +621,74 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   outline: 2px solid var(--orange-500);
   outline-offset: -1px;
 }
-.heatmap-months {
+.heatmap-cell.other-month {
+  opacity: 0.3;
+}
+.cal-grid {
   display: grid;
-  grid-template-columns: repeat(53, 1fr);
-  gap: 2px;
-  margin-bottom: 3px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
 }
-.heatmap-month-label {
-  font-size: 9px;
-  font-weight: 600;
+.cal-dow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--gray-400);
-  white-space: nowrap;
-  overflow: visible;
+  padding-bottom: 4px;
 }
-.heatmap-dow {
-  display: grid;
-  grid-template-rows: repeat(7, 1fr);
-  gap: 2px;
-  margin-right: 4px;
-  font-size: 9px;
-  color: var(--gray-400);
-  font-weight: 500;
-}
-.heatmap-dow span {
+.cal-dow.sun { color: var(--red-400); }
+.cal-dow.sat { color: var(--blue-400); }
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--gray-100);
+  min-width: 0;
+  position: relative;
   display: flex;
   align-items: center;
-  min-height: 0;
+  justify-content: center;
 }
-.heatmap-body {
+body.dark-mode .heatmap-cell {
+  background: #2a2535;
+}
+.heatmap-cell .cal-day {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-500);
+  line-height: 1;
+}
+.heatmap-cell.today .cal-day {
+  color: white;
+  font-weight: 800;
+}
+.heatmap-cell.l1 .cal-day,
+.heatmap-cell.l2 .cal-day { color: var(--gray-700); }
+.heatmap-cell.l3 .cal-day,
+.heatmap-cell.l4 .cal-day,
+.heatmap-cell.l5 .cal-day { color: white; }
+.cal-month-nav {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
 }
-.heatmap-weeks {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(53, 1fr);
-  grid-template-rows: repeat(7, 1fr);
-  gap: 2px;
+.cal-month-nav button {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--gray-500);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.cal-month-nav button:active { background: var(--gray-100); }
+.cal-month-nav span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+  min-width: 80px;
+  text-align: center;
 }
 
 .app {
@@ -1394,7 +1417,10 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   font-size: 24px;
   flex-shrink: 0;
 }
-.action-btn.study .icon { background: linear-gradient(135deg, var(--orange-400), var(--orange-600)); }
+.action-btn.study .icon {
+  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
+  border-radius: 50%;
+}
 .action-btn.review .icon { background: linear-gradient(135deg, var(--blue-400), var(--blue-500)); }
 .action-btn.list .icon { background: linear-gradient(135deg, var(--green-400), var(--green-600)); }
 .action-btn.edit-words .icon { background: linear-gradient(135deg, var(--gray-400), var(--gray-600)); }
@@ -2573,10 +2599,9 @@ body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
   background: rgba(0,0,0,0.5);
   z-index: 2000;
   display: none;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 24px;
-  padding-top: max(60px, env(safe-area-inset-top, 20px) + 40px);
   animation: fadeInOverlay 0.2s ease;
   overflow-y: auto;
 }
@@ -2884,7 +2909,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 
     <div class="action-section">
       <button class="action-btn study" onclick="showLevelSelect()">
-        <div class="icon">📝</div>
+        <div class="icon" style="padding-left:3px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="8,5 20,12 8,19"/></svg></div>
         <div class="text">
           <h3>学習を始める</h3>
           <p>範囲を選んで一問一答スタート</p>
@@ -2912,7 +2937,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <div class="level-select-grid" id="levelSelectGrid"></div>
 
       <div style="text-align:center;margin-top:12px;">
-        <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')">⚙️ 詳細設定 ▶</button>
+        <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')">⚙️ 詳細設定</button>
       </div>
 
       <button class="start-quiz-btn" id="startQuizBtn" onclick="startQuiz()">スタート！</button>
@@ -3417,80 +3442,103 @@ function formatStudyTime(sec) {
   return hr + '時間' + (remMin > 0 ? remMin + '分' : '');
 }
 
+let heatmapYear, heatmapMonth;
+(function() {
+  const now = new Date();
+  heatmapYear = now.getFullYear();
+  heatmapMonth = now.getMonth();
+})();
+
 function renderHeatmap() {
   const container = document.getElementById('heatmapContainer');
   if (!container) return;
   const log = getStudyLog();
 
-  // Determine max for color scale
+  const year = heatmapYear;
+  const month = heatmapMonth;
+
+  // Max for color scale (across all log data)
   const values = Object.values(log).map(v => v.studied || 0);
   const maxVal = Math.max(1, ...values);
 
-  // Build 53 weeks (371 days) ending today
+  const todayStr = getTodayStr();
   const today = new Date();
   today.setHours(0,0,0,0);
-  const todayStr = getTodayStr();
 
-  // Find the Saturday of this week (end of grid)
-  const endDate = new Date(today);
-  endDate.setDate(today.getDate() + (6 - today.getDay()));
+  // First day of this month
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
 
-  // Start = 52 weeks before the start of endDate's week
-  const startDate = new Date(endDate);
-  startDate.setDate(endDate.getDate() - (53 * 7 - 1));
+  // Day of week for the 1st (0=Sun)
+  const startDow = firstDay.getDay();
 
-  // Month labels
+  // Month label
   const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  let monthsHtml = '';
-  let lastMonth = -1;
-  let weekIdx = 0;
-  const d = new Date(startDate);
-  while (d <= endDate) {
-    // Start of week (Sunday)
-    if (d.getDay() === 0) {
-      const m = d.getMonth();
-      if (m !== lastMonth && d.getDate() <= 7) {
-        monthsHtml += `<span class="heatmap-month-label" style="grid-column:${weekIdx+1}">${monthNames[m]}</span>`;
-        lastMonth = m;
-      }
-      weekIdx++;
-    }
-    d.setDate(d.getDate() + 1);
+  const dowLabels = ['日','月','火','水','木','金','土'];
+
+  // Header with navigation
+  let html = '<div class="cal-month-nav">';
+  html += '<button onclick="changeHeatmapMonth(-1)">◀</button>';
+  html += `<span>${year}年${monthNames[month]}</span>`;
+  // Only allow forward if not future
+  const isCurrentMonth = (year === today.getFullYear() && month === today.getMonth());
+  html += `<button onclick="changeHeatmapMonth(1)" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
+  html += '</div>';
+
+  // Day of week headers
+  html += '<div class="cal-grid">';
+  dowLabels.forEach((d, i) => {
+    let cls = 'cal-dow';
+    if (i === 0) cls += ' sun';
+    if (i === 6) cls += ' sat';
+    html += `<div class="${cls}">${d}</div>`;
+  });
+
+  // Empty cells before the 1st
+  for (let i = 0; i < startDow; i++) {
+    html += '<div class="heatmap-cell other-month"></div>';
   }
 
-  // Day of week labels
-  const dowLabels = ['', '月', '', '水', '', '金', ''];
-
-  // Build cells - grid is 7 rows x 53 columns, filled column by column (each column = 1 week)
-  const cells = [];
-  const cellDate = new Date(startDate);
-  for (let col = 0; col < 53; col++) {
-    for (let row = 0; row < 7; row++) {
-      const key = cellDate.getFullYear() + '-' + String(cellDate.getMonth()+1).padStart(2,'0') + '-' + String(cellDate.getDate()).padStart(2,'0');
-      const val = log[key] ? log[key].studied : 0;
-      let lvl = '';
-      if (val > 0) {
-        const ratio = val / maxVal;
-        if (ratio <= 0.2) lvl = 'l1';
-        else if (ratio <= 0.4) lvl = 'l2';
-        else if (ratio <= 0.6) lvl = 'l3';
-        else if (ratio <= 0.8) lvl = 'l4';
-        else lvl = 'l5';
-      }
-      const isToday = key === todayStr ? ' today' : '';
-      const title = key + (val > 0 ? `: ${val}語` : '');
-      cells.push(`<div class="heatmap-cell${lvl ? ' '+lvl : ''}${isToday}" title="${title}" style="grid-row:${row+1};grid-column:${col+1}"></div>`);
-      cellDate.setDate(cellDate.getDate() + 1);
+  // Day cells
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    const val = log[key] ? log[key].studied : 0;
+    let lvl = '';
+    if (val > 0) {
+      const ratio = val / maxVal;
+      if (ratio <= 0.2) lvl = ' l1';
+      else if (ratio <= 0.4) lvl = ' l2';
+      else if (ratio <= 0.6) lvl = ' l3';
+      else if (ratio <= 0.8) lvl = ' l4';
+      else lvl = ' l5';
     }
+    const isToday = key === todayStr ? ' today' : '';
+    const title = val > 0 ? `${key}: ${val}語` : key;
+    html += `<div class="heatmap-cell${lvl}${isToday}" title="${title}"><span class="cal-day">${day}</span></div>`;
   }
 
-  container.innerHTML = `
-    <div class="heatmap-months" style="margin-left:24px;">${monthsHtml}</div>
-    <div class="heatmap-body">
-      <div class="heatmap-dow">${dowLabels.map(l => `<span>${l}</span>`).join('')}</div>
-      <div class="heatmap-weeks">${cells.join('')}</div>
-    </div>
-  `;
+  // Empty cells after last day
+  const endDow = lastDay.getDay();
+  for (let i = endDow + 1; i < 7; i++) {
+    html += '<div class="heatmap-cell other-month"></div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function changeHeatmapMonth(delta) {
+  heatmapMonth += delta;
+  if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
+  if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
+  // Don't go beyond current month
+  const now = new Date();
+  if (heatmapYear > now.getFullYear() || (heatmapYear === now.getFullYear() && heatmapMonth > now.getMonth())) {
+    heatmapYear = now.getFullYear();
+    heatmapMonth = now.getMonth();
+  }
+  renderHeatmap();
 }
 
 // ============ AUDIO SYSTEM ============
