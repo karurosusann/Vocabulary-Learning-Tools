@@ -477,6 +477,86 @@ body.dark-mode .settings-menu-item .menu-badge {
   margin-bottom: 8px;
 }
 
+/* Bottom navigation bar */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--gray-200);
+  display: none;
+  justify-content: space-around;
+  align-items: stretch;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+body.dark-mode .bottom-nav {
+  background: #1e1a28;
+  border-top-color: #3a3545;
+}
+.bottom-nav.show {
+  display: flex;
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-item .nav-icon {
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.bottom-nav-item .nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-400);
+  transition: color 0.15s;
+}
+.bottom-nav-item.active .nav-label {
+  color: var(--orange-500);
+}
+.bottom-nav-item.active .nav-icon {
+  transform: scale(1.1);
+}
+.bottom-nav-item:active {
+  opacity: 0.6;
+}
+.bottom-nav-item.nav-study {
+  position: relative;
+}
+.bottom-nav-item.nav-study .nav-icon {
+  background: var(--orange-500);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-top: -18px;
+  box-shadow: 0 4px 12px rgba(249,115,22,0.35);
+}
+.bottom-nav-item.nav-study .nav-label {
+  color: var(--orange-500);
+  margin-top: 2px;
+}
+body.has-bottom-nav .app {
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+}
+
 /* Study stats & heatmap */
 .study-stats-card {
   background: white;
@@ -2767,23 +2847,6 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       </button>
     </div>
 
-    <div class="action-section">
-      <button class="action-btn edit-words" onclick="showWordEditor()">
-        <div class="icon">✏️</div>
-        <div class="text">
-          <h3>問題を編集</h3>
-          <p>追加・編集・削除</p>
-        </div>
-      </button>
-      <button class="action-btn list" onclick="showWordList()">
-        <div class="icon">📖</div>
-        <div class="text">
-          <h3>問題一覧</h3>
-          <p>すべての単語を確認</p>
-        </div>
-      </button>
-    </div>
-
     <input type="file" id="importJsonInput" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
 
     <div class="reset-area">
@@ -2929,6 +2992,30 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <div class="editor-word-list" id="editorWordList"></div>
   </div>
 
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" onclick="navTo('home')" id="navHome">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">ホーム</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navTo('list')" id="navList">
+    <span class="nav-icon">📖</span>
+    <span class="nav-label">一覧</span>
+  </button>
+  <button class="bottom-nav-item nav-study" onclick="navTo('study')" id="navStudy">
+    <span class="nav-icon">▶</span>
+    <span class="nav-label">学習</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navTo('edit')" id="navEdit">
+    <span class="nav-icon">✏️</span>
+    <span class="nav-label">編集</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navTo('settings')" id="navSettings">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">設定</span>
+  </button>
 </div>
 
   <!-- Modal: Edit Word -->
@@ -4233,6 +4320,42 @@ function showScreen(name) {
   if (name === 'dashboard') {
     updateStudyStats();
     renderHeatmap();
+  }
+  // Bottom nav visibility
+  const navScreens = ['dashboard', 'wordlist', 'word-editor'];
+  const nav = document.getElementById('bottomNav');
+  if (nav) {
+    if (navScreens.includes(name)) {
+      nav.classList.add('show');
+      document.body.classList.add('has-bottom-nav');
+    } else {
+      nav.classList.remove('show');
+      document.body.classList.remove('has-bottom-nav');
+    }
+  }
+  updateBottomNavActive(name);
+}
+
+function updateBottomNavActive(name) {
+  const map = { 'dashboard': 'navHome', 'wordlist': 'navList', 'word-editor': 'navEdit' };
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  const id = map[name];
+  if (id) document.getElementById(id)?.classList.add('active');
+}
+
+function navTo(target) {
+  if (target === 'home') {
+    showScreen('dashboard');
+    renderDeckList();
+    updateDashboard();
+  } else if (target === 'list') {
+    showWordList();
+  } else if (target === 'study') {
+    showLevelSelect();
+  } else if (target === 'edit') {
+    showWordEditor();
+  } else if (target === 'settings') {
+    openSettings();
   }
 }
 
