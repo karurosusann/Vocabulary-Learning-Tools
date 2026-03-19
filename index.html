@@ -533,26 +533,6 @@ body.dark-mode .bottom-nav {
 .bottom-nav-item:active {
   opacity: 0.6;
 }
-.bottom-nav-item.nav-study {
-  position: relative;
-}
-.bottom-nav-item.nav-study .nav-icon {
-  background: var(--orange-500);
-  color: white;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  margin-top: -18px;
-  box-shadow: 0 4px 12px rgba(249,115,22,0.35);
-}
-.bottom-nav-item.nav-study .nav-label {
-  color: var(--orange-500);
-  margin-top: 2px;
-}
 body.has-bottom-nav .app {
   padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
 }
@@ -2996,25 +2976,17 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 
 <!-- Bottom Navigation Bar -->
 <div class="bottom-nav" id="bottomNav">
-  <button class="bottom-nav-item active" onclick="navTo('home')" id="navHome">
-    <span class="nav-icon">🏠</span>
-    <span class="nav-label">ホーム</span>
-  </button>
   <button class="bottom-nav-item" onclick="navTo('list')" id="navList">
     <span class="nav-icon">📖</span>
     <span class="nav-label">一覧</span>
   </button>
-  <button class="bottom-nav-item nav-study" onclick="navTo('study')" id="navStudy">
-    <span class="nav-icon">▶</span>
-    <span class="nav-label">学習</span>
+  <button class="bottom-nav-item" onclick="navTo('home')" id="navHome">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">ホーム</span>
   </button>
   <button class="bottom-nav-item" onclick="navTo('edit')" id="navEdit">
     <span class="nav-icon">✏️</span>
     <span class="nav-label">編集</span>
-  </button>
-  <button class="bottom-nav-item" onclick="navTo('settings')" id="navSettings">
-    <span class="nav-icon">⚙️</span>
-    <span class="nav-label">設定</span>
   </button>
 </div>
 
@@ -4350,12 +4322,8 @@ function navTo(target) {
     updateDashboard();
   } else if (target === 'list') {
     showWordList();
-  } else if (target === 'study') {
-    showLevelSelect();
   } else if (target === 'edit') {
     showWordEditor();
-  } else if (target === 'settings') {
-    openSettings();
   }
 }
 
