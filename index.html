@@ -4163,17 +4163,20 @@ function saveGdriveClientId() {
 }
 
 function gdriveDisconnect() {
-  localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
-  localStorage.removeItem(GDRIVE_LAST_SYNC_KEY);
-  gdriveAccessToken = null;
-  gdriveTokenClient = null;
-  document.getElementById('gdriveSetup').style.display = 'block';
-  document.getElementById('gdriveConnected').style.display = 'none';
-  document.getElementById('gdriveClientIdInput').textContent = '';
-  document.getElementById('gdriveBadge').textContent = '未接続';
-  document.getElementById('gdriveLoggedOut').style.display = 'block';
-  document.getElementById('gdriveLoggedIn').style.display = 'none';
-  showToast('接続を解除しました');
+  closeGdrivePanel();
+  confirmAction('Google Drive接続を解除', 'クライアントIDが削除されます。データ自体は端末とGoogle Driveに残ります。', function() {
+    localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
+    localStorage.removeItem(GDRIVE_LAST_SYNC_KEY);
+    gdriveAccessToken = null;
+    gdriveTokenClient = null;
+    document.getElementById('gdriveSetup').style.display = 'block';
+    document.getElementById('gdriveConnected').style.display = 'none';
+    document.getElementById('gdriveClientIdInput').textContent = '';
+    document.getElementById('gdriveBadge').textContent = '未接続';
+    document.getElementById('gdriveLoggedOut').style.display = 'block';
+    document.getElementById('gdriveLoggedIn').style.display = 'none';
+    showToast('接続を解除しました');
+  }, '解除する');
 }
 
 function updateGdriveLastSync() {
@@ -5089,9 +5092,9 @@ function buildDonutSVG(counts, total) {
   const greenEnd = greenPct;
   const blueEnd  = greenPct + bluePct;
 
-  const pct = Math.round(greenPct);
+  const pct = Math.round(((counts.mastered + counts.fuzzy + counts.weak) / t) * 100);
   return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #4CAF50 0% ${greenEnd}%, #4285F4 ${greenEnd}% ${blueEnd}%, #E0E0E0 ${blueEnd}% 100%);"></div>
-    <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">習得</span></div>`;
+    <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">学習</span></div>`;
 }
 
 function renderDeckList() {
