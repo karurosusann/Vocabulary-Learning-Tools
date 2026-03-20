@@ -607,16 +607,6 @@ body.dark-mode .stat-box {
   font-weight: 700;
   color: var(--gray-600);
 }
-.heatmap-cell.l1 { background: #fed7aa; }
-.heatmap-cell.l2 { background: #fdba74; }
-.heatmap-cell.l3 { background: #fb923c; }
-.heatmap-cell.l4 { background: #f97316; }
-.heatmap-cell.l5 { background: #ea580c; }
-body.dark-mode .heatmap-cell.l1 { background: #5c3a1e; }
-body.dark-mode .heatmap-cell.l2 { background: #7a4a1e; }
-body.dark-mode .heatmap-cell.l3 { background: #9a5a1e; }
-body.dark-mode .heatmap-cell.l4 { background: #c06a10; }
-body.dark-mode .heatmap-cell.l5 { background: #ea580c; }
 .heatmap-cell.today {
   outline: 2px solid var(--orange-500);
   outline-offset: -1px;
@@ -658,14 +648,23 @@ body.dark-mode .heatmap-cell {
   line-height: 1;
 }
 .heatmap-cell.today .cal-day {
-  color: white;
+  color: var(--orange-500);
   font-weight: 800;
 }
-.heatmap-cell.l1 .cal-day,
-.heatmap-cell.l2 .cal-day { color: var(--gray-700); }
-.heatmap-cell.l3 .cal-day,
-.heatmap-cell.l4 .cal-day,
-.heatmap-cell.l5 .cal-day { color: white; }
+.heatmap-cell .cal-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--orange-500);
+  opacity: 0.7;
+}
+body.dark-mode .heatmap-cell .cal-check {
+  color: var(--orange-400);
+}
 .cal-month-nav {
   display: flex;
   align-items: center;
@@ -2888,7 +2887,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       </div>
       <div class="heatmap-section">
         <div class="heatmap-header">
-          <h4>📅 学習カレンダー</h4>
+          <h4>🗓 学習カレンダー</h4>
         </div>
         <div id="heatmapContainer"></div>
       </div>
@@ -3504,18 +3503,11 @@ function renderHeatmap() {
   for (let day = 1; day <= daysInMonth; day++) {
     const key = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     const val = log[key] ? log[key].studied : 0;
-    let lvl = '';
-    if (val > 0) {
-      const ratio = val / maxVal;
-      if (ratio <= 0.2) lvl = ' l1';
-      else if (ratio <= 0.4) lvl = ' l2';
-      else if (ratio <= 0.6) lvl = ' l3';
-      else if (ratio <= 0.8) lvl = ' l4';
-      else lvl = ' l5';
-    }
+    const studied = val > 0 ? ' studied' : '';
     const isToday = key === todayStr ? ' today' : '';
     const title = val > 0 ? `${key}: ${val}語` : key;
-    html += `<div class="heatmap-cell${lvl}${isToday}" title="${title}"><span class="cal-day">${day}</span></div>`;
+    const check = val > 0 ? '<span class="cal-check">✓</span>' : '';
+    html += `<div class="heatmap-cell${studied}${isToday}" title="${title}"><span class="cal-day">${day}</span>${check}</div>`;
   }
 
   // Empty cells after last day
