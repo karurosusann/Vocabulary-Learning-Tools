@@ -3605,11 +3605,17 @@ body.dark-mode .gdrive-setup-hint code {
     <!-- Connected: sync actions -->
     <div id="gdriveConnected" style="display:none;">
       <div class="gdrive-status connected" id="gdriveStatusText">✓ 接続済み</div>
-      <div class="gdrive-actions">
-        <button class="gdrive-btn upload" id="gdriveUploadBtn" onclick="gdriveUpload()">☁️ アップロード（保存）</button>
-        <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="gdriveDownload()">📥 ダウンロード（復元）</button>
-        <button class="gdrive-btn disconnect" onclick="gdriveDisconnect()">接続を解除</button>
+      <div id="gdriveLoggedOut">
+        <p style="font-size:12px;color:var(--gray-500);text-align:center;margin:8px 0;">Googleにログインして同期を開始します</p>
+        <button class="gdrive-btn upload" onclick="gdriveLogin()">Googleにログイン</button>
       </div>
+      <div id="gdriveLoggedIn" style="display:none;">
+        <div class="gdrive-actions">
+          <button class="gdrive-btn upload" id="gdriveUploadBtn" onclick="gdriveUpload()">☁️ アップロード（保存）</button>
+          <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="gdriveDownload()">📥 ダウンロード（復元）</button>
+        </div>
+      </div>
+      <button class="gdrive-btn disconnect" style="margin-top:10px;" onclick="gdriveDisconnect()">接続を解除</button>
       <div class="gdrive-last-sync" id="gdriveLastSync"></div>
     </div>
 
@@ -4107,6 +4113,14 @@ function showGdrivePanel() {
   if (clientId) {
     document.getElementById('gdriveSetup').style.display = 'none';
     document.getElementById('gdriveConnected').style.display = 'block';
+    // Show login or sync buttons based on token state
+    if (gdriveAccessToken) {
+      document.getElementById('gdriveLoggedOut').style.display = 'none';
+      document.getElementById('gdriveLoggedIn').style.display = 'block';
+    } else {
+      document.getElementById('gdriveLoggedOut').style.display = 'block';
+      document.getElementById('gdriveLoggedIn').style.display = 'none';
+    }
     updateGdriveLastSync();
     document.getElementById('gdriveBadge').textContent = '接続済み';
   } else {
@@ -4120,6 +4134,17 @@ function showGdrivePanel() {
 
 function closeGdrivePanel() {
   document.getElementById('gdriveOverlay').classList.remove('show');
+}
+
+async function gdriveLogin() {
+  try {
+    await gdriveGetToken();
+    document.getElementById('gdriveLoggedOut').style.display = 'none';
+    document.getElementById('gdriveLoggedIn').style.display = 'block';
+    showToast('✓ Googleにログインしました');
+  } catch (e) {
+    showToast('ログインエラー: ' + (e.message || e));
+  }
 }
 
 function saveGdriveClientId() {
@@ -4146,6 +4171,8 @@ function gdriveDisconnect() {
   document.getElementById('gdriveConnected').style.display = 'none';
   document.getElementById('gdriveClientIdInput').textContent = '';
   document.getElementById('gdriveBadge').textContent = '未接続';
+  document.getElementById('gdriveLoggedOut').style.display = 'block';
+  document.getElementById('gdriveLoggedIn').style.display = 'none';
   showToast('接続を解除しました');
 }
 
@@ -4169,25 +4196,41 @@ function gdriveGetToken() {
     if (gdriveAccessToken) { resolve(gdriveAccessToken); return; }
 
     if (!window.google || !window.google.accounts) {
-      reject('Google認証ライブラリが読み込まれていません。インターネット接続を確認してください。');
+      reject('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。');
       return;
     }
 
-    if (!gdriveTokenClient) {
-      gdriveTokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: GDRIVE_SCOPES,
-        callback: (resp) => {
-          if (resp.error) { reject(resp.error); return; }
-          gdriveAccessToken = resp.access_token;
-          // Token expires, clear after 50 min
-          setTimeout(() => { gdriveAccessToken = null; }, 50 * 60 * 1000);
-          resolve(gdriveAccessToken);
-        },
-        error_callback: (err) => { reject(err.message || 'OAuth認証エラー'); }
-      });
+    let settled = false;
+    // Timeout after 60 seconds
+    const timer = setTimeout(() => {
+      if (!settled) { settled = true; reject('認証がタイムアウトしました。もう一度お試しください。'); }
+    }, 60000);
+
+    gdriveTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: GDRIVE_SCOPES,
+      callback: (resp) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (resp.error) { reject(resp.error_description || resp.error); return; }
+        gdriveAccessToken = resp.access_token;
+        setTimeout(() => { gdriveAccessToken = null; }, 50 * 60 * 1000);
+        resolve(gdriveAccessToken);
+      },
+      error_callback: (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err.message || err.type || 'OAuth認証エラー');
+      }
+    });
+
+    try {
+      gdriveTokenClient.requestAccessToken();
+    } catch (e) {
+      if (!settled) { settled = true; clearTimeout(timer); reject(e.message || '認証の開始に失敗しました'); }
     }
-    gdriveTokenClient.requestAccessToken();
   });
 }
 
