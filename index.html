@@ -2413,12 +2413,12 @@ body.dark-mode .heatmap-cell .cal-check {
 .level-select-card {
   background: white;
   border-radius: var(--radius-sm);
-  padding: 12px 10px;
+  padding: 12px 14px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid var(--gray-200);
-  min-width: 64px;
+  min-width: 80px;
   flex-shrink: 0;
 }
 .level-select-card:active { transform: scale(0.97); }
@@ -2463,6 +2463,12 @@ body.dark-mode .heatmap-cell .cal-check {
   -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
   scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.level-select-row.dragging {
+  cursor: grabbing;
 }
 .level-select-row::-webkit-scrollbar { display: none; }
 .level-praise-banner {
@@ -4762,9 +4768,10 @@ function showLevelSelect() {
   html += '</div>';
   document.getElementById('levelSelectGrid').innerHTML = html;
 
-  // Wheel scroll for row
+  // Wheel scroll and drag scroll for row
   const row = document.querySelector('.level-select-row');
   if (row) {
+    setupDragScroll(row);
     row.addEventListener('wheel', (e) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
@@ -6608,51 +6615,45 @@ function showToast(msg) {
 }
 
 // ============ DRAG SCROLL (PC) ============
-(function initDragScroll() {
-  function setupDragScroll(el) {
-    let isDown = false, startX, scrollLeft, hasMoved;
-    el.addEventListener('mousedown', e => {
-      isDown = true;
-      hasMoved = false;
-      el.classList.add('dragging');
-      startX = e.pageX - el.offsetLeft;
-      scrollLeft = el.scrollLeft;
-    });
-    el.addEventListener('mouseleave', () => {
-      isDown = false;
-      el.classList.remove('dragging');
-    });
-    el.addEventListener('mouseup', () => {
-      isDown = false;
-      el.classList.remove('dragging');
-    });
-    el.addEventListener('mousemove', e => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - el.offsetLeft;
-      const walk = x - startX;
-      if (Math.abs(walk) > 3) hasMoved = true;
-      el.scrollLeft = scrollLeft - walk;
-    });
-    // Prevent click on tabs if dragged
-    el.addEventListener('click', e => {
-      if (hasMoved) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
-  }
-  const dragSelector = '.deck-tabs, .deck-list-grid';
-  // Apply to all scrollable containers (now and future via MutationObserver)
-  document.querySelectorAll(dragSelector).forEach(el => {
-    el.setAttribute('data-drag', '1');
-    setupDragScroll(el);
+function setupDragScroll(el) {
+  if (el.getAttribute('data-drag') === '1') return;
+  el.setAttribute('data-drag', '1');
+  let isDown = false, startX, scrollLeft, hasMoved;
+  el.addEventListener('mousedown', e => {
+    isDown = true;
+    hasMoved = false;
+    el.classList.add('dragging');
+    startX = e.pageX;
+    scrollLeft = el.scrollLeft;
   });
+  el.addEventListener('mouseleave', () => {
+    isDown = false;
+    el.classList.remove('dragging');
+  });
+  el.addEventListener('mouseup', () => {
+    isDown = false;
+    el.classList.remove('dragging');
+  });
+  el.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const walk = e.pageX - startX;
+    if (Math.abs(walk) > 3) hasMoved = true;
+    el.scrollLeft = scrollLeft - walk;
+  });
+  el.addEventListener('click', e => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+}
+
+(function initDragScroll() {
+  const dragSelector = '.deck-tabs, .deck-list-grid';
+  document.querySelectorAll(dragSelector).forEach(el => setupDragScroll(el));
   const observer = new MutationObserver(() => {
-    document.querySelectorAll(dragSelector.split(',').map(s => s.trim() + ':not([data-drag])').join(',')).forEach(el => {
-      el.setAttribute('data-drag', '1');
-      setupDragScroll(el);
-    });
+    document.querySelectorAll(dragSelector.split(',').map(s => s.trim() + ':not([data-drag])').join(',')).forEach(el => setupDragScroll(el));
   });
   observer.observe(document.body, { childList: true, subtree: true });
 })();
