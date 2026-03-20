@@ -3119,7 +3119,69 @@ body.dark-mode .img-attach-box {
   transition: color 0.2s;
 }
 .reset-btn:hover { color: var(--red-500); }
+/* Google Drive sync */
+.gdrive-status {
+  text-align: center;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--gray-400);
+  margin: 6px 0;
+}
+.gdrive-status.connected {
+  color: var(--green-500);
+}
+.gdrive-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.gdrive-btn {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.gdrive-btn.upload { background: var(--blue-500); color: white; }
+.gdrive-btn.download { background: var(--green-500); color: white; }
+.gdrive-btn.disconnect { background: var(--gray-200); color: var(--gray-600); font-size: 12px; padding: 8px; }
+body.dark-mode .gdrive-btn.disconnect { background: #2a2535; color: var(--gray-500); }
+.gdrive-btn:disabled { opacity: 0.5; cursor: default; }
+.gdrive-last-sync {
+  font-size: 11px;
+  color: var(--gray-400);
+  text-align: center;
+  margin-top: 8px;
+}
+.gdrive-setup-hint {
+  font-size: 11px;
+  color: var(--gray-500);
+  line-height: 1.6;
+  margin-top: 8px;
+  text-align: left;
+}
+.gdrive-setup-hint code {
+  display: block;
+  background: var(--gray-100);
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin: 4px 0;
+  word-break: break-all;
+  font-size: 10px;
+}
+body.dark-mode .gdrive-setup-hint code {
+  background: #2a2535;
+}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="app">
@@ -3494,6 +3556,12 @@ body.dark-mode .img-attach-box {
       </button>
       <input type="file" id="settingsImportJson" accept=".json" style="display:none;" onchange="importAllData(event)">
       <div class="settings-menu-divider"></div>
+      <button class="settings-menu-item" onclick="closeSettings();showGdrivePanel();">
+        <span class="menu-icon">☁️</span>
+        <span class="menu-label">Google Drive同期</span>
+        <span class="menu-badge" id="gdriveBadge">未接続</span>
+      </button>
+      <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showHelp();">
         <span class="menu-icon">❓</span>
         <span class="menu-label">使い方ガイド</span>
@@ -3502,6 +3570,50 @@ body.dark-mode .img-attach-box {
     <div class="settings-panel-footer">
       CSVocab v1.0
     </div>
+  </div>
+</div>
+
+<!-- Google Drive sync overlay -->
+<div class="confirm-overlay" id="gdriveOverlay" onclick="closeGdrivePanel()">
+  <div class="confirm-modal" onclick="event.stopPropagation()" style="max-width:380px;">
+    <div class="confirm-icon">☁️</div>
+    <h3>Google Drive同期</h3>
+
+    <!-- Setup: enter client ID -->
+    <div id="gdriveSetup">
+      <p style="font-size:12px;color:var(--gray-500);margin:12px 0 8px;text-align:left;line-height:1.5;">
+        Google Driveにデータを保存して、PC・スマホ・iPad間で同期できます。
+      </p>
+      <details style="margin-bottom:12px;text-align:left;">
+        <summary style="font-size:12px;font-weight:700;color:var(--orange-500);cursor:pointer;">📋 初回セットアップ手順</summary>
+        <div class="gdrive-setup-hint">
+          <strong>1.</strong> <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--blue-500);">Google Cloud Console</a> を開く<br>
+          <strong>2.</strong> プロジェクトを新規作成<br>
+          <strong>3.</strong>「APIとサービス」→「ライブラリ」→「<strong>Google Drive API</strong>」を有効化<br>
+          <strong>4.</strong>「OAuth同意画面」→「外部」で作成 → テストユーザーに自分のGmailを追加<br>
+          <strong>5.</strong>「認証情報」→「認証情報を作成」→「OAuthクライアントID」<br>
+          <strong>6.</strong> アプリの種類：「ウェブアプリケーション」<br>
+          <strong>7.</strong> 承認済みのJavaScript生成元に以下を追加：
+          <code id="gdriveOriginHint"></code>
+          <strong>8.</strong> 作成されたクライアントIDを下に貼り付け
+        </div>
+      </details>
+      <div class="rename-input rename-editable" id="gdriveClientIdInput" contenteditable="true" role="textbox" data-placeholder="クライアントIDを貼り付け" style="font-size:12px;margin-bottom:10px;word-break:break-all;"></div>
+      <button class="gdrive-btn upload" onclick="saveGdriveClientId()">設定を保存</button>
+    </div>
+
+    <!-- Connected: sync actions -->
+    <div id="gdriveConnected" style="display:none;">
+      <div class="gdrive-status connected" id="gdriveStatusText">✓ 接続済み</div>
+      <div class="gdrive-actions">
+        <button class="gdrive-btn upload" id="gdriveUploadBtn" onclick="gdriveUpload()">☁️ アップロード（保存）</button>
+        <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="gdriveDownload()">📥 ダウンロード（復元）</button>
+        <button class="gdrive-btn disconnect" onclick="gdriveDisconnect()">接続を解除</button>
+      </div>
+      <div class="gdrive-last-sync" id="gdriveLastSync"></div>
+    </div>
+
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeGdrivePanel()">閉じる</button>
   </div>
 </div>
 
@@ -3977,6 +4089,225 @@ function changeHeatmapMonth(delta) {
     heatmapMonth = now.getMonth();
   }
   renderHeatmap();
+}
+
+// ============ GOOGLE DRIVE SYNC ============
+const GDRIVE_CLIENT_ID_KEY = 'csvocab_gdrive_client_id';
+const GDRIVE_LAST_SYNC_KEY = 'csvocab_gdrive_last_sync';
+const GDRIVE_FILE_NAME = 'csvocab_backup.json';
+const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+let gdriveTokenClient = null;
+let gdriveAccessToken = null;
+
+function showGdrivePanel() {
+  const overlay = document.getElementById('gdriveOverlay');
+  const clientId = localStorage.getItem(GDRIVE_CLIENT_ID_KEY) || '';
+  document.getElementById('gdriveOriginHint').textContent = location.origin;
+
+  if (clientId) {
+    document.getElementById('gdriveSetup').style.display = 'none';
+    document.getElementById('gdriveConnected').style.display = 'block';
+    updateGdriveLastSync();
+    document.getElementById('gdriveBadge').textContent = '接続済み';
+  } else {
+    document.getElementById('gdriveSetup').style.display = 'block';
+    document.getElementById('gdriveConnected').style.display = 'none';
+    document.getElementById('gdriveClientIdInput').textContent = '';
+    document.getElementById('gdriveBadge').textContent = '未接続';
+  }
+  overlay.classList.add('show');
+}
+
+function closeGdrivePanel() {
+  document.getElementById('gdriveOverlay').classList.remove('show');
+}
+
+function saveGdriveClientId() {
+  const input = document.getElementById('gdriveClientIdInput');
+  const clientId = (input.textContent || '').trim();
+  if (!clientId || !clientId.includes('.apps.googleusercontent.com')) {
+    showToast('有効なクライアントIDを入力してください');
+    return;
+  }
+  localStorage.setItem(GDRIVE_CLIENT_ID_KEY, clientId);
+  showToast('✓ クライアントIDを保存しました');
+  document.getElementById('gdriveSetup').style.display = 'none';
+  document.getElementById('gdriveConnected').style.display = 'block';
+  document.getElementById('gdriveBadge').textContent = '接続済み';
+  gdriveTokenClient = null; // reset to reinit with new ID
+}
+
+function gdriveDisconnect() {
+  localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
+  localStorage.removeItem(GDRIVE_LAST_SYNC_KEY);
+  gdriveAccessToken = null;
+  gdriveTokenClient = null;
+  document.getElementById('gdriveSetup').style.display = 'block';
+  document.getElementById('gdriveConnected').style.display = 'none';
+  document.getElementById('gdriveClientIdInput').textContent = '';
+  document.getElementById('gdriveBadge').textContent = '未接続';
+  showToast('接続を解除しました');
+}
+
+function updateGdriveLastSync() {
+  const last = localStorage.getItem(GDRIVE_LAST_SYNC_KEY);
+  const el = document.getElementById('gdriveLastSync');
+  if (last) {
+    const d = new Date(last);
+    el.textContent = '最終同期: ' + d.toLocaleDateString('ja-JP') + ' ' + d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  } else {
+    el.textContent = 'まだ同期されていません';
+  }
+}
+
+function gdriveGetToken() {
+  return new Promise((resolve, reject) => {
+    const clientId = localStorage.getItem(GDRIVE_CLIENT_ID_KEY);
+    if (!clientId) { reject('クライアントIDが設定されていません'); return; }
+
+    // Already have a valid token
+    if (gdriveAccessToken) { resolve(gdriveAccessToken); return; }
+
+    if (!window.google || !window.google.accounts) {
+      reject('Google認証ライブラリが読み込まれていません。インターネット接続を確認してください。');
+      return;
+    }
+
+    if (!gdriveTokenClient) {
+      gdriveTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: GDRIVE_SCOPES,
+        callback: (resp) => {
+          if (resp.error) { reject(resp.error); return; }
+          gdriveAccessToken = resp.access_token;
+          // Token expires, clear after 50 min
+          setTimeout(() => { gdriveAccessToken = null; }, 50 * 60 * 1000);
+          resolve(gdriveAccessToken);
+        },
+        error_callback: (err) => { reject(err.message || 'OAuth認証エラー'); }
+      });
+    }
+    gdriveTokenClient.requestAccessToken();
+  });
+}
+
+async function gdriveFindFile(token) {
+  const query = encodeURIComponent(`name='${GDRIVE_FILE_NAME}' and trashed=false`);
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&spaces=drive`, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (!res.ok) throw new Error('Drive API error: ' + res.status);
+  const data = await res.json();
+  return data.files && data.files.length > 0 ? data.files[0] : null;
+}
+
+async function gdriveUpload() {
+  const btn = document.getElementById('gdriveUploadBtn');
+  btn.disabled = true;
+  btn.textContent = '☁️ アップロード中...';
+
+  try {
+    const token = await gdriveGetToken();
+
+    // Collect data (same as exportAllData)
+    const imageIds = new Set();
+    decks.forEach(d => d.words.forEach(w => {
+      if (w.questionImageId) imageIds.add(w.questionImageId);
+      if (w.answerImageId) imageIds.add(w.answerImageId);
+    }));
+    const images = {};
+    for (const id of imageIds) {
+      const data = await loadImage(id);
+      if (data) images[id] = data;
+    }
+    const backupData = {
+      version: 2,
+      app: 'CSVocab',
+      exportedAt: new Date().toISOString(),
+      activeDeckId: activeDeckId,
+      decks: decks,
+      studyLog: getStudyLog(),
+      images: Object.keys(images).length > 0 ? images : undefined
+    };
+    const jsonStr = JSON.stringify(backupData);
+
+    // Check if file already exists
+    const existing = await gdriveFindFile(token);
+
+    if (existing) {
+      // Update existing file
+      const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: jsonStr
+      });
+      if (!res.ok) throw new Error('Upload failed: ' + res.status);
+    } else {
+      // Create new file
+      const metadata = { name: GDRIVE_FILE_NAME, mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', new Blob([jsonStr], { type: 'application/json' }));
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: form
+      });
+      if (!res.ok) throw new Error('Upload failed: ' + res.status);
+    }
+
+    localStorage.setItem(GDRIVE_LAST_SYNC_KEY, new Date().toISOString());
+    updateGdriveLastSync();
+    showToast('☁️ Google Driveにアップロードしました');
+  } catch (e) {
+    console.error('GDrive upload error:', e);
+    showToast('エラー: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '☁️ アップロード（保存）';
+  }
+}
+
+async function gdriveDownload() {
+  const btn = document.getElementById('gdriveDownloadBtn');
+  btn.disabled = true;
+  btn.textContent = '📥 ダウンロード中...';
+
+  try {
+    const token = await gdriveGetToken();
+    const file = await gdriveFindFile(token);
+    if (!file) {
+      showToast('Google Driveにバックアップが見つかりません');
+      return;
+    }
+
+    // Download file content
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) throw new Error('Download failed: ' + res.status);
+    const data = await res.json();
+
+    if (!data.app || data.app !== 'CSVocab' || !data.decks) {
+      showToast('有効なCSVocabバックアップではありません');
+      return;
+    }
+
+    // Apply data (replace mode)
+    await applyImportData(data, 'replace');
+    localStorage.setItem(GDRIVE_LAST_SYNC_KEY, new Date().toISOString());
+    updateGdriveLastSync();
+    showScreen('dashboard');
+    renderDeckList();
+    updateDashboard();
+    showToast('📥 Google Driveからデータを復元しました（' + data.decks.length + 'デッキ）');
+  } catch (e) {
+    console.error('GDrive download error:', e);
+    showToast('エラー: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 ダウンロード（復元）';
+  }
 }
 
 // ============ IMAGE DB (IndexedDB) ============
@@ -6930,7 +7261,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
@@ -7222,6 +7553,11 @@ function setupDragScroll(el) {
 
 // ============ INIT ============
 loadState();
+// Update Google Drive badge
+if (localStorage.getItem(GDRIVE_CLIENT_ID_KEY)) {
+  const b = document.getElementById('gdriveBadge');
+  if (b) b.textContent = '接続済み';
+}
 
 // ============ PWA SERVICE WORKER ============
 if ('serviceWorker' in navigator) {
