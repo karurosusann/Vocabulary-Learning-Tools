@@ -2887,7 +2887,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       </div>
       <div class="heatmap-section">
         <div class="heatmap-header">
-          <h4>🗓 学習カレンダー</h4>
+          <h4><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:2px;"><rect x="1" y="3" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="1" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="1" x2="4.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="11.5" y1="1" x2="11.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> 学習カレンダー</h4>
         </div>
         <div id="heatmapContainer"></div>
       </div>
@@ -2900,9 +2900,9 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
         <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
       </div>
       <div class="deck-list-grid" id="deckListGrid"></div>
-      <div style="margin-top:10px;position:relative;">
-        <label for="fileInputAdd" class="secondary-btn" style="width:100%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-sizing:border-box;">＋ 新しいデッキを追加</label>
-        <input type="file" id="fileInputAdd" accept=".csv,.txt" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;">
+      <div style="margin-top:10px;">
+        <button class="secondary-btn" style="width:100%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-sizing:border-box;" onclick="showNewDeckModal()">＋ 新しいデッキを追加</button>
+        <input type="file" id="fileInputAdd" accept=".csv,.txt" multiple style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
       </div>
     </div>
 
@@ -3247,6 +3247,32 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   </div>
 </div>
 
+<!-- New Deck modal -->
+<div class="confirm-overlay" id="newDeckOverlay" onclick="closeNewDeckModal()">
+  <div class="confirm-modal" onclick="event.stopPropagation()" id="newDeckModalContent">
+    <div class="confirm-icon">📚</div>
+    <h3>新しいデッキを追加</h3>
+    <div class="confirm-buttons" style="flex-direction:column;gap:10px;margin-top:16px;">
+      <button class="confirm-danger" style="background:var(--orange-500);" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();">📄 CSVファイルから追加</button>
+      <button class="confirm-danger" style="background:var(--blue-500);" onclick="showCreateEmptyDeck()">✏️ 空のデッキを作成</button>
+    </div>
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeNewDeckModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- Create empty deck modal -->
+<div class="confirm-overlay" id="createDeckOverlay" onclick="closeCreateDeckModal()">
+  <div class="confirm-modal" onclick="event.stopPropagation()">
+    <div class="confirm-icon">✏️</div>
+    <h3>デッキ名を入力</h3>
+    <div id="createDeckName" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="デッキ名を入力" style="margin-top:12px;"></div>
+    <div class="confirm-buttons" style="margin-top:16px;">
+      <button class="confirm-cancel" onclick="closeCreateDeckModal()">キャンセル</button>
+      <button class="confirm-danger" style="background:var(--orange-500);" onclick="createEmptyDeck()">作成</button>
+    </div>
+  </div>
+</div>
+
 <div class="confirm-overlay" id="confirmOverlay" onclick="closeConfirm()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-icon">⚠️</div>
@@ -3266,6 +3292,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <div class="deck-edit-name-ce" id="deckEditNameInput" contenteditable="true" role="textbox" data-placeholder="デッキ名"></div>
     <button class="deck-edit-save-btn" onclick="saveDeckName()">保存</button>
     <div class="deck-edit-actions">
+      <button class="deck-edit-btn" onclick="closeDeckEdit();editDeckContent(activeDeckId)"><span class="de-icon">✏️</span> デッキ内を編集</button>
       <button class="deck-edit-btn" onclick="closeDeckEdit();openReorderModal()"><span class="de-icon">↕️</span> デッキの並べ替え</button>
       <button class="deck-edit-btn danger" onclick="closeDeckEdit();deleteDeck(activeDeckId)"><span class="de-icon">🗑️</span> このデッキを削除</button>
     </div>
@@ -3899,6 +3926,39 @@ function handleFilesAdd(files) {
   handleMultipleFiles(files);
 }
 
+// ============ NEW DECK MODAL ============
+function showNewDeckModal() {
+  document.getElementById('newDeckOverlay').classList.add('show');
+}
+function closeNewDeckModal() {
+  document.getElementById('newDeckOverlay').classList.remove('show');
+}
+function showCreateEmptyDeck() {
+  closeNewDeckModal();
+  document.getElementById('createDeckName').textContent = '';
+  document.getElementById('createDeckOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('createDeckName').focus(), 300);
+}
+function closeCreateDeckModal() {
+  document.getElementById('createDeckOverlay').classList.remove('show');
+}
+function createEmptyDeck() {
+  const nameEl = document.getElementById('createDeckName');
+  const name = (nameEl.textContent || '').trim();
+  if (!name) {
+    showToast('デッキ名を入力してください');
+    return;
+  }
+  const newDeck = { id: generateId(), name: name, words: [] };
+  decks.push(newDeck);
+  activeDeckId = newDeck.id;
+  saveState();
+  closeCreateDeckModal();
+  renderDeckList();
+  updateDashboard();
+  showToast('📚 デッキ「' + name + '」を作成しました');
+}
+
 // Attach event listener for fileInputAdd (home screen CSV add)
 const fileInputAdd = document.getElementById('fileInputAdd');
 if (fileInputAdd) {
@@ -4321,6 +4381,17 @@ function closeDeckEdit() {
   const el = document.getElementById('deckEditNameInput');
   if (el) el.blur();
   document.getElementById('deckEditOverlay').classList.remove('show');
+}
+
+function editDeckContent(deckId) {
+  editorDeckId = deckId;
+  showScreen('word-editor');
+  editorSearchQuery = '';
+  const si = document.getElementById('editorSearchInput');
+  if (si) si.value = '';
+  document.getElementById('editorSearchClear')?.classList.remove('show');
+  renderEditorDeckTabs();
+  renderEditorList();
 }
 
 function saveDeckName() {
@@ -6087,7 +6158,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
