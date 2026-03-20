@@ -3070,6 +3070,27 @@ body.dark-mode .img-attach-box {
   object-fit: contain;
   margin: 6px auto;
   display: block;
+  cursor: zoom-in;
+}
+/* Image lightbox */
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: zoom-out;
+  animation: fadeInOverlay 0.15s ease;
+}
+.img-lightbox img {
+  max-width: 95%;
+  max-height: 90vh;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4);
 }
 .word-item-img {
   width: 32px;
@@ -4014,8 +4035,8 @@ async function getAllImages() {
 }
 
 function resizeImage(file, maxWidth, quality) {
-  maxWidth = maxWidth || 400;
-  quality = quality || 0.6;
+  maxWidth = maxWidth || 1200;
+  quality = quality || 0.92;
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -5504,7 +5525,7 @@ async function showQuizQuestion() {
   // Load question image
   const qImgData = qImgId ? await loadImage(qImgId) : null;
   if (qImgData) {
-    quizWordEl.innerHTML = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}">`;
+    quizWordEl.innerHTML = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}" onclick="event.stopPropagation();openLightbox(this.src)">`;
   } else {
     quizWordEl.textContent = questionText;
   }
@@ -5539,7 +5560,7 @@ async function showQuizQuestion() {
 
   // Answer area inside card (hint + hidden answer)
   const aImgData = aImgId ? await loadImage(aImgId) : null;
-  const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}">` : '';
+  const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">` : '';
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
     <div class="answer-text-area">${answerImgHtml}${escapeHtml(answerText)}</div>
@@ -5690,6 +5711,21 @@ async function onQuizImagePicked(event) {
   showToast('📷 画像を追加しました');
   // Refresh the question display
   showQuizQuestion();
+}
+
+/* ===== Image lightbox ===== */
+function openLightbox(src) {
+  closeLightbox();
+  const lb = document.createElement('div');
+  lb.className = 'img-lightbox';
+  lb.id = 'imgLightbox';
+  lb.onclick = closeLightbox;
+  lb.innerHTML = `<img src="${src}">`;
+  document.body.appendChild(lb);
+}
+function closeLightbox() {
+  const lb = document.getElementById('imgLightbox');
+  if (lb) lb.remove();
 }
 
 /* ===== Swipe to answer (Mikan-style, touch only) ===== */
