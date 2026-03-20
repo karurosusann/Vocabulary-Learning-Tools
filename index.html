@@ -3411,7 +3411,8 @@ body.dark-mode .img-attach-box {
   <span class="bulk-count" id="bulkCount">0件選択</span>
   <div class="bulk-actions">
     <button class="bulk-action-btn select-all" onclick="bulkSelectAll()">全選択</button>
-    <button class="bulk-action-btn move" onclick="showBulkMoveModal()">移動</button>
+    <button class="bulk-action-btn move" onclick="showBulkMoveModal('move')">移動</button>
+    <button class="bulk-action-btn move" style="background:var(--green-500);" onclick="showBulkMoveModal('copy')">コピー</button>
     <button class="bulk-action-btn delete" onclick="bulkDelete()">削除</button>
   </div>
 </div>
@@ -3590,11 +3591,11 @@ body.dark-mode .img-attach-box {
 <!-- Bulk move modal -->
 <div class="confirm-overlay" id="bulkMoveOverlay" onclick="closeBulkMoveModal()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
-    <div class="confirm-icon">📦</div>
-    <h3>移動先を選択</h3>
+    <div class="confirm-icon" id="bulkMoveIcon">📦</div>
+    <h3 id="bulkMoveTitle">移動先を選択</h3>
     <div id="bulkMoveList" style="margin-top:12px;max-height:40vh;overflow-y:auto;"></div>
     <div style="margin-top:10px;">
-      <button class="confirm-danger" style="background:var(--blue-500);width:100%;" onclick="bulkMoveToNewDeck()">＋ 新しいデッキを作成して移動</button>
+      <button class="confirm-danger" style="background:var(--blue-500);width:100%;" id="bulkMoveNewDeckBtn" onclick="bulkMoveToNewDeck()">＋ 新しいデッキを作成して移動</button>
     </div>
     <button class="confirm-cancel" style="width:100%;margin-top:10px;" onclick="closeBulkMoveModal()">キャンセル</button>
   </div>
@@ -6549,17 +6550,30 @@ function bulkDelete() {
   }, '削除する');
 }
 
-function showBulkMoveModal() {
+let bulkMoveMode = 'move'; // 'move' or 'copy'
+
+function showBulkMoveModal(mode) {
   const total = getTotalSelectedCount();
   if (total === 0) { showToast('単語を選択してください'); return; }
+  bulkMoveMode = mode || 'move';
+  const isMove = bulkMoveMode === 'move';
+
+  // Update modal title and button text
+  document.getElementById('bulkMoveIcon').textContent = isMove ? '📦' : '📋';
+  document.getElementById('bulkMoveTitle').textContent = isMove ? '移動先を選択' : 'コピー先を選択';
+  document.getElementById('bulkMoveNewDeckBtn').textContent = isMove ? '＋ 新しいデッキを作成して移動' : '＋ 新しいデッキを作成してコピー';
+
   // Collect all source deck IDs that have selections
   const sourceDeckIds = new Set();
   for (const deckId in editorSelectedMap) {
     if (editorSelectedMap[deckId].size > 0) sourceDeckIds.add(deckId);
   }
   const list = document.getElementById('bulkMoveList');
-  list.innerHTML = decks
-    .filter(d => !sourceDeckIds.has(d.id) || sourceDeckIds.size > 1)
+  // For copy mode, show all decks including source
+  const filtered = isMove
+    ? decks.filter(d => !sourceDeckIds.has(d.id) || sourceDeckIds.size > 1)
+    : decks;
+  list.innerHTML = filtered
     .map(d => `<button class="settings-menu-item" style="border-radius:10px;" onclick="bulkMoveTo('${d.id}')"><span class="menu-icon">📚</span><span class="menu-label">${escapeHtml(d.name)}</span><span class="menu-badge">${d.words.length}問</span></button>`)
     .join('');
   if (list.innerHTML === '') {
@@ -6575,22 +6589,30 @@ function closeBulkMoveModal() {
 function bulkMoveTo(targetDeckId) {
   const targetDeck = decks.find(d => d.id === targetDeckId);
   if (!targetDeck) return;
-  let movedCount = 0;
+  const isMove = bulkMoveMode === 'move';
+  let count = 0;
   for (const deckId in editorSelectedMap) {
     const sel = editorSelectedMap[deckId];
     if (sel.size === 0) continue;
-    if (deckId === targetDeckId) continue;
+    if (isMove && deckId === targetDeckId) continue;
     const sourceDeck = decks.find(d => d.id === deckId);
     if (!sourceDeck) continue;
     const indices = Array.from(sel).sort((a, b) => b - a);
-    const moved = [];
-    indices.forEach(i => {
-      moved.push(sourceDeck.words[i]);
-      sourceDeck.words.splice(i, 1);
-    });
-    moved.reverse();
-    targetDeck.words.push(...moved);
-    movedCount += moved.length;
+    if (isMove) {
+      const moved = [];
+      indices.forEach(i => {
+        moved.push(sourceDeck.words[i]);
+        sourceDeck.words.splice(i, 1);
+      });
+      moved.reverse();
+      targetDeck.words.push(...moved);
+      count += moved.length;
+    } else {
+      // Copy: deep clone words, don't remove from source
+      const copied = indices.reverse().map(i => JSON.parse(JSON.stringify(sourceDeck.words[i])));
+      targetDeck.words.push(...copied);
+      count += copied.length;
+    }
   }
   editorSelectedMap = {};
   saveState();
@@ -6598,13 +6620,14 @@ function bulkMoveTo(targetDeckId) {
   renderEditorDeckTabs();
   renderEditorList();
   updateBulkToolbar();
-  showToast('📦 ' + movedCount + '件を「' + targetDeck.name + '」に移動しました');
+  const action = isMove ? '移動' : 'コピー';
+  const icon = isMove ? '📦' : '📋';
+  showToast(icon + ' ' + count + '件を「' + targetDeck.name + '」に' + action + 'しました');
 }
 
 function bulkMoveToNewDeck() {
   closeBulkMoveModal();
   document.getElementById('createDeckName').textContent = '';
-  // Override createEmptyDeck to also move words
   window._bulkMoveAfterCreate = true;
   document.getElementById('createDeckOverlay').classList.add('show');
   setTimeout(() => document.getElementById('createDeckName').focus(), 300);
