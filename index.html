@@ -882,26 +882,26 @@ body.dark-mode .heatmap-cell .cal-check {
 /* Import screen */
 .import-dual-row {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 0;
 }
 .import-dual-row .import-area {
   flex: 1;
-  padding: 20px 12px;
+  padding: 16px 8px;
 }
 .import-dual-row .import-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 10px;
-  font-size: 22px;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 8px;
+  font-size: 20px;
 }
 .import-dual-row .import-area h3 {
-  font-size: 13px;
-  margin-bottom: 6px;
+  font-size: 12px;
+  margin-bottom: 4px;
   line-height: 1.4;
 }
 .import-dual-row .import-area p {
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.4;
 }
 .import-json-area {
@@ -1111,10 +1111,9 @@ body.dark-mode .heatmap-cell .cal-check {
   background: rgba(0,0,0,0.5);
   z-index: 2000;
   display: none;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 24px;
-  padding-top: max(60px, env(safe-area-inset-top, 20px) + 40px);
   animation: fadeInOverlay 0.2s ease;
   overflow-y: auto;
 }
@@ -2742,6 +2741,9 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   gap: 6px;
   padding-bottom: 40px;
 }
+.select-mode .editor-word-list {
+  padding-bottom: 80px;
+}
 .editor-add-btn {
   background: var(--orange-500);
   color: white;
@@ -2752,6 +2754,115 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+}
+.editor-select-btn {
+  background: var(--gray-200);
+  color: var(--gray-600);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.editor-select-btn.active {
+  background: var(--blue-500);
+  color: white;
+}
+body.dark-mode .editor-select-btn {
+  background: #2a2535;
+  color: var(--gray-500);
+}
+body.dark-mode .editor-select-btn.active {
+  background: var(--blue-500);
+  color: white;
+}
+.ew-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--gray-300);
+  background: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 15px;
+  font-weight: 900;
+  color: transparent;
+}
+body.dark-mode .ew-checkbox {
+  background: #2a2535;
+  border-color: #3a3545;
+}
+.select-mode .ew-checkbox {
+  display: flex;
+}
+.ew-checkbox.checked {
+  color: var(--orange-500);
+  border-color: var(--orange-500);
+}
+.bulk-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--gray-200);
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  display: none;
+  align-items: center;
+  gap: 8px;
+  z-index: 200;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+}
+body.dark-mode .bulk-toolbar {
+  background: #1e1a28;
+  border-top-color: #3a3545;
+}
+.bulk-toolbar.show {
+  display: flex;
+}
+.bulk-toolbar .bulk-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.bulk-toolbar .bulk-actions {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.bulk-action-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.bulk-action-btn.move {
+  background: var(--blue-500);
+  color: white;
+}
+.bulk-action-btn.delete {
+  background: var(--red-500);
+  color: white;
+}
+.bulk-action-btn.select-all {
+  background: var(--gray-200);
+  color: var(--gray-600);
+}
+body.dark-mode .bulk-action-btn.select-all {
+  background: #2a2535;
+  color: var(--gray-500);
 }
 .editor-word-item {
   position: relative;
@@ -2831,6 +2942,11 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
         <h3>他の端末から<br>データを移行</h3>
         <p>JSONファイルから復元</p>
         <input type="file" id="importJsonInitial" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
+      </div>
+      <div class="import-area import-json-area" onclick="showCreateEmptyDeck()">
+        <div class="import-icon" style="background:var(--gray-100);">✏️</div>
+        <h3>自分でデッキを<br>作成</h3>
+        <p>空のデッキを作成して編集</p>
       </div>
     </div>
 
@@ -3073,8 +3189,11 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   <div id="screen-word-editor" class="screen">
     <div class="editor-header" id="editorHeader">
       <div class="editor-header-top">
-        <button class="quiz-back" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
-        <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
+        <button class="quiz-back" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
+        <div style="display:flex;gap:6px;">
+          <button class="editor-select-btn" id="editorSelectBtn" onclick="toggleEditorSelectMode()">選択</button>
+          <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
+        </div>
       </div>
       <h2 class="editor-title">問題を編集</h2>
       <div class="search-bar" style="margin-top:10px;">
@@ -3086,6 +3205,16 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     </div>
     <div class="editor-word-list" id="editorWordList"></div>
   </div>
+
+<!-- Bulk action toolbar -->
+<div class="bulk-toolbar" id="bulkToolbar">
+  <span class="bulk-count" id="bulkCount">0件選択</span>
+  <div class="bulk-actions">
+    <button class="bulk-action-btn select-all" onclick="bulkSelectAll()">全選択</button>
+    <button class="bulk-action-btn move" onclick="showBulkMoveModal()">移動</button>
+    <button class="bulk-action-btn delete" onclick="bulkDelete()">削除</button>
+  </div>
+</div>
 
 </div>
 
@@ -3226,12 +3355,12 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
     <h3 style="text-align:center;margin-bottom:16px;">📚 デモ問題を選択</h3>
     <div class="demo-list">
-      <button class="demo-item" onclick="loadDemoData('korean')">🇰🇷 韓国語 中級<span>99語</span></button>
-      <button class="demo-item" onclick="loadDemoData('education_law')">📜 教育基本法・学校教育法<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('curriculum')">🏫 小学校学習指導要領<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('student_guidance')">📖 生徒指導提要<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('pe_exam')">🏃 教採 保健体育<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('kochi_exam')">✏️ 教採 教職教養<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('english')">🔤 英単語<span>10語</span></button>
+      <button class="demo-item" onclick="loadDemoData('history')">📜 歴史<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('math')">📐 数学公式<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('spi')">💼 SPI<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('civil')">🏛️ 公務員試験<span>10問</span></button>
+      <button class="demo-item" onclick="loadDemoData('license')">📝 資格試験<span>10問</span></button>
     </div>
     <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeDemoPicker()">閉じる</button>
   </div>
@@ -3244,6 +3373,19 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <p class="reorder-hint">ボタンで順番を入れ替え</p>
     <div class="reorder-list" id="reorderList"></div>
     <button class="reorder-done-btn" onclick="closeReorder()">完了</button>
+  </div>
+</div>
+
+<!-- Bulk move modal -->
+<div class="confirm-overlay" id="bulkMoveOverlay" onclick="closeBulkMoveModal()">
+  <div class="confirm-modal" onclick="event.stopPropagation()">
+    <div class="confirm-icon">📦</div>
+    <h3>移動先を選択</h3>
+    <div id="bulkMoveList" style="margin-top:12px;max-height:40vh;overflow-y:auto;"></div>
+    <div style="margin-top:10px;">
+      <button class="confirm-danger" style="background:var(--blue-500);width:100%;" onclick="bulkMoveToNewDeck()">＋ 新しいデッキを作成して移動</button>
+    </div>
+    <button class="confirm-cancel" style="width:100%;margin-top:10px;" onclick="closeBulkMoveModal()">キャンセル</button>
   </div>
 </div>
 
@@ -3951,12 +4093,21 @@ function createEmptyDeck() {
   }
   const newDeck = { id: generateId(), name: name, words: [] };
   decks.push(newDeck);
-  activeDeckId = newDeck.id;
-  saveState();
   closeCreateDeckModal();
-  renderDeckList();
-  updateDashboard();
-  showToast('📚 デッキ「' + name + '」を作成しました');
+
+  // If called from bulk move, move selected words to new deck
+  if (window._bulkMoveAfterCreate) {
+    window._bulkMoveAfterCreate = false;
+    bulkMoveTo(newDeck.id);
+    activeDeckId = editorDeckId; // stay on current deck
+  } else {
+    activeDeckId = newDeck.id;
+    saveState();
+    showScreen('dashboard');
+    renderDeckList();
+    updateDashboard();
+    showToast('📚 デッキ「' + name + '」を作成しました');
+  }
 }
 
 // Attach event listener for fileInputAdd (home screen CSV add)
@@ -4073,173 +4224,83 @@ function loadDemoData(key) {
 }
 
 const DEMO_DECKS = {
-  korean: {
-    name: '韓国語 中級',
-    csv: `경제,経済
-사회,社会
-문화,文化
-경험,経験
-관계,関係
-관심,関心
-교통,交通
-교육,教育
-규칙,規則
-결과,結果
-결정,決定
-과정,過程
-노력,努力
-느낌,感じ
-능력,能力
-다양하다,多様だ
-대신,代わり
-대상,対象
-대회,大会
-도움,助け
-동기,動機
-목적,目的
-미래,未来
-바탕,基礎・土台
-발생하다,発生する
-발달,発達
-발전,発展
-방법,方法
-방향,方向
-변화,変化
-보관하다,保管する
-보호하다,保護する
-부족하다,不足する
-분야,分野
-비율,比率
-사건,事件
-사실,事実
-사업,事業
-사용하다,使用する
-상태,状態
-상황,状況
-생활,生活
-성공하다,成功する
-설명하다,説明する
-성격,性格
-습관,習慣
-시대,時代
-시설,施設
-시청,視聴・市役所
-실력,実力
-실수,失敗・ミス
-실시하다,実施する
-실용적,実用的
-심각하다,深刻だ
-아름답다,美しい
-안내하다,案内する
-안전하다,安全だ
-알아보다,調べる
-연구하다,研究する
-연기하다,延期する・演技する
-연락하다,連絡する
-연주하다,演奏する
-예방하다,予防する
-예상하다,予想する
-원인,原因
-위험하다,危険だ
-유명하다,有名だ
-유지하다,維持する
-유행하다,流行する
-의견,意見
-의미,意味
-이상,以上
-이하,以下
-이해하다,理解する
-인간,人間
-인기,人気
-인정하다,認める
-일정,日程
-자연,自然
-자료,資料
-자신,自信・自身
-자유,自由
-장점,長所
-단점,短所
-재료,材料
-적당하다,適当だ
-전문가,専門家
-전통,伝統
-정보,情報
-정상,正常・頂上
-정확하다,正確だ
-조건,条件
-조사하다,調査する
-조심하다,気をつける
-종류,種類
-주장하다,主張する
-준비하다,準備する
-증가하다,増加する
-감소하다,減少する
-지역,地域`
+  english: {
+    name: '英単語',
+    csv: `abandon,見捨てる
+accomplish,達成する
+adequate,十分な
+brief,簡潔な
+comprehend,理解する
+deliberate,意図的な
+enthusiasm,熱意
+inevitable,避けられない
+persuade,説得する
+sufficient,十分な`
   },
-  education_law: {
-    name: '教育基本法・学校教育法',
-    csv: `"教育基本法前文：民主的で文化的な（　）を建設して世界の平和と人類の福祉に貢献する","国家"
-"教育基本法前文：個人の尊厳を重んじ（　）と平和を希求する人間の育成を期する","真理"
-"教育基本法第1条：教育は（　）の完成を目指し行われなければならない","人格"
-"教育基本法第2条：（　）と道徳心を培うこと","豊かな情操"
-"教育基本法第4条：すべて国民は（　）に教育を受ける機会を与えられる","ひとしく"
-"教育基本法第5条：義務教育の年限は（　）年","9"
-"教育基本法第6条：法律に定める学校は（　）の性質を有するもの","公の"
-"教育基本法第9条：法律に定める学校の教員は（　）と実践的な指導力の向上に努める","絶えず研究"
-"学校教育法第21条の義務教育の目標は（　）個","10"
-"学校教育法第37条：校長は校務をつかさどり（　）を監督する","所属職員"`
+  history: {
+    name: '歴史',
+    csv: `鎌倉幕府の成立,1185年
+関ヶ原の戦い,1600年
+明治維新,1868年
+大化の改新,645年
+応仁の乱,1467年
+本能寺の変,1582年
+日清戦争,1894年
+日露戦争,1904年
+太平洋戦争の終結,1945年
+サンフランシスコ平和条約,1951年`
   },
-  curriculum: {
-    name: '小学校学習指導要領',
-    csv: `"学習指導要領が育成を目指すバランスのとれた力は何か","生きる力"
-"学校と社会とが共有する教育課程を何と呼ぶか","社会に開かれた教育課程"
-"教育課程を編成し実施し評価して改善を図る営みを何というか","カリキュラム・マネジメント"
-"（　）・対話的で深い学び","主体的"
-"未知の状況にも対応できる（　）・判断力・表現力等","思考力"
-"学びに向かう力・（　）等を涵養する","人間性"
-"言語能力・（　）能力・問題発見解決能力等は学習の基盤となる資質能力","情報活用"
-"プログラミングを体験しながら論理的思考力を身に付ける教育は？","プログラミング教育"
-"小学校の授業の1単位時間は原則として何分か","45分"
-"外国語活動の指導対象学年は？","第3学年及び第4学年"`
+  math: {
+    name: '数学公式',
+    csv: `三角形の面積の公式,底辺×高さ÷2
+円の面積の公式,π×r²
+速さの公式,距離÷時間
+球の体積の公式,(4/3)×π×r³
+台形の面積の公式,(上底＋下底)×高さ÷2
+円の円周の公式,2×π×r
+直方体の体積の公式,縦×横×高さ
+ピタゴラスの定理,a²＋b²＝c²
+2次方程式の解の公式,x＝(-b±√(b²-4ac))/2a
+円錐の体積の公式,(1/3)×π×r²×h`
   },
-  student_guidance: {
-    name: '生徒指導提要',
-    csv: `"生徒指導とは児童生徒の自発的・主体的な成長を支える（　）","教育活動"
-"生徒指導の目的は個性の発見とよさや可能性の伸長と（　）の育成","社会的資質・行動力"
-"児童生徒が自発的・主体的に自らを発達させていく過程を（　）という","自己指導能力"
-"生徒指導の実践上の視点として自己存在感の感受と（　）の促進","共感的な人間関係"
-"発達支持的生徒指導は（　）の児童生徒を対象とする","全て"
-"課題予防的生徒指導の第1段階は（　）的な予防教育","全体"
-"いじめ防止対策推進法におけるいじめの定義：一定の人間関係にある（　）","他の児童等が行う心理的又は物理的な影響を与える行為"
-"いじめの認知に際し「心身の苦痛を感じているもの」の判断は（　）に立つ","被害児童生徒の立場"
-"不登校児童生徒への支援の目標は（　）的自立を目指すこと","社会"
-"チーム学校として生徒指導を進める際の専門スタッフの例は？","スクールカウンセラー・スクールソーシャルワーカー"`
+  spi: {
+    name: 'SPI',
+    csv: `"損益算：原価800円の品に25%の利益を見込んだ定価は？",1000円
+"仕事算：Aは12日・Bは6日で完了。一緒にやると？",4日
+"速度算：時速60kmで2時間30分走った距離は？",150km
+"割合：200人中40人が合格。合格率は？",20%
+"濃度算：10%の食塩水200gの食塩の量は？",20g
+"損益算：定価1500円の商品を2割引で売った時の売値は？",1200円
+"確率：サイコロを2回振って合計が7になる確率は？",1/6
+"仕事算：ある仕事をAは10日、Bは15日で終える。一緒にやると？",6日
+"速度算：分速80mで歩くと駅まで15分。駅までの距離は？",1200m
+"割合：定価の30%引きで700円。定価はいくら？",1000円`
   },
-  pe_exam: {
-    name: '教採 保健体育',
-    csv: `"中学校保健体育の目標：（　）の保持増進と豊かなスポーツライフの実現","心身"
-"体育分野の目標：運動の合理的な実践を通して（　）を培う","運動の楽しさや喜び"
-"保健分野で学習する内容のうち第1学年は（　）","心身の機能の発達と心の健康"
-"体つくり運動の2つの領域は体ほぐしの運動と（　）","体の動きを高める運動"
-"器械運動の種目は4種類：マット運動・鉄棒運動・平均台運動・（　）","跳び箱運動"
-"陸上競技の種目は短距離走・長距離走・（　）・走り幅跳び・走り高跳び","ハードル走"
-"水泳の泳法はクロール・平泳ぎ・背泳ぎ・（　）","バタフライ"
-"武道として中学校で指導する主な種目は柔道と（　）","剣道"
-"ダンスの領域は創作ダンス・フォークダンス・（　）","現代的なリズムのダンス"
-"体育理論で扱う内容の一つ：運動やスポーツの意義や効果と（　）","学び方や安全な行い方"`
+  civil: {
+    name: '公務員試験',
+    csv: `"行政法：行政行為の取消しと撤回の違いは？","取消しは遡及的に無効・撤回は将来に向かって効力消滅"
+"憲法25条が保障する権利は？",生存権
+"憲法21条が保障する権利は？",表現の自由
+"地方自治法：直接請求で条例制定を求めるのに必要な署名数は？",有権者の1/50以上
+"行政法：行政不服審査法における不服申立ての種類は？",審査請求
+"憲法14条が定める原則は？",法の下の平等
+"憲法9条が定めている内容は？",戦争の放棄・戦力の不保持・交戦権の否認
+"行政法：情報公開法で開示請求できる対象は？",行政文書
+"地方自治法：議会の解散請求に必要な署名数は？",有権者の1/3以上
+"憲法76条：すべて裁判官は（　）に従い独立して職権を行う",良心`
   },
-  kochi_exam: {
-    name: '教採 教職教養',
-    csv: `"スキナーが提唱したスモールステップで進める学習理論は？","プログラム学習"
-"ブルーナーが提唱した学習者が自ら法則を見つける学習理論は？","発見学習"
-"ヴィゴツキーの発達の最近接領域の説明は？","自力では解決できないが援助があればできる領域"
-"ピアジェの認知発達段階で具体的操作期は何歳頃か？","7〜11歳頃"
-"マズローの欲求段階説の最上位は何か？","自己実現の欲求"
-"ブルームが提唱した完全習得学習を何というか？","マスタリーラーニング"
-"デューイが重視した経験主義の学習方法は？","問題解決学習"
-"ロジャーズが提唱した学習を促進する教師の態度は？","共感的理解・無条件の肯定的配慮・自己一致"
-"バンデューラの社会的学習理論における中心的概念は？","観察学習（モデリング）"
-"PDCAサイクルのPDCAとは何の略か？","Plan・Do・Check・Action"`
+  license: {
+    name: '資格試験',
+    csv: `"簿記：仕訳で借方に記入するものは？","資産の増加・費用の発生"
+"宅建：重要事項説明を行えるのは？",宅地建物取引士
+"宅建：クーリングオフの期間は？",8日間
+"FP：公的年金の受給資格期間は？",10年
+"簿記：貸借対照表の左側に記載するものは？",資産
+"ITパスポート：CPUの役割は？",演算と制御
+"FP：所得税の計算で使われる税率方式は？",超過累進税率
+"宅建：建物の用途制限を定める地域区分を何というか？",用途地域
+"簿記：売上原価の計算式は？",期首商品棚卸高＋仕入高−期末商品棚卸高
+"ITパスポート：情報セキュリティの3要素は？",機密性・完全性・可用性`
   }
 };
 
@@ -4506,8 +4567,12 @@ function showScreen(name) {
   // Bottom nav visibility
   const navScreens = ['dashboard', 'wordlist', 'word-editor'];
   const nav = document.getElementById('bottomNav');
+  // Reset bulk select mode when leaving editor
+  if (name !== 'word-editor') {
+    exitEditorSelectMode();
+  }
   if (nav) {
-    if (navScreens.includes(name)) {
+    if (navScreens.includes(name) && !editorSelectMode) {
       nav.classList.add('show');
       document.body.classList.add('has-bottom-nav');
     } else {
@@ -5897,7 +5962,164 @@ let editingWordIndex = null;
 let editorSearchQuery = '';
 let editorDeckId = null;
 
+// ============ BULK SELECT MODE ============
+let editorSelectMode = false;
+let editorSelectedMap = {}; // { deckId: Set of indices }
+
+function getEditorSelected() {
+  if (!editorSelectedMap[editorDeckId]) editorSelectedMap[editorDeckId] = new Set();
+  return editorSelectedMap[editorDeckId];
+}
+
+function toggleEditorSelectMode() {
+  editorSelectMode = !editorSelectMode;
+  if (!editorSelectMode) editorSelectedMap = {};
+  const btn = document.getElementById('editorSelectBtn');
+  btn.classList.toggle('active', editorSelectMode);
+  btn.textContent = editorSelectMode ? '完了' : '選択';
+  document.getElementById('screen-word-editor').classList.toggle('select-mode', editorSelectMode);
+  updateBulkToolbar();
+  renderEditorList();
+}
+
+function exitEditorSelectMode() {
+  editorSelectMode = false;
+  editorSelectedMap = {};
+  const btn = document.getElementById('editorSelectBtn');
+  if (btn) { btn.classList.remove('active'); btn.textContent = '選択'; }
+  document.getElementById('screen-word-editor')?.classList.remove('select-mode');
+  document.getElementById('bulkToolbar').classList.remove('show');
+}
+
+function toggleEditorCheckbox(index, event) {
+  event.stopPropagation();
+  const sel = getEditorSelected();
+  if (sel.has(index)) {
+    sel.delete(index);
+  } else {
+    sel.add(index);
+  }
+  const el = document.querySelector(`.editor-word-item[data-index="${index}"] .ew-checkbox`);
+  if (el) el.classList.toggle('checked', sel.has(index));
+  updateBulkToolbar();
+}
+
+function bulkSelectAll() {
+  const words = getEditorWords();
+  const sel = getEditorSelected();
+  if (sel.size === words.length) {
+    sel.clear();
+  } else {
+    for (let i = 0; i < words.length; i++) sel.add(i);
+  }
+  renderEditorList();
+  updateBulkToolbar();
+}
+
+function getTotalSelectedCount() {
+  let total = 0;
+  for (const deckId in editorSelectedMap) {
+    total += editorSelectedMap[deckId].size;
+  }
+  return total;
+}
+
+function updateBulkToolbar() {
+  const toolbar = document.getElementById('bulkToolbar');
+  if (editorSelectMode) {
+    toolbar.classList.add('show');
+    const total = getTotalSelectedCount();
+    document.getElementById('bulkCount').textContent = total + '件選択';
+    document.getElementById('bottomNav')?.classList.remove('show');
+  } else {
+    toolbar.classList.remove('show');
+  }
+}
+
+function bulkDelete() {
+  const total = getTotalSelectedCount();
+  if (total === 0) { showToast('単語を選択してください'); return; }
+  confirmAction(total + '件を削除', '選択した' + total + '件の単語を削除します。この操作は取り消せません。', function() {
+    for (const deckId in editorSelectedMap) {
+      const sel = editorSelectedMap[deckId];
+      if (sel.size === 0) continue;
+      const deck = decks.find(d => d.id === deckId);
+      if (!deck) continue;
+      const indices = Array.from(sel).sort((a, b) => b - a);
+      indices.forEach(i => deck.words.splice(i, 1));
+    }
+    editorSelectedMap = {};
+    saveState();
+    renderEditorDeckTabs();
+    renderEditorList();
+    updateBulkToolbar();
+    showToast('🗑️ ' + total + '件を削除しました');
+  }, '削除する');
+}
+
+function showBulkMoveModal() {
+  const total = getTotalSelectedCount();
+  if (total === 0) { showToast('単語を選択してください'); return; }
+  // Collect all source deck IDs that have selections
+  const sourceDeckIds = new Set();
+  for (const deckId in editorSelectedMap) {
+    if (editorSelectedMap[deckId].size > 0) sourceDeckIds.add(deckId);
+  }
+  const list = document.getElementById('bulkMoveList');
+  list.innerHTML = decks
+    .filter(d => !sourceDeckIds.has(d.id) || sourceDeckIds.size > 1)
+    .map(d => `<button class="settings-menu-item" style="border-radius:10px;" onclick="bulkMoveTo('${d.id}')"><span class="menu-icon">📚</span><span class="menu-label">${escapeHtml(d.name)}</span><span class="menu-badge">${d.words.length}問</span></button>`)
+    .join('');
+  if (list.innerHTML === '') {
+    list.innerHTML = '<div style="text-align:center;padding:12px;color:var(--gray-400);font-size:13px;">他のデッキがありません</div>';
+  }
+  document.getElementById('bulkMoveOverlay').classList.add('show');
+}
+
+function closeBulkMoveModal() {
+  document.getElementById('bulkMoveOverlay').classList.remove('show');
+}
+
+function bulkMoveTo(targetDeckId) {
+  const targetDeck = decks.find(d => d.id === targetDeckId);
+  if (!targetDeck) return;
+  let movedCount = 0;
+  for (const deckId in editorSelectedMap) {
+    const sel = editorSelectedMap[deckId];
+    if (sel.size === 0) continue;
+    if (deckId === targetDeckId) continue;
+    const sourceDeck = decks.find(d => d.id === deckId);
+    if (!sourceDeck) continue;
+    const indices = Array.from(sel).sort((a, b) => b - a);
+    const moved = [];
+    indices.forEach(i => {
+      moved.push(sourceDeck.words[i]);
+      sourceDeck.words.splice(i, 1);
+    });
+    moved.reverse();
+    targetDeck.words.push(...moved);
+    movedCount += moved.length;
+  }
+  editorSelectedMap = {};
+  saveState();
+  closeBulkMoveModal();
+  renderEditorDeckTabs();
+  renderEditorList();
+  updateBulkToolbar();
+  showToast('📦 ' + movedCount + '件を「' + targetDeck.name + '」に移動しました');
+}
+
+function bulkMoveToNewDeck() {
+  closeBulkMoveModal();
+  document.getElementById('createDeckName').textContent = '';
+  // Override createEmptyDeck to also move words
+  window._bulkMoveAfterCreate = true;
+  document.getElementById('createDeckOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('createDeckName').focus(), 300);
+}
+
 function showWordEditor() {
+  exitEditorSelectMode();
   editorDeckId = activeDeckId;
   showScreen('word-editor');
   editorSearchQuery = '';
@@ -5918,6 +6140,7 @@ function renderEditorDeckTabs() {
 
 function switchEditorDeck(deckId, el) {
   editorDeckId = deckId;
+  updateBulkToolbar();
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderEditorList();
@@ -5966,8 +6189,9 @@ function renderEditorList() {
   }
 
   el.innerHTML = items.map(({ w, i }) => `
-    <div class="editor-word-item" data-index="${i}" onclick="showEditWordModal(${i})">
+    <div class="editor-word-item" data-index="${i}" onclick="${editorSelectMode ? 'toggleEditorCheckbox('+i+', event)' : 'showEditWordModal('+i+')'}">
       <div class="ew-inner">
+        <div class="ew-checkbox ${getEditorSelected().has(i) ? 'checked' : ''}">✓</div>
         <div class="ew-content">
           <div class="ew-eng">${escapeHtml(w.english)}</div>
           <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
@@ -6158,7 +6382,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
