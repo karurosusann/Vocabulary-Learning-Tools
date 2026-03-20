@@ -1644,6 +1644,7 @@ body.dark-mode .cal-day-popup {
   letter-spacing: -0.5px;
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   word-break: break-word;
@@ -2959,6 +2960,80 @@ body.dark-mode .bulk-action-btn.select-all {
   word-break: break-word;
 }
 .edit-word-modal .rename-input { margin-bottom: 10px; }
+/* Image attachment */
+.img-attach-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.img-attach-box {
+  flex: 1;
+  border: 2px dashed var(--gray-200);
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+.img-attach-box:hover { border-color: var(--orange-300); }
+.img-attach-box .img-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-400);
+  margin-bottom: 4px;
+}
+.img-attach-box .img-add-icon {
+  font-size: 20px;
+  color: var(--gray-300);
+}
+.img-attach-box img {
+  max-width: 100%;
+  max-height: 80px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+.img-attach-box .img-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--red-500);
+  color: white;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+body.dark-mode .img-attach-box {
+  border-color: #3a3545;
+}
+/* Quiz image display */
+.quiz-question-img, .quiz-answer-img {
+  max-width: 80%;
+  max-height: 120px;
+  border-radius: 8px;
+  object-fit: contain;
+  margin: 6px auto;
+  display: block;
+}
+.word-item-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
 
 /* Reset button */
 .reset-area {
@@ -3299,6 +3374,17 @@ body.dark-mode .bulk-action-btn.select-all {
       <h3 id="editWordTitle">単語を編集</h3>
       <div id="editWordEng" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div>
       <div id="editWordJpn" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
+      <div class="img-attach-row">
+        <div class="img-attach-box" id="imgBoxQ" onclick="pickImage('question')">
+          <span class="img-label">問題の画像</span>
+          <span class="img-add-icon" id="imgAddQ">📷</span>
+        </div>
+        <div class="img-attach-box" id="imgBoxA" onclick="pickImage('answer')">
+          <span class="img-label">答えの画像</span>
+          <span class="img-add-icon" id="imgAddA">📷</span>
+        </div>
+      </div>
+      <input type="file" id="imgFileInput" accept="image/*" style="display:none;" onchange="onImagePicked(event)">
       <div id="insertPositionRow" style="display:none;margin-bottom:14px;">
         <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:6px;">挿入位置</label>
         <select id="insertPosition" class="rename-input" style="margin-bottom:0;padding:10px 12px;font-size:14px;"></select>
@@ -3820,6 +3906,132 @@ function changeHeatmapMonth(delta) {
     heatmapMonth = now.getMonth();
   }
   renderHeatmap();
+}
+
+// ============ IMAGE DB (IndexedDB) ============
+const IMG_DB_NAME = 'csvocab_images';
+const IMG_STORE = 'images';
+let imgDB = null;
+
+function openImageDB() {
+  return new Promise((resolve, reject) => {
+    if (imgDB) { resolve(imgDB); return; }
+    const req = indexedDB.open(IMG_DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(IMG_STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = e => { imgDB = e.target.result; resolve(imgDB); };
+    req.onerror = e => reject(e);
+  });
+}
+
+async function saveImage(id, dataUrl) {
+  const db = await openImageDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readwrite');
+    tx.objectStore(IMG_STORE).put({ id, data: dataUrl });
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+async function loadImage(id) {
+  if (!id) return null;
+  const db = await openImageDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readonly');
+    const req = tx.objectStore(IMG_STORE).get(id);
+    req.onsuccess = () => resolve(req.result ? req.result.data : null);
+    req.onerror = e => reject(e);
+  });
+}
+
+async function deleteImage(id) {
+  if (!id) return;
+  const db = await openImageDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readwrite');
+    tx.objectStore(IMG_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+async function getAllImages() {
+  const db = await openImageDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readonly');
+    const req = tx.objectStore(IMG_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = e => reject(e);
+  });
+}
+
+function resizeImage(file, maxWidth, quality) {
+  maxWidth = maxWidth || 400;
+  quality = quality || 0.6;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Image picker state
+let imgPickTarget = null; // 'question' or 'answer'
+let editImgQ = null; // data URL or null
+let editImgA = null;
+
+function pickImage(target) {
+  imgPickTarget = target;
+  document.getElementById('imgFileInput').value = '';
+  document.getElementById('imgFileInput').click();
+}
+
+async function onImagePicked(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const dataUrl = await resizeImage(file);
+  if (imgPickTarget === 'question') {
+    editImgQ = dataUrl;
+    renderImgBox('imgBoxQ', dataUrl, 'question');
+  } else {
+    editImgA = dataUrl;
+    renderImgBox('imgBoxA', dataUrl, 'answer');
+  }
+}
+
+function renderImgBox(boxId, dataUrl, target) {
+  const box = document.getElementById(boxId);
+  if (dataUrl) {
+    box.innerHTML = `
+      <span class="img-label">${target === 'question' ? '問題の画像' : '答えの画像'}</span>
+      <img src="${dataUrl}">
+      <button class="img-remove" onclick="event.stopPropagation();removeEditImg('${target}')">✕</button>
+    `;
+  } else {
+    box.innerHTML = `
+      <span class="img-label">${target === 'question' ? '問題の画像' : '答えの画像'}</span>
+      <span class="img-add-icon">📷</span>
+    `;
+  }
+}
+
+function removeEditImg(target) {
+  if (target === 'question') { editImgQ = null; renderImgBox('imgBoxQ', null, 'question'); }
+  else { editImgA = null; renderImgBox('imgBoxA', null, 'answer'); }
 }
 
 // ============ AUDIO SYSTEM ============
@@ -5216,7 +5428,7 @@ function startQuiz() {
   showQuizQuestion();
 }
 
-function showQuizQuestion() {
+async function showQuizQuestion() {
   const q = currentQuiz;
   const word = q.words[q.index];
 
@@ -5239,9 +5451,17 @@ function showQuizQuestion() {
   // ③ Reverse mode: swap question/answer display
   const questionText = reverseMode ? word.japanese : word.english;
   const answerText = reverseMode ? word.english : word.japanese;
+  const qImgId = reverseMode ? word.answerImageId : word.questionImageId;
+  const aImgId = reverseMode ? word.questionImageId : word.answerImageId;
 
   const quizWordEl = document.getElementById('quizWord');
-  quizWordEl.textContent = questionText;
+  // Load question image
+  const qImgData = qImgId ? await loadImage(qImgId) : null;
+  if (qImgData) {
+    quizWordEl.innerHTML = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}">`;
+  } else {
+    quizWordEl.textContent = questionText;
+  }
 
   // ② Auto-size: shrink font for long text
   autoSizeQuizWord(quizWordEl);
@@ -5272,9 +5492,11 @@ function showQuizQuestion() {
   const body = document.getElementById('quizBody');
 
   // Answer area inside card (hint + hidden answer)
+  const aImgData = aImgId ? await loadImage(aImgId) : null;
+  const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}">` : '';
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
-    <div class="answer-text-area">${escapeHtml(answerText)}</div>
+    <div class="answer-text-area">${answerImgHtml}${escapeHtml(answerText)}</div>
   `;
 
   if (quizMode === 'flashcard') {
@@ -6329,6 +6551,11 @@ function addWordDirect() {
   document.getElementById('editWordEng').textContent = '';
   document.getElementById('editWordJpn').textContent = '';
 
+  // Reset images
+  editImgQ = null; editImgA = null;
+  renderImgBox('imgBoxQ', null, 'question');
+  renderImgBox('imgBoxA', null, 'answer');
+
   // Hide delete button for new word
   document.getElementById('editWordDeleteRow').style.display = 'none';
 
@@ -6354,7 +6581,7 @@ function showAddWordModal() {
   addWordDirect();
 }
 
-function showEditWordModal(index) {
+async function showEditWordModal(index) {
   const words = getEditorWords();
   const word = words[index];
   if (!word) return;
@@ -6362,6 +6589,12 @@ function showEditWordModal(index) {
   document.getElementById('editWordTitle').textContent = '単語を編集';
   document.getElementById('editWordEng').textContent = word.english;
   document.getElementById('editWordJpn').textContent = word.japanese;
+
+  // Load images
+  editImgQ = word.questionImageId ? await loadImage(word.questionImageId) : null;
+  editImgA = word.answerImageId ? await loadImage(word.answerImageId) : null;
+  renderImgBox('imgBoxQ', editImgQ, 'question');
+  renderImgBox('imgBoxA', editImgA, 'answer');
 
   // Show position selector for moving
   const posRow = document.getElementById('insertPositionRow');
@@ -6387,7 +6620,7 @@ function closeEditWord() {
   document.getElementById('editWordOverlay').classList.remove('show');
 }
 
-function saveWord() {
+async function saveWord() {
   const eng = document.getElementById('editWordEng').textContent.trim();
   const jpn = document.getElementById('editWordJpn').textContent.trim();
   if (!eng || !jpn) {
@@ -6397,29 +6630,46 @@ function saveWord() {
   const words = getEditorWords();
   const targetPos = parseInt(document.getElementById('insertPosition').value) || 0;
 
+  let word;
   if (editingWordIndex === null) {
-    // Add new word at selected position
-    const newWord = { english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 };
-    words.splice(targetPos, 0, newWord);
+    word = { english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 };
+    words.splice(targetPos, 0, word);
     showToast('追加しました！');
   } else {
-    // Edit existing word
-    words[editingWordIndex].english = eng;
-    words[editingWordIndex].japanese = jpn;
+    word = words[editingWordIndex];
+    word.english = eng;
+    word.japanese = jpn;
 
-    // Move if position changed
     const currentPos = editingWordIndex;
-    // "targetPos" means "insert after position targetPos-1", i.e. at index targetPos
-    // But we need to account for the item being removed first
     if (targetPos !== currentPos && targetPos !== currentPos + 1) {
       const [moved] = words.splice(currentPos, 1);
       const insertAt = targetPos > currentPos ? targetPos - 1 : targetPos;
       words.splice(insertAt, 0, moved);
+      word = moved;
       showToast('保存・移動しました！');
     } else {
       showToast('保存しました！');
     }
   }
+
+  // Save images to IndexedDB
+  if (editImgQ) {
+    const imgId = word.questionImageId || ('img_' + Date.now() + '_q');
+    await saveImage(imgId, editImgQ);
+    word.questionImageId = imgId;
+  } else if (word.questionImageId) {
+    await deleteImage(word.questionImageId);
+    delete word.questionImageId;
+  }
+  if (editImgA) {
+    const imgId = word.answerImageId || ('img_' + Date.now() + '_a');
+    await saveImage(imgId, editImgA);
+    word.answerImageId = imgId;
+  } else if (word.answerImageId) {
+    await deleteImage(word.answerImageId);
+    delete word.answerImageId;
+  }
+
   saveState();
   closeEditWord();
   renderEditorDeckTabs();
@@ -6429,7 +6679,9 @@ function saveWord() {
 function deleteWord(index) {
   const words = getEditorWords();
   const word = words[index];
-  confirmAction('単語を削除', `「${word.english}」を削除しますか？`, function() {
+  confirmAction('単語を削除', `「${word.english}」を削除しますか？`, async function() {
+    if (word.questionImageId) await deleteImage(word.questionImageId);
+    if (word.answerImageId) await deleteImage(word.answerImageId);
     words.splice(index, 1);
     saveState();
     renderEditorDeckTabs();
@@ -6545,25 +6797,40 @@ function doResetAll() {
   localStorage.removeItem('mikan_decks');
   localStorage.removeItem('mikan_activeDeck');
   localStorage.removeItem(STUDY_LOG_KEY);
+  // Clear image DB
+  try { indexedDB.deleteDatabase(IMG_DB_NAME); imgDB = null; } catch(e) {}
   showScreen('import');
   showToast('すべてのデッキを削除しました');
 }
 
 // ============ EXPORT / IMPORT ============
-function exportAllData() {
+async function exportAllData() {
   if (decks.length === 0) {
     showToast('エクスポートするデッキがありません');
     return;
   }
+  // Collect image IDs used by all decks
+  const imageIds = new Set();
+  decks.forEach(d => d.words.forEach(w => {
+    if (w.questionImageId) imageIds.add(w.questionImageId);
+    if (w.answerImageId) imageIds.add(w.answerImageId);
+  }));
+  // Load images from IndexedDB
+  const images = {};
+  for (const id of imageIds) {
+    const data = await loadImage(id);
+    if (data) images[id] = data;
+  }
   const data = {
-    version: 1,
+    version: 2,
     app: 'CSVocab',
     exportedAt: new Date().toISOString(),
     activeDeckId: activeDeckId,
     decks: decks,
-    studyLog: getStudyLog()
+    studyLog: getStudyLog(),
+    images: Object.keys(images).length > 0 ? images : undefined
   };
-  const json = JSON.stringify(data, null, 2);
+  const json = JSON.stringify(data);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -6664,7 +6931,7 @@ function showImportChoiceModal(data) {
   overlay.classList.add('show');
 }
 
-function applyImportData(data, mode) {
+async function applyImportData(data, mode) {
   if (mode === 'replace') {
     decks = data.decks;
     activeDeckId = data.activeDeckId || (decks.length > 0 ? decks[0].id : null);
@@ -6676,7 +6943,6 @@ function applyImportData(data, mode) {
     for (const importDeck of data.decks) {
       const existing = decks.find(d => d.id === importDeck.id);
       if (existing) {
-        // Update existing deck
         existing.name = importDeck.name;
         existing.words = importDeck.words;
       } else {
@@ -6686,7 +6952,7 @@ function applyImportData(data, mode) {
     if (!activeDeckId && decks.length > 0) {
       activeDeckId = decks[0].id;
     }
-    // Merge study log (add counts for same dates)
+    // Merge study log
     if (data.studyLog) {
       const current = getStudyLog();
       for (const date in data.studyLog) {
@@ -6699,6 +6965,13 @@ function applyImportData(data, mode) {
         }
       }
       saveStudyLog(current);
+    }
+  }
+
+  // Import images to IndexedDB
+  if (data.images) {
+    for (const id in data.images) {
+      await saveImage(id, data.images[id]);
     }
   }
 
