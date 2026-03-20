@@ -689,6 +689,58 @@ body.dark-mode .heatmap-cell .cal-check {
   min-width: 70px;
   text-align: center;
 }
+.cal-day-popup {
+  position: fixed;
+  z-index: 3000;
+  background: white;
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  min-width: 180px;
+  animation: calPopIn 0.15s ease;
+  pointer-events: auto;
+}
+body.dark-mode .cal-day-popup {
+  background: #1e1a28;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+@keyframes calPopIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cal-day-popup .cdp-date {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+.cal-day-popup .cdp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+.cal-day-popup .cdp-label {
+  font-size: 12px;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+.cal-day-popup .cdp-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+.cal-day-popup .cdp-none {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-align: center;
+  padding: 4px 0;
+}
+.cal-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2999;
+}
 
 .app {
   max-width: 480px;
@@ -3682,7 +3734,7 @@ function renderHeatmap() {
     const isToday = key === todayStr ? ' today' : '';
     const title = val > 0 ? `${key}: ${val}語` : key;
     const check = val > 0 ? '<span class="cal-check">✓</span>' : '';
-    html += `<div class="heatmap-cell${studied}${isToday}" title="${title}"><span class="cal-day">${day}</span>${check}</div>`;
+    html += `<div class="heatmap-cell${studied}${isToday}" title="${title}" onclick="showCalDayPopup('${key}', event)"><span class="cal-day">${day}</span>${check}</div>`;
   }
 
   // Empty cells after last day
@@ -3695,7 +3747,69 @@ function renderHeatmap() {
   container.innerHTML = html;
 }
 
+function showCalDayPopup(dateKey, event) {
+  event.stopPropagation();
+  closeCalDayPopup();
+  const log = getStudyLog();
+  const data = log[dateKey];
+
+  // Parse date for display
+  const parts = dateKey.split('-');
+  const displayDate = parseInt(parts[0]) + '年' + parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+
+  let content = '';
+  if (data && data.studied > 0) {
+    const pct = data.correct && data.studied ? Math.round((data.correct / data.studied) * 100) : 0;
+    const time = formatStudyTime(data.timeSec || 0);
+    content = `
+      <div class="cdp-row"><span class="cdp-label">問題数</span><span class="cdp-value">${data.studied}問</span></div>
+      <div class="cdp-row"><span class="cdp-label">正答数</span><span class="cdp-value">${data.correct || 0}問 (${pct}%)</span></div>
+      <div class="cdp-row"><span class="cdp-label">学習時間</span><span class="cdp-value">${time}</span></div>
+      <div class="cdp-row"><span class="cdp-label">セッション</span><span class="cdp-value">${data.sessions || 0}回</span></div>
+    `;
+  } else {
+    content = '<div class="cdp-none">学習記録なし</div>';
+  }
+
+  // Create backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'cal-popup-backdrop';
+  backdrop.id = 'calPopupBackdrop';
+  backdrop.onclick = closeCalDayPopup;
+  document.body.appendChild(backdrop);
+
+  // Create popup
+  const popup = document.createElement('div');
+  popup.className = 'cal-day-popup';
+  popup.id = 'calDayPopup';
+  popup.innerHTML = `<div class="cdp-date">${displayDate}</div>${content}`;
+  document.body.appendChild(popup);
+
+  // Position near the tapped cell
+  const rect = event.currentTarget.getBoundingClientRect();
+  const pw = popup.offsetWidth;
+  const ph = popup.offsetHeight;
+  let left = rect.left + rect.width / 2 - pw / 2;
+  let top = rect.bottom + 8;
+
+  // Keep within viewport
+  if (left < 8) left = 8;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 8;
+
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+}
+
+function closeCalDayPopup() {
+  const popup = document.getElementById('calDayPopup');
+  const backdrop = document.getElementById('calPopupBackdrop');
+  if (popup) popup.remove();
+  if (backdrop) backdrop.remove();
+}
+
 function changeHeatmapMonth(delta) {
+  closeCalDayPopup();
   heatmapMonth += delta;
   if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
   if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
@@ -5359,23 +5473,23 @@ let swipeState = null;
     const card = document.getElementById('quizCard');
     const isRevealed = card && card.classList.contains('revealed');
 
-    // Enter / Space / ↑ — reveal answer, or re-read aloud if already revealed
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowUp') {
+    // Enter / Space / ↑ / ↓ — reveal answer, or re-read aloud if already revealed
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       e.preventDefault();
       revealAnswer();
       return;
     }
 
-    // Arrow keys — only after answer is revealed, flashcard mode
-    if (isRevealed && quizMode === 'flashcard' && !keyLocked) {
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
+    // → / ← — reveal if not yet revealed, answer if revealed (flashcard mode)
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (!isRevealed) {
+        revealAnswer();
+        return;
+      }
+      if (quizMode === 'flashcard' && !keyLocked) {
         keyLocked = true;
-        keyAnswerWithAnimation(true, card);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        keyLocked = true;
-        keyAnswerWithAnimation(false, card);
+        keyAnswerWithAnimation(e.key === 'ArrowRight', card);
       }
     }
   });
