@@ -3352,11 +3352,6 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
 
     <input type="file" id="importJsonInput" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
-
-    <div class="reset-area">
-      <button class="reset-btn" onclick="confirmAction('このデッキの進捗をリセット', 'すべての単語が「未学習」に戻ります。この操作は取り消せません。', doResetCurrentDeck)">🗑️ このデッキをリセット</button>
-      <button class="reset-btn" onclick="confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)">🗑️ すべてのデータを削除</button>
-    </div>
   </div>
 
   <!-- Screen: Level Select -->
@@ -3628,6 +3623,11 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-icon">❓</span>
         <span class="menu-label">使い方ガイド</span>
       </button>
+      <div class="settings-menu-divider"></div>
+      <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
+        <span class="menu-icon">🗑️</span>
+        <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
+      </button>
     </div>
     <div class="settings-panel-footer">
       CSVocab v1.0
@@ -3831,6 +3831,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="deck-edit-actions">
       <button class="deck-edit-btn" onclick="closeDeckEdit();editDeckContent(activeDeckId)"><span class="de-icon">✏️</span> デッキ内を編集</button>
       <button class="deck-edit-btn" onclick="closeDeckEdit();openReorderModal()"><span class="de-icon">↕️</span> デッキの並べ替え</button>
+      <button class="deck-edit-btn danger" onclick="closeDeckEdit();confirmAction('このデッキの進捗をリセット', 'すべての単語が「未学習」に戻ります。この操作は取り消せません。', doResetCurrentDeck)"><span class="de-icon">🔄</span> このデッキをリセット</button>
       <button class="deck-edit-btn danger" onclick="closeDeckEdit();deleteDeck(activeDeckId)"><span class="de-icon">🗑️</span> このデッキを削除</button>
     </div>
   </div>
