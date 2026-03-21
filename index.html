@@ -1773,6 +1773,7 @@ body.dark-mode .cal-day-popup {
   width: 40px;
   height: 40px;
   font-size: 18px;
+  color: var(--gray-400);
 }
 .quiz-img-picker {
   position: fixed;
@@ -3075,6 +3076,28 @@ body.dark-mode .img-attach-box {
   display: block;
   cursor: zoom-in;
 }
+/* Copy button */
+.quiz-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--gray-100);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--gray-400);
+  font-size: 14px;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.quiz-copy-btn:active { opacity: 1; }
+body.dark-mode .quiz-copy-btn { background: #2a2535; }
 /* Image lightbox */
 .img-lightbox {
   position: fixed;
@@ -3416,11 +3439,11 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
       <div class="level-badge" id="quizBadge">未学習</div>
+      <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
       <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
-      <button class="bookmark-btn card-camera" id="quizCameraBtn" onclick="event.stopPropagation();showQuizImagePicker()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></button>
-      <input type="file" id="quizImgFileInput" accept="image/*" style="display:none;" onchange="onQuizImagePicked(event)">
+      <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
     </div>
     <div id="quizBody"></div>
   </div>
@@ -6027,71 +6050,121 @@ function toggleBookmark() {
   saveState();
 }
 
-/* ===== Quiz image picker ===== */
-let quizImgPickTarget = null; // 'question' or 'answer'
+function copyQuizText() {
+  if (!currentQuiz) return;
+  closeCopyMenu();
 
-function showQuizImagePicker() {
-  closeQuizImagePicker();
-  const btn = document.getElementById('quizCameraBtn');
+  const word = currentQuiz.words[currentQuiz.index];
+  const card = document.getElementById('quizCard');
+  const isRevealed = card && card.classList.contains('revealed');
+  const btn = document.getElementById('quizCopyBtn');
   const rect = btn.getBoundingClientRect();
 
   const backdrop = document.createElement('div');
   backdrop.className = 'cal-popup-backdrop';
-  backdrop.id = 'quizImgPickerBackdrop';
-  backdrop.onclick = closeQuizImagePicker;
+  backdrop.id = 'copyMenuBackdrop';
+  backdrop.onclick = closeCopyMenu;
   document.body.appendChild(backdrop);
 
-  const picker = document.createElement('div');
-  picker.className = 'quiz-img-picker';
-  picker.id = 'quizImgPicker';
-  picker.innerHTML = `
-    <button onclick="quizPickImage('question')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg>問題に画像を追加</button>
-    <button onclick="quizPickImage('answer')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg>答えに画像を追加</button>
-  `;
-  document.body.appendChild(picker);
+  const menu = document.createElement('div');
+  menu.className = 'quiz-img-picker';
+  menu.id = 'copyMenu';
 
-  let left = rect.right - picker.offsetWidth;
-  let top = rect.top - picker.offsetHeight - 8;
-  if (top < 8) top = rect.bottom + 8;
+  let html = '<button onclick="doCopyQuiz(\'question\')">📋 問題文をコピー</button>';
+  if (isRevealed) {
+    html += '<button onclick="doCopyQuiz(\'answer\')">📋 答えをコピー</button>';
+    html += '<button onclick="doCopyQuiz(\'both\')">📋 両方をコピー</button>';
+  }
+  menu.innerHTML = html;
+  document.body.appendChild(menu);
+
+  let left = rect.left;
+  let top = rect.bottom + 8;
+  if (left + menu.offsetWidth > window.innerWidth - 8) left = window.innerWidth - menu.offsetWidth - 8;
+  if (top + menu.offsetHeight > window.innerHeight - 8) top = rect.top - menu.offsetHeight - 8;
   if (left < 8) left = 8;
-  picker.style.left = left + 'px';
-  picker.style.top = top + 'px';
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
 }
 
-function closeQuizImagePicker() {
-  const p = document.getElementById('quizImgPicker');
-  const b = document.getElementById('quizImgPickerBackdrop');
-  if (p) p.remove();
+function closeCopyMenu() {
+  const m = document.getElementById('copyMenu');
+  const b = document.getElementById('copyMenuBackdrop');
+  if (m) m.remove();
   if (b) b.remove();
 }
 
-function quizPickImage(target) {
-  closeQuizImagePicker();
-  quizImgPickTarget = target;
-  document.getElementById('quizImgFileInput').value = '';
-  document.getElementById('quizImgFileInput').click();
+function doCopyQuiz(target) {
+  closeCopyMenu();
+  if (!currentQuiz) return;
+  const word = currentQuiz.words[currentQuiz.index];
+  const questionText = reverseMode ? word.japanese : word.english;
+  const answerText = reverseMode ? word.english : word.japanese;
+
+  let textToCopy, label;
+  if (target === 'question') {
+    textToCopy = questionText;
+    label = '問題文';
+  } else if (target === 'answer') {
+    textToCopy = answerText;
+    label = '答え';
+  } else {
+    textToCopy = questionText + '\n' + answerText;
+    label = '問題と答え';
+  }
+
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    showToast('📋 ' + label + 'をコピーしました');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = textToCopy;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 ' + label + 'をコピーしました');
+  });
 }
 
-async function onQuizImagePicked(event) {
-  const file = event.target.files[0];
-  if (!file || !currentQuiz) return;
+/* ===== Quiz edit ===== */
+function quizEditCurrentWord() {
+  if (!currentQuiz) return;
   const word = currentQuiz.words[currentQuiz.index];
-  const dataUrl = await resizeImage(file);
-  const imgId = 'img_' + Date.now() + '_' + quizImgPickTarget.charAt(0);
 
-  if (quizImgPickTarget === 'question') {
-    if (word.questionImageId) await deleteImage(word.questionImageId);
-    await saveImage(imgId, dataUrl);
-    word.questionImageId = imgId;
-  } else {
-    if (word.answerImageId) await deleteImage(word.answerImageId);
-    await saveImage(imgId, dataUrl);
-    word.answerImageId = imgId;
-  }
-  saveState();
-  showToast('🖼️ 画像を追加しました');
-  // Refresh the question display
-  showQuizQuestion();
+  // Find the word's index in the deck
+  const deck = decks.find(d => d.words.includes(word));
+  if (!deck) return;
+  const wordIndex = deck.words.indexOf(word);
+  if (wordIndex === -1) return;
+
+  // Store quiz state so we can resume
+  window._quizEditReturn = true;
+
+  // Open edit modal
+  editingWordIndex = wordIndex;
+  editorDeckId = deck.id;
+  document.getElementById('editWordTitle').textContent = '問題を編集';
+  document.getElementById('editWordEng').textContent = word.english;
+  document.getElementById('editWordJpn').textContent = word.japanese;
+
+  // Load images
+  editImgQ = null; editImgA = null;
+  renderImgBox('imgBoxQ', null, 'question');
+  renderImgBox('imgBoxA', null, 'answer');
+  (async () => {
+    editImgQ = word.questionImageId ? await loadImage(word.questionImageId) : null;
+    editImgA = word.answerImageId ? await loadImage(word.answerImageId) : null;
+    renderImgBox('imgBoxQ', editImgQ, 'question');
+    renderImgBox('imgBoxA', editImgA, 'answer');
+  })();
+
+  // Hide position selector & delete button (not needed in quiz edit)
+  document.getElementById('insertPositionRow').style.display = 'none';
+  document.getElementById('editWordDeleteRow').style.display = 'none';
+
+  document.getElementById('editWordOverlay').classList.add('show');
 }
 
 /* ===== Image lightbox ===== */
@@ -6221,6 +6294,10 @@ let swipeState = null;
     const quizScreen = document.getElementById('screen-quiz');
     if (!quizScreen || !quizScreen.classList.contains('active')) return;
     if (!currentQuiz) return;
+
+    // Ignore keyboard when any overlay/modal is open
+    const anyOverlay = document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show');
+    if (anyOverlay) return;
 
     const card = document.getElementById('quizCard');
     const isRevealed = card && card.classList.contains('revealed');
@@ -7170,6 +7247,7 @@ async function showEditWordModal(index) {
 
 function closeEditWord() {
   document.getElementById('editWordOverlay').classList.remove('show');
+  window._quizEditReturn = false;
 }
 
 async function saveWord() {
@@ -7192,15 +7270,18 @@ async function saveWord() {
     word.english = eng;
     word.japanese = jpn;
 
-    const currentPos = editingWordIndex;
-    if (targetPos !== currentPos && targetPos !== currentPos + 1) {
-      const [moved] = words.splice(currentPos, 1);
-      const insertAt = targetPos > currentPos ? targetPos - 1 : targetPos;
-      words.splice(insertAt, 0, moved);
-      word = moved;
-      showToast('保存・移動しました！');
-    } else {
-      showToast('保存しました！');
+    // Skip position change when editing from quiz
+    if (!window._quizEditReturn) {
+      const currentPos = editingWordIndex;
+      if (targetPos !== currentPos && targetPos !== currentPos + 1) {
+        const [moved] = words.splice(currentPos, 1);
+        const insertAt = targetPos > currentPos ? targetPos - 1 : targetPos;
+        words.splice(insertAt, 0, moved);
+        word = moved;
+        showToast('保存・移動しました！');
+      } else {
+        showToast('保存しました！');
+      }
     }
   }
 
@@ -7223,7 +7304,16 @@ async function saveWord() {
   }
 
   saveState();
+  const wasQuizEdit = !!window._quizEditReturn;
   closeEditWord();
+
+  // If editing from quiz, refresh quiz display and return
+  if (wasQuizEdit) {
+    showQuizQuestion();
+    showToast('保存しました！');
+    return;
+  }
+
   renderEditorDeckTabs();
   renderEditorList();
 }
