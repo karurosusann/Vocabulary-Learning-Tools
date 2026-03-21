@@ -3244,7 +3244,6 @@ body.dark-mode .gdrive-setup-hint code {
   background: #2a2535;
 }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="app">
@@ -3918,11 +3917,16 @@ let quizStartTime = null;
 function getStudyLog() {
   try {
     return JSON.parse(localStorage.getItem(STUDY_LOG_KEY)) || {};
-  } catch(e) { return {}; }
+  } catch(e) { console.error('getStudyLog failed:', e); return {}; }
 }
 
 function saveStudyLog(log) {
-  localStorage.setItem(STUDY_LOG_KEY, JSON.stringify(log));
+  try {
+    localStorage.setItem(STUDY_LOG_KEY, JSON.stringify(log));
+  } catch(e) {
+    console.error('saveStudyLog failed:', e);
+    showToast('⚠️ 学習ログの保存に失敗しました');
+  }
 }
 
 function getTodayStr() {
@@ -4345,13 +4349,33 @@ function updateGdriveLastSync() {
   }
 }
 
-function gdriveGetToken() {
+function loadGISScript() {
   return new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts) { resolve(); return; }
+    const existing = document.querySelector('script[src*="accounts.google.com/gsi"]');
+    if (existing) { existing.onload = resolve; return; }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = resolve;
+    s.onerror = () => reject('Google認証ライブラリの読み込みに失敗しました');
+    document.head.appendChild(s);
+  });
+}
+
+function gdriveGetToken() {
+  return new Promise(async (resolve, reject) => {
     const clientId = localStorage.getItem(GDRIVE_CLIENT_ID_KEY);
     if (!clientId) { reject('クライアントIDが設定されていません'); return; }
 
     // Already have a valid token
     if (gdriveAccessToken) { resolve(gdriveAccessToken); return; }
+
+    // Load GIS script on demand
+    try {
+      await loadGISScript();
+    } catch (e) {
+      reject(e); return;
+    }
 
     if (!window.google || !window.google.accounts) {
       reject('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。');
@@ -4901,7 +4925,10 @@ function saveState() {
   try {
     localStorage.setItem('mikan_decks', JSON.stringify(decks));
     localStorage.setItem('mikan_activeDeck', activeDeckId);
-  } catch(e) {}
+  } catch(e) {
+    console.error('saveState failed:', e);
+    showToast('⚠️ 保存に失敗しました。端末の容量が不足している可能性があります');
+  }
 }
 
 // Per-deck quiz settings persistence
@@ -4918,7 +4945,9 @@ function saveDeckSettings(deckId) {
       showImages: quizShowImages
     };
     localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
-  } catch(e) {}
+  } catch(e) {
+    console.error('saveDeckSettings failed:', e);
+  }
 }
 
 function loadDeckSettings(deckId) {
@@ -4926,7 +4955,9 @@ function loadDeckSettings(deckId) {
   try {
     const raw = localStorage.getItem('mikan_deckSettings_' + deckId);
     if (raw) return JSON.parse(raw);
-  } catch(e) {}
+  } catch(e) {
+    console.error('loadDeckSettings failed:', e);
+  }
   return null;
 }
 function loadState() {
@@ -4960,7 +4991,21 @@ function loadState() {
         updateDashboard();
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('loadState failed:', e);
+    showToast('⚠️ データの読み込みに失敗しました');
+  }
+}
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function wordKey(w) {
+  return w.english + '\0' + w.japanese;
 }
 
 function generateId() {
@@ -5409,7 +5454,14 @@ function saveDeckName() {
 function deleteDeck(id) {
   const deck = decks.find(d => d.id === id);
   if (!deck) return;
-  confirmAction('デッキを削除', '「' + deck.name + '」を削除しますか？この操作は取り消せません。', function() {
+  confirmAction('デッキを削除', '「' + deck.name + '」を削除しますか？この操作は取り消せません。', async function() {
+    // Delete all images belonging to this deck
+    for (const w of deck.words) {
+      try {
+        if (w.questionImageId) await deleteImage(w.questionImageId);
+        if (w.answerImageId) await deleteImage(w.answerImageId);
+      } catch(e) { console.error('Image delete failed:', e); }
+    }
     decks = decks.filter(d => d.id !== id);
     if (activeDeckId === id) {
       activeDeckId = decks.length > 0 ? decks[0].id : null;
@@ -5781,7 +5833,7 @@ function startNextQuiz() {
 
   // Apply order
   if (quizOrder === 'random') {
-    pool = pool.sort(() => Math.random() - 0.5);
+    shuffle(pool);
   } else if (quizOrder === 'desc') {
     pool = pool.reverse();
   }
@@ -5792,7 +5844,7 @@ function startNextQuiz() {
 
   // Save original levels before quiz
   const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+  pool.forEach(w => { beforeLevels[wordKey(w)] = w.level; });
 
   currentQuiz = {
     words: pool,
@@ -5817,22 +5869,22 @@ function startMissedReview() {
   const missed = currentQuiz.results.filter(r => !r.correct);
   const seen = new Set();
   const pool = missed.filter(r => {
-    if (seen.has(r.word.english)) return false;
-    seen.add(r.word.english);
+    if (seen.has(wordKey(r.word))) return false;
+    seen.add(wordKey(r.word));
     return true;
   }).map(r => r.word);
 
   if (pool.length === 0) return;
 
-  pool.sort(() => Math.random() - 0.5);
+  shuffle(pool);
 
   reviewMode = true;
   quizMode = 'flashcard';
-  quizDrillMode = true;
+  // Keep the original drill mode setting (don't force drill)
 
   // Save current levels (won't be changed)
   const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+  pool.forEach(w => { beforeLevels[wordKey(w)] = w.level; });
 
   currentQuiz = {
     words: pool,
@@ -5948,7 +6000,7 @@ function updateQuizImgToggle() {
   if (btn) btn.classList.toggle('off', !quizShowImages);
 }
 
-function startQuizTimer() {
+function startQuizTimer(resumeFrom) {
   stopQuizTimer();
   if (!quizTimerEnabled) {
     document.getElementById('quizTimerBar').style.display = 'none';
@@ -5960,11 +6012,22 @@ function startQuizTimer() {
   const text = document.getElementById('quizTimerText');
   bar.style.display = 'block';
   text.style.display = 'block';
-  fill.classList.remove('urgent');
-  text.classList.remove('urgent');
-  fill.style.transform = 'scaleX(1)';
-  text.textContent = quizTimerSeconds;
-  quizTimerStartTime = Date.now();
+  // If resuming, start partway through; otherwise fresh start
+  if (typeof resumeFrom === 'number' && resumeFrom < quizTimerSeconds) {
+    const alreadyElapsed = quizTimerSeconds - resumeFrom;
+    quizTimerStartTime = Date.now() - alreadyElapsed * 1000;
+    const ratio = resumeFrom / quizTimerSeconds;
+    fill.style.transform = 'scaleX(' + ratio + ')';
+    text.textContent = Math.ceil(resumeFrom);
+    if (resumeFrom <= 3) { fill.classList.add('urgent'); text.classList.add('urgent'); }
+    else { fill.classList.remove('urgent'); text.classList.remove('urgent'); }
+  } else {
+    fill.classList.remove('urgent');
+    text.classList.remove('urgent');
+    fill.style.transform = 'scaleX(1)';
+    text.textContent = quizTimerSeconds;
+    quizTimerStartTime = Date.now();
+  }
   quizTimerInterval = setInterval(tickQuizTimer, 100);
 }
 
@@ -6028,7 +6091,7 @@ function startQuiz() {
 
   // Apply order
   if (quizOrder === 'random') {
-    pool = pool.sort(() => Math.random() - 0.5);
+    shuffle(pool);
   } else if (quizOrder === 'desc') {
     pool = pool.reverse();
   }
@@ -6041,7 +6104,7 @@ function startQuiz() {
 
   // Save original levels before quiz
   const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+  pool.forEach(w => { beforeLevels[wordKey(w)] = w.level; });
 
   currentQuiz = {
     words: pool,
@@ -6144,7 +6207,7 @@ async function showQuizQuestion() {
     `;
   } else {
     const choices = generateChoices(word);
-    const correctAnswer = word.japanese;
+    const correctAnswer = reverseMode ? word.english : word.japanese;
     body.innerHTML = `
       <div class="choices">
         ${choices.map((c, i) => `
@@ -6516,12 +6579,14 @@ let swipeState = null;
 })();
 
 function generateChoices(targetWord) {
-  const correct = targetWord.japanese;
-  // Pull distractors from all decks for better variety
-  const allW = getAllWords().filter(w => w.japanese !== correct);
-  const shuffled = allW.sort(() => Math.random() - 0.5).slice(0, 3);
-  const choices = [correct, ...shuffled.map(w => w.japanese)];
-  return choices.sort(() => Math.random() - 0.5);
+  // In reverse mode: question=japanese, answer=english → choices are english
+  // In normal mode: question=english, answer=japanese → choices are japanese
+  const answerField = reverseMode ? 'english' : 'japanese';
+  const correct = targetWord[answerField];
+  const allW = getAllWords().filter(w => w[answerField] !== correct);
+  const shuffled = shuffle(allW).slice(0, 3);
+  const choices = [correct, ...shuffled.map(w => w[answerField])];
+  return shuffle(choices);
 }
 
 function answerKnowledge(known) {
@@ -6532,7 +6597,7 @@ function answerKnowledge(known) {
     sfxCorrect();
     currentQuiz.correct++;
     if (!reviewMode) {
-      if (quizDrillMode && currentQuiz.drillWrongSet.has(word.english)) {
+      if (quizDrillMode && currentQuiz.drillWrongSet.has(wordKey(word))) {
         // Drill mode: word was wrong before in this session → stay weak, just count as mastered for progress
         word.level = 'weak';
         word.correctStreak = 0;
@@ -6561,7 +6626,7 @@ function answerKnowledge(known) {
 
     // Track wrong answers in drill mode
     if (quizDrillMode) {
-      currentQuiz.drillWrongSet.add(word.english);
+      currentQuiz.drillWrongSet.add(wordKey(word));
     }
 
     // Drill mode: re-queue the word later
@@ -6588,30 +6653,48 @@ function answerChoice(btn, index, isCorrect) {
     btn.classList.add('correct');
     sfxCorrect();
     currentQuiz.correct++;
-    if (quizDrillMode && currentQuiz.drillWrongSet.has(word.english)) {
-      // Drill mode: word was wrong before in this session → stay weak
-      word.level = 'weak';
-      word.correctStreak = 0;
-    } else {
-      word.correctStreak = (word.correctStreak || 0) + 1;
-      if (word.correctStreak >= 2) word.level = 'mastered';
-      else if (word.correctStreak >= 1) word.level = 'fuzzy';
+    if (!reviewMode) {
+      if (quizDrillMode && currentQuiz.drillWrongSet.has(wordKey(word))) {
+        word.level = 'weak';
+        word.correctStreak = 0;
+      } else if (word.level === 'unlearned') {
+        word.level = 'fuzzy';
+        word.correctStreak = 1;
+      } else if (word.level === 'weak') {
+        word.level = 'fuzzy';
+        word.correctStreak = 1;
+      } else if (word.level === 'fuzzy') {
+        word.level = 'mastered';
+        word.correctStreak = 2;
+      }
     }
     currentQuiz.results.push({ word, correct: true });
+    if (quizDrillMode) currentQuiz.masteredCount++;
   } else {
     btn.classList.add('wrong');
     sfxWrong();
     currentQuiz.wrong++;
-    word.level = 'weak';
-    word.correctStreak = 0;
+    if (!reviewMode) {
+      word.level = 'weak';
+      word.correctStreak = 0;
+    }
+    const correctText = reverseMode ? word.english : word.japanese;
     allBtns.forEach(b => {
-      if (b.textContent === word.japanese) b.classList.add('show-correct');
+      if (b.textContent === correctText) b.classList.add('show-correct');
     });
     currentQuiz.results.push({ word, correct: false });
 
     // Track wrong answers in drill mode
     if (quizDrillMode) {
-      currentQuiz.drillWrongSet.add(word.english);
+      currentQuiz.drillWrongSet.add(wordKey(word));
+    }
+
+    // Drill mode: re-queue the word later
+    if (quizDrillMode) {
+      const remaining = currentQuiz.words.slice(currentQuiz.index + 1);
+      const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
+      remaining.splice(insertPos, 0, word);
+      currentQuiz.words = [...currentQuiz.words.slice(0, currentQuiz.index + 1), ...remaining];
     }
   }
 
@@ -6665,7 +6748,7 @@ function showResult() {
     totalAnswered = q.totalCount;
     // Words that were never wrong = correct on first try
     const uniqueWordsSet = new Set();
-    q.words.forEach(w => uniqueWordsSet.add(w.english));
+    q.words.forEach(w => uniqueWordsSet.add(wordKey(w)));
     const wrongUniqueCount = q.drillWrongSet.size;
     displayCorrect = totalAnswered - wrongUniqueCount;
     displayWrong = wrongUniqueCount;
@@ -6699,9 +6782,9 @@ function showResult() {
   const seenWords = new Set();
   const diffs = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
   q.words.forEach(w => {
-    if (seenWords.has(w.english)) return;
-    seenWords.add(w.english);
-    const before = q.beforeLevels[w.english] || 'unlearned';
+    if (seenWords.has(wordKey(w))) return;
+    seenWords.add(wordKey(w));
+    const before = q.beforeLevels[wordKey(w)] || 'unlearned';
     const after = w.level;
     if (before !== after) {
       if (diffs[before] !== undefined) diffs[before]--;
@@ -6744,8 +6827,8 @@ function showResult() {
   const missed = q.results.filter(r => !r.correct);
   const seenMissed = new Set();
   const uniqueMissed = missed.filter(r => {
-    if (seenMissed.has(r.word.english)) return false;
-    seenMissed.add(r.word.english);
+    if (seenMissed.has(wordKey(r.word))) return false;
+    seenMissed.add(wordKey(r.word));
     return true;
   });
 
@@ -6762,6 +6845,35 @@ function showResult() {
             <div class="missed-item">
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
               <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtml(r.word.japanese)}</span>
+            </div>
+          `}).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Correct words
+  const correct = q.results.filter(r => r.correct);
+  const seenCorrect = new Set();
+  const uniqueCorrect = correct.filter(r => {
+    if (seenCorrect.has(wordKey(r.word))) return false;
+    seenCorrect.add(wordKey(r.word));
+    return true;
+  });
+
+  let correctHtml = '';
+  if (uniqueCorrect.length > 0) {
+    correctHtml = `
+      <div class="missed-section" style="margin-top:16px;">
+        <h4 style="color:var(--green-500);">正解した問題（${uniqueCorrect.length}語）</h4>
+        <div class="missed-list">
+          ${uniqueCorrect.map(r => {
+            const engEsc = escapeHtml(r.word.english).replace(/'/g, "\\'");
+            const jpnEsc = escapeHtml(r.word.japanese).replace(/'/g, "\\'");
+            return `
+            <div class="missed-item">
+              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
+              <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtml(r.word.japanese)}</span>
             </div>
           `}).join('')}
         </div>
@@ -6794,6 +6906,7 @@ function showResult() {
       ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">まちがえた問題を復習する</button>' : ''}
     </div>
     ${missedHtml}
+    ${correctHtml}
   `;
 
   // Animate bars and counters after render
@@ -6857,12 +6970,36 @@ function showMissedWords() {
 }
 
 function confirmQuit() {
+  // Calculate remaining time before stopping
+  let timerRemaining = null;
+  if (quizTimerEnabled && quizTimerInterval) {
+    const elapsed = (Date.now() - quizTimerStartTime) / 1000;
+    timerRemaining = Math.max(0, quizTimerSeconds - elapsed);
+  }
   stopQuizTimer();
+
   confirmAction('クイズを中断', '中断しますか？ここまでの進捗は保存されます。', function() {
+    // Mark that quit was confirmed — timer should NOT resume
+    timerRemaining = null;
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
   }, '中断する');
+
+  // Temporarily wrap closeConfirm to detect cancel vs confirm
+  if (timerRemaining !== null) {
+    const origCloseConfirm = closeConfirm;
+    closeConfirm = function() {
+      closeConfirm = origCloseConfirm; // restore immediately
+      origCloseConfirm();
+      // Defer check: if quit action ran, timerRemaining is already null
+      setTimeout(() => {
+        if (timerRemaining !== null) {
+          startQuizTimer(timerRemaining);
+        }
+      }, 0);
+    };
+  }
 }
 
 // ============ WORD LIST ============
@@ -7150,14 +7287,25 @@ function updateBulkToolbar() {
 function bulkDelete() {
   const total = getTotalSelectedCount();
   if (total === 0) { showToast('単語を選択してください'); return; }
-  confirmAction(total + '件を削除', '選択した' + total + '件の単語を削除します。この操作は取り消せません。', function() {
+  confirmAction(total + '件を削除', '選択した' + total + '件の単語を削除します。この操作は取り消せません。', async function() {
+    // Collect image IDs before deleting words
+    const imageIds = [];
     for (const deckId in editorSelectedMap) {
       const sel = editorSelectedMap[deckId];
       if (sel.size === 0) continue;
       const deck = decks.find(d => d.id === deckId);
       if (!deck) continue;
+      for (const i of sel) {
+        const w = deck.words[i];
+        if (w && w.questionImageId) imageIds.push(w.questionImageId);
+        if (w && w.answerImageId) imageIds.push(w.answerImageId);
+      }
       const indices = Array.from(sel).sort((a, b) => b - a);
       indices.forEach(i => deck.words.splice(i, 1));
+    }
+    // Delete orphaned images from IndexedDB
+    for (const imgId of imageIds) {
+      try { await deleteImage(imgId); } catch(e) { console.error('Image delete failed:', e); }
     }
     editorSelectedMap = {};
     saveState();
