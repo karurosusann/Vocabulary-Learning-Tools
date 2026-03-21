@@ -3609,13 +3609,9 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-badge" id="settingsDarkBadge">OFF</span>
       </button>
       <div class="settings-menu-divider"></div>
-      <button class="settings-menu-item" onclick="closeSettings();exportAllData();">
+      <button class="settings-menu-item" onclick="closeSettings();showExportPicker();">
         <span class="menu-icon">📤</span>
         <span class="menu-label">データをエクスポート</span>
-      </button>
-      <button class="settings-menu-item" onclick="closeSettings();showCsvExport();">
-        <span class="menu-icon">📄</span>
-        <span class="menu-label">CSVでエクスポート</span>
       </button>
       <button class="settings-menu-item" onclick="closeSettings();document.getElementById('settingsImportJson').click();">
         <span class="menu-icon">📥</span>
@@ -3773,6 +3769,26 @@ body.dark-mode .gdrive-setup-hint code {
 
 <!-- Reorder overlay -->
 <div class="reorder-overlay" id="reorderOverlay" onclick="closeReorder()">
+  <div class="reorder-modal" onclick="event.stopPropagation()">
+    <h3>📚 デッキの並べ替え</h3>
+    <p class="reorder-hint">ボタンで順番を入れ替え</p>
+    <div class="reorder-list" id="reorderList"></div>
+    <button class="reorder-done-btn" onclick="closeReorder()">完了</button>
+  </div>
+</div>
+
+<!-- Export format picker overlay -->
+<div class="confirm-overlay" id="exportPickerOverlay" onclick="closeExportPicker()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📤 データをエクスポート</h3>
+    <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポート形式を選択</p>
+    <div class="demo-list">
+      <button class="demo-item" onclick="closeExportPicker();exportAllData();">📋 JSON（バックアップ用）<span>全データ</span></button>
+      <button class="demo-item" onclick="closeExportPicker();showCsvExport();">📄 CSV（表計算ソフト用）<span>デッキ選択</span></button>
+    </div>
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeExportPicker()">閉じる</button>
+  </div>
+</div>
 
 <!-- CSV Export picker overlay -->
 <div class="confirm-overlay" id="csvExportOverlay" onclick="closeCsvExport()">
@@ -3781,13 +3797,6 @@ body.dark-mode .gdrive-setup-hint code {
     <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
     <div class="demo-list" id="csvExportDeckList"></div>
     <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeCsvExport()">閉じる</button>
-  </div>
-</div>
-  <div class="reorder-modal" onclick="event.stopPropagation()">
-    <h3>📚 デッキの並べ替え</h3>
-    <p class="reorder-hint">ボタンで順番を入れ替え</p>
-    <div class="reorder-list" id="reorderList"></div>
-    <button class="reorder-done-btn" onclick="closeReorder()">完了</button>
   </div>
 </div>
 
@@ -7720,7 +7729,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'csvExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
@@ -7769,6 +7778,18 @@ function doResetAll() {
 }
 
 // ============ EXPORT / IMPORT ============
+function showExportPicker() {
+  if (decks.length === 0) {
+    showToast('エクスポートするデッキがありません');
+    return;
+  }
+  document.getElementById('exportPickerOverlay').classList.add('show');
+}
+
+function closeExportPicker() {
+  document.getElementById('exportPickerOverlay').classList.remove('show');
+}
+
 async function exportAllData() {
   if (decks.length === 0) {
     showToast('エクスポートするデッキがありません');
