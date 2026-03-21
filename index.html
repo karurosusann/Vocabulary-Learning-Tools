@@ -5131,10 +5131,11 @@ if (fileInputAdd) {
 
 function addDeckFromCSV(text, deckName) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const delimiter = detectDelimiter(lines);
   const words = [];
 
   for (const line of lines) {
-    const parts = parseCSVLine(line);
+    const parts = parseCSVLine(line, delimiter);
     if (parts.length >= 2) {
       const english = parts[0].trim();
       const japanese = parts[1].trim();
@@ -5145,6 +5146,7 @@ function addDeckFromCSV(text, deckName) {
   }
 
   if (words.length > 0) {
+    const delimNames = { '\t': 'タブ', ',': 'カンマ', '|': 'パイプ', ';': 'セミコロン' };
     const deck = { id: generateId(), name: deckName, words };
     decks.push(deck);
     activeDeckId = deck.id;
@@ -5152,14 +5154,38 @@ function addDeckFromCSV(text, deckName) {
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
-    showToast(`「${deckName}」に${words.length}語を追加しました！`);
+    showToast(`「${deckName}」に${words.length}語を追加しました！（${delimNames[delimiter] || delimiter}区切り）`);
   } else {
     showToast('単語が見つかりませんでした');
   }
 }
 
-// Parse a single CSV line respecting quoted fields
-function parseCSVLine(line) {
+// Auto-detect delimiter: try each candidate and pick the one that splits most lines into exactly 2 columns
+function detectDelimiter(lines) {
+  const candidates = ['\t', '|', ';', ','];
+  let bestDelim = ',';
+  let bestScore = -1;
+
+  for (const delim of candidates) {
+    let twoColCount = 0;
+    for (const line of lines) {
+      const parts = parseCSVLine(line, delim);
+      if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+        twoColCount++;
+      }
+    }
+    // Require a majority of lines to be 2 columns
+    if (twoColCount > bestScore) {
+      bestScore = twoColCount;
+      bestDelim = delim;
+    }
+  }
+  return bestDelim;
+}
+
+// Parse a single CSV/TSV line respecting quoted fields
+function parseCSVLine(line, delimiter) {
+  if (delimiter === undefined) delimiter = ',';
   const result = [];
   let current = '';
   let inQuotes = false;
@@ -5176,7 +5202,7 @@ function parseCSVLine(line) {
     } else {
       if (ch === '"') {
         inQuotes = true;
-      } else if (ch === ',' || ch === '\t') {
+      } else if (ch === delimiter) {
         result.push(current);
         current = '';
       } else {
@@ -5551,6 +5577,10 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+// Escape a string for safe use inside JS string literals in inline HTML attributes (onclick etc.)
+function escapeForInlineJS(str) {
+  return escapeHtml(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 // ============ SCREENS ============
 function showScreen(name) {
@@ -5567,6 +5597,8 @@ function showScreen(name) {
   } else {
     document.body.style.overflow = '';
     document.body.style.height = '';
+    // Ensure quiz timer is stopped when leaving quiz screen
+    stopQuizTimer();
   }
   if (name === 'advanced-settings') {
     applyAdvancedSettingsUI();
@@ -5847,6 +5879,12 @@ let quizShowImages = true;
 
 function startNextQuiz() {
   // Re-start a quiz with the same settings (range, mode, drill, reverse, tts, order, count)
+  const count = lastMainQuizCount;
+  _launchQuiz(count);
+}
+
+// Shared quiz launcher used by startQuiz and startNextQuiz
+function _launchQuiz(count) {
   reviewMode = false;
   let pool = getQuizPool();
   if (pool.length === 0) {
@@ -5860,10 +5898,11 @@ function startNextQuiz() {
   } else if (quizOrder === 'desc') {
     pool = pool.reverse();
   }
+  // 'asc' = keep original list order (default from getQuizPool)
 
-  // Use the saved main quiz count (not the review session count)
-  const count = Math.min(lastMainQuizCount, pool.length);
-  pool = pool.slice(0, count);
+  const actual = Math.min(count, pool.length);
+  pool = pool.slice(0, actual);
+  lastMainQuizCount = actual;
 
   // Save original levels before quiz
   const beforeLevels = {};
@@ -5878,7 +5917,8 @@ function startNextQuiz() {
     totalCount: pool.length,
     masteredCount: 0,
     beforeLevels: beforeLevels,
-    drillWrongSet: new Set()
+    drillWrongSet: new Set(),
+    drillRetryCount: new Map()
   };
   quizStartTime = Date.now();
 
@@ -5918,7 +5958,8 @@ function startMissedReview() {
     totalCount: pool.length,
     masteredCount: 0,
     beforeLevels: beforeLevels,
-    drillWrongSet: new Set()
+    drillWrongSet: new Set(),
+    drillRetryCount: new Map()
   };
   quizStartTime = Date.now();
 
@@ -6108,44 +6149,11 @@ function getQuizPool() {
 
 // ============ QUIZ ============
 function startQuiz() {
-  reviewMode = false;
-  let pool = getQuizPool();
+  const pool = getQuizPool();
   if (pool.length === 0) return;
-
-  // Apply order
-  if (quizOrder === 'random') {
-    shuffle(pool);
-  } else if (quizOrder === 'desc') {
-    pool = pool.reverse();
-  }
-  // 'asc' = keep original list order (default from getQuizPool)
-
   const countSel = document.getElementById('quizCount').value;
-  const count = countSel === 'all' ? pool.length : Math.min(parseInt(countSel), pool.length);
-  pool = pool.slice(0, count);
-  lastMainQuizCount = count; // remember for "次の問題へ"
-
-  // Save original levels before quiz
-  const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[wordKey(w)] = w.level; });
-
-  currentQuiz = {
-    words: pool,
-    index: 0,
-    correct: 0,
-    wrong: 0,
-    results: [],
-    totalCount: pool.length,
-    masteredCount: 0,
-    beforeLevels: beforeLevels,
-    drillWrongSet: new Set()
-  };
-  quizStartTime = Date.now();
-
-  showScreen('quiz');
-  sfxStart();
-  updateQuizImgToggle();
-  showQuizQuestion();
+  const count = countSel === 'all' ? pool.length : parseInt(countSel);
+  _launchQuiz(count);
 }
 
 async function showQuizQuestion() {
@@ -6606,21 +6614,34 @@ function generateChoices(targetWord) {
   // In normal mode: question=english, answer=japanese → choices are japanese
   const answerField = reverseMode ? 'english' : 'japanese';
   const correct = targetWord[answerField];
-  const allW = getAllWords().filter(w => w[answerField] !== correct);
-  const shuffled = shuffle(allW).slice(0, 3);
-  const choices = [correct, ...shuffled.map(w => w[answerField])];
+  const targetKey = wordKey(targetWord);
+  // Filter by word identity (not value) to avoid excluding words that share the same answer text
+  const allW = getAllWords().filter(w => wordKey(w) !== targetKey);
+  shuffle(allW);
+  // Pick up to 3 unique distractor values (no duplicates, and not equal to correct answer)
+  const usedValues = new Set([correct]);
+  const distractors = [];
+  for (const w of allW) {
+    const val = w[answerField];
+    if (!usedValues.has(val)) {
+      usedValues.add(val);
+      distractors.push(val);
+      if (distractors.length >= 3) break;
+    }
+  }
+  const choices = [correct, ...distractors];
   return shuffle(choices);
 }
 
-function answerKnowledge(known) {
-  stopQuizTimer();
-  const word = currentQuiz.words[currentQuiz.index];
+const DRILL_MAX_RETRIES = 3; // Maximum times a word can be re-queued in drill mode
 
-  if (known) {
-    sfxCorrect();
-    currentQuiz.correct++;
+// Shared quiz answer processing: updates level, tracks drill state, re-queues if needed
+function processQuizAnswer(word, isCorrect) {
+  const q = currentQuiz;
+  if (isCorrect) {
+    q.correct++;
     if (!reviewMode) {
-      if (quizDrillMode && currentQuiz.drillWrongSet.has(wordKey(word))) {
+      if (quizDrillMode && q.drillWrongSet.has(wordKey(word))) {
         // Drill mode: word was wrong before in this session → stay weak, just count as mastered for progress
         word.level = 'weak';
         word.correctStreak = 0;
@@ -6636,32 +6657,50 @@ function answerKnowledge(known) {
       }
       // mastered stays mastered (no change needed)
     }
-    currentQuiz.results.push({ word, correct: true });
-    if (quizDrillMode) currentQuiz.masteredCount++;
+    q.results.push({ word, correct: true });
+    if (quizDrillMode) q.masteredCount++;
   } else {
-    sfxWrong();
-    currentQuiz.wrong++;
+    q.wrong++;
     if (!reviewMode) {
       word.level = 'weak';
       word.correctStreak = 0;
     }
-    currentQuiz.results.push({ word, correct: false });
+    q.results.push({ word, correct: false });
 
     // Track wrong answers in drill mode
     if (quizDrillMode) {
-      currentQuiz.drillWrongSet.add(wordKey(word));
+      q.drillWrongSet.add(wordKey(word));
     }
 
-    // Drill mode: re-queue the word later
+    // Drill mode: re-queue the word later (with retry limit to prevent infinite growth)
     if (quizDrillMode) {
-      const remaining = currentQuiz.words.slice(currentQuiz.index + 1);
-      const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
-      remaining.splice(insertPos, 0, word);
-      currentQuiz.words = [...currentQuiz.words.slice(0, currentQuiz.index + 1), ...remaining];
+      const key = wordKey(word);
+      const retries = q.drillRetryCount.get(key) || 0;
+      if (retries < DRILL_MAX_RETRIES) {
+        q.drillRetryCount.set(key, retries + 1);
+        const remaining = q.words.slice(q.index + 1);
+        const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
+        remaining.splice(insertPos, 0, word);
+        q.words = [...q.words.slice(0, q.index + 1), ...remaining];
+      } else {
+        // Exceeded retry limit — count as mastered for progress so quiz can finish
+        q.masteredCount++;
+      }
     }
   }
-
   saveState();
+}
+
+function answerKnowledge(known) {
+  stopQuizTimer();
+  const word = currentQuiz.words[currentQuiz.index];
+
+  if (known) {
+    sfxCorrect();
+  } else {
+    sfxWrong();
+  }
+  processQuizAnswer(word, known);
   nextQuestion();
 }
 
@@ -6675,53 +6714,15 @@ function answerChoice(btn, index, isCorrect) {
   if (isCorrect) {
     btn.classList.add('correct');
     sfxCorrect();
-    currentQuiz.correct++;
-    if (!reviewMode) {
-      if (quizDrillMode && currentQuiz.drillWrongSet.has(wordKey(word))) {
-        word.level = 'weak';
-        word.correctStreak = 0;
-      } else if (word.level === 'unlearned') {
-        word.level = 'fuzzy';
-        word.correctStreak = 1;
-      } else if (word.level === 'weak') {
-        word.level = 'fuzzy';
-        word.correctStreak = 1;
-      } else if (word.level === 'fuzzy') {
-        word.level = 'mastered';
-        word.correctStreak = 2;
-      }
-    }
-    currentQuiz.results.push({ word, correct: true });
-    if (quizDrillMode) currentQuiz.masteredCount++;
   } else {
     btn.classList.add('wrong');
     sfxWrong();
-    currentQuiz.wrong++;
-    if (!reviewMode) {
-      word.level = 'weak';
-      word.correctStreak = 0;
-    }
     const correctText = reverseMode ? word.english : word.japanese;
     allBtns.forEach(b => {
       if (b.textContent === correctText) b.classList.add('show-correct');
     });
-    currentQuiz.results.push({ word, correct: false });
-
-    // Track wrong answers in drill mode
-    if (quizDrillMode) {
-      currentQuiz.drillWrongSet.add(wordKey(word));
-    }
-
-    // Drill mode: re-queue the word later
-    if (quizDrillMode) {
-      const remaining = currentQuiz.words.slice(currentQuiz.index + 1);
-      const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
-      remaining.splice(insertPos, 0, word);
-      currentQuiz.words = [...currentQuiz.words.slice(0, currentQuiz.index + 1), ...remaining];
-    }
   }
-
-  saveState();
+  processQuizAnswer(word, isCorrect);
   setTimeout(() => nextQuestion(), isCorrect ? 600 : 1200);
 }
 
@@ -6862,8 +6863,8 @@ function showResult() {
         <h4>まちがえた問題（${uniqueMissed.length}語）</h4>
         <div class="missed-list">
           ${uniqueMissed.map(r => {
-            const engEsc = escapeHtml(r.word.english).replace(/'/g, "\\'");
-            const jpnEsc = escapeHtml(r.word.japanese).replace(/'/g, "\\'");
+            const engEsc = escapeForInlineJS(r.word.english);
+            const jpnEsc = escapeForInlineJS(r.word.japanese);
             return `
             <div class="missed-item">
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
@@ -6891,8 +6892,8 @@ function showResult() {
         <h4 style="color:var(--green-500);">正解した問題（${uniqueCorrect.length}語）</h4>
         <div class="missed-list">
           ${uniqueCorrect.map(r => {
-            const engEsc = escapeHtml(r.word.english).replace(/'/g, "\\'");
-            const jpnEsc = escapeHtml(r.word.japanese).replace(/'/g, "\\'");
+            const engEsc = escapeForInlineJS(r.word.english);
+            const jpnEsc = escapeForInlineJS(r.word.japanese);
             return `
             <div class="missed-item">
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
