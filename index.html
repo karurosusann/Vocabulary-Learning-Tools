@@ -2032,11 +2032,8 @@ body.dark-mode .quiz-img-picker button {
   text-align: center;
 }
 .missed-list {
-  max-height: 233px;
-  overflow-y: auto;
-  border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 .missed-item {
   display: flex;
@@ -3091,13 +3088,40 @@ body.dark-mode .img-attach-box {
   font-size: 14px;
   position: absolute;
   top: 6px;
-  left: 6px;
+  right: 6px;
   z-index: 3;
   opacity: 0.6;
   transition: opacity 0.15s;
 }
 .quiz-copy-btn:active { opacity: 1; }
 body.dark-mode .quiz-copy-btn { background: #2a2535; }
+/* Quiz image toggle */
+.quiz-img-toggle {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--orange-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.15s;
+  position: relative;
+}
+.quiz-img-toggle.off {
+  color: var(--gray-300);
+}
+.quiz-img-toggle.off::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background: var(--red-400);
+  transform: rotate(-45deg);
+  border-radius: 1px;
+}
 /* Image lightbox */
 .img-lightbox {
   position: fixed;
@@ -3402,6 +3426,12 @@ body.dark-mode .gdrive-setup-hint code {
             <div class="drill-desc">時間切れで自動的に「知らない」になります</div>
           </div>
 
+          <h4 class="setup-section-label">🖼️ 画像表示</h4>
+          <div class="mode-toggle" id="imageToggle">
+            <button class="mode-toggle-btn active" onclick="selectShowImages(true, this)">表示する</button>
+            <button class="mode-toggle-btn" onclick="selectShowImages(false, this)">非表示</button>
+          </div>
+
           <div class="count-selector">
             <label>出題数：</label>
             <select id="quizCount">
@@ -3426,7 +3456,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="quiz-header">
       <button class="quiz-back" onclick="confirmQuit()">←</button>
       <span class="quiz-progress-text" id="quizProgressText">1 / 10</span>
-      <div style="width:40px"></div>
+      <button class="quiz-img-toggle" id="quizImgToggle" onclick="toggleQuizImages()" title="画像表示切替"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></button>
     </div>
     <div class="quiz-progress-bar">
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
@@ -4782,7 +4812,8 @@ function saveDeckSettings(deckId) {
       tts: ttsMode,
       order: quizOrder,
       timerEnabled: quizTimerEnabled,
-      timerSeconds: quizTimerSeconds
+      timerSeconds: quizTimerSeconds,
+      showImages: quizShowImages
     };
     localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
   } catch(e) {}
@@ -5586,6 +5617,7 @@ function showLevelSelect() {
     quizOrder = saved.order || 'asc';
     quizTimerEnabled = saved.timerEnabled || false;
     quizTimerSeconds = saved.timerSeconds || 5;
+    quizShowImages = saved.showImages !== undefined ? saved.showImages : true;
   } else {
     quizDrillMode = false;
     reverseMode = false;
@@ -5593,6 +5625,7 @@ function showLevelSelect() {
     quizOrder = 'asc';
     quizTimerEnabled = false;
     quizTimerSeconds = 5;
+    quizShowImages = true;
   }
 
   // Auto-select first available range if none selected
@@ -5633,6 +5666,7 @@ let quizTimerEnabled = false;
 let quizTimerSeconds = 5;
 let quizTimerInterval = null;
 let quizTimerStartTime = 0;
+let quizShowImages = true;
 
 function startNextQuiz() {
   // Re-start a quiz with the same settings (range, mode, drill, reverse, tts, order, count)
@@ -5673,6 +5707,7 @@ function startNextQuiz() {
 
   showScreen('quiz');
   sfxStart();
+  updateQuizImgToggle();
   showQuizQuestion();
 }
 
@@ -5712,6 +5747,7 @@ function startMissedReview() {
 
   showScreen('quiz');
   sfxStart();
+  updateQuizImgToggle();
   showQuizQuestion();
 } // false = normal, true = drill
 
@@ -5742,6 +5778,10 @@ function applyAdvancedSettingsUI() {
   });
   document.getElementById('timerSecondsRow').style.display = quizTimerEnabled ? 'block' : 'none';
   document.getElementById('timerSeconds').value = String(quizTimerSeconds);
+  // Image toggle UI
+  document.querySelectorAll('#imageToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', quizShowImages ? i === 0 : i === 1);
+  });
 }
 
 function selectMode(mode, el) {
@@ -5784,6 +5824,26 @@ function selectTimer(enabled, el) {
 function changeTimerSeconds(val) {
   quizTimerSeconds = parseInt(val) || 5;
   saveDeckSettings(activeDeckId);
+}
+
+function selectShowImages(show, el) {
+  quizShowImages = show;
+  el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  saveDeckSettings(activeDeckId);
+}
+
+function toggleQuizImages() {
+  quizShowImages = !quizShowImages;
+  const btn = document.getElementById('quizImgToggle');
+  btn.classList.toggle('off', !quizShowImages);
+  showToast(quizShowImages ? '🖼️ 画像を表示' : '🖼️ 画像を非表示');
+  showQuizQuestion();
+}
+
+function updateQuizImgToggle() {
+  const btn = document.getElementById('quizImgToggle');
+  if (btn) btn.classList.toggle('off', !quizShowImages);
 }
 
 function startQuizTimer() {
@@ -5896,6 +5956,7 @@ function startQuiz() {
 
   showScreen('quiz');
   sfxStart();
+  updateQuizImgToggle();
   showQuizQuestion();
 }
 
@@ -5927,7 +5988,7 @@ async function showQuizQuestion() {
 
   const quizWordEl = document.getElementById('quizWord');
   // Load question image
-  const qImgData = qImgId ? await loadImage(qImgId) : null;
+  const qImgData = (quizShowImages && qImgId) ? await loadImage(qImgId) : null;
   if (qImgData) {
     quizWordEl.innerHTML = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}" onclick="event.stopPropagation();openLightbox(this.src)">`;
   } else {
@@ -5963,7 +6024,7 @@ async function showQuizQuestion() {
   const body = document.getElementById('quizBody');
 
   // Answer area inside card (hint + hidden answer)
-  const aImgData = aImgId ? await loadImage(aImgId) : null;
+  const aImgData = (quizShowImages && aImgId) ? await loadImage(aImgId) : null;
   const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">` : '';
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
@@ -6073,16 +6134,14 @@ function copyQuizText() {
   let html = '<button onclick="doCopyQuiz(\'question\')">📋 問題文をコピー</button>';
   if (isRevealed) {
     html += '<button onclick="doCopyQuiz(\'answer\')">📋 答えをコピー</button>';
-    html += '<button onclick="doCopyQuiz(\'both\')">📋 両方をコピー</button>';
   }
   menu.innerHTML = html;
   document.body.appendChild(menu);
 
-  let left = rect.left;
+  let left = rect.right - menu.offsetWidth;
   let top = rect.bottom + 8;
-  if (left + menu.offsetWidth > window.innerWidth - 8) left = window.innerWidth - menu.offsetWidth - 8;
-  if (top + menu.offsetHeight > window.innerHeight - 8) top = rect.top - menu.offsetHeight - 8;
   if (left < 8) left = 8;
+  if (top + menu.offsetHeight > window.innerHeight - 8) top = rect.top - menu.offsetHeight - 8;
   menu.style.left = left + 'px';
   menu.style.top = top + 'px';
 }
