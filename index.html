@@ -3613,6 +3613,10 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-icon">📤</span>
         <span class="menu-label">データをエクスポート</span>
       </button>
+      <button class="settings-menu-item" onclick="closeSettings();showCsvExport();">
+        <span class="menu-icon">📄</span>
+        <span class="menu-label">CSVでエクスポート</span>
+      </button>
       <button class="settings-menu-item" onclick="closeSettings();document.getElementById('settingsImportJson').click();">
         <span class="menu-icon">📥</span>
         <span class="menu-label">データをインポート</span>
@@ -3769,6 +3773,16 @@ body.dark-mode .gdrive-setup-hint code {
 
 <!-- Reorder overlay -->
 <div class="reorder-overlay" id="reorderOverlay" onclick="closeReorder()">
+
+<!-- CSV Export picker overlay -->
+<div class="confirm-overlay" id="csvExportOverlay" onclick="closeCsvExport()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📄 CSVエクスポート</h3>
+    <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
+    <div class="demo-list" id="csvExportDeckList"></div>
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeCsvExport()">閉じる</button>
+  </div>
+</div>
   <div class="reorder-modal" onclick="event.stopPropagation()">
     <h3>📚 デッキの並べ替え</h3>
     <p class="reorder-hint">ボタンで順番を入れ替え</p>
@@ -7706,7 +7720,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'csvExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
@@ -7793,6 +7807,87 @@ async function exportAllData() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('📤 データをエクスポートしました');
+}
+
+// ============ CSV EXPORT ============
+function showCsvExport() {
+  if (decks.length === 0) {
+    showToast('エクスポートするデッキがありません');
+    return;
+  }
+  const list = document.getElementById('csvExportDeckList');
+  let html = '';
+  if (decks.length > 1) {
+    html += '<button class="demo-item" onclick="exportAllDecksAsCSV()">📦 全デッキをまとめて<span>' + decks.length + 'デッキ</span></button>';
+  }
+  decks.forEach(d => {
+    html += '<button class="demo-item" onclick="exportDeckAsCSV(\'' + d.id + '\')">' +
+      escapeHtml(d.name) + '<span>' + d.words.length + '語</span></button>';
+  });
+  list.innerHTML = html;
+  document.getElementById('csvExportOverlay').classList.add('show');
+}
+
+function closeCsvExport() {
+  document.getElementById('csvExportOverlay').classList.remove('show');
+}
+
+function escapeCSVField(value) {
+  const str = String(value);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function exportDeckAsCSV(deckId) {
+  const deck = decks.find(d => d.id === deckId);
+  if (!deck) return;
+  const bom = '\uFEFF';
+  const header = '問題,解答,レベル,正答連続数';
+  const rows = deck.words.map(w =>
+    [w.english, w.japanese, w.level || 'unlearned', w.correctStreak || 0]
+      .map(escapeCSVField).join(',')
+  );
+  const csv = bom + header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = deck.name + '_' + date + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  closeCsvExport();
+  showToast('📄 「' + deck.name + '」をCSVでエクスポートしました');
+}
+
+function exportAllDecksAsCSV() {
+  closeCsvExport();
+  const bom = '\uFEFF';
+  const date = new Date().toISOString().slice(0, 10);
+  decks.forEach((deck, i) => {
+    setTimeout(() => {
+      const header = '問題,解答,レベル,正答連続数';
+      const rows = deck.words.map(w =>
+        [w.english, w.japanese, w.level || 'unlearned', w.correctStreak || 0]
+          .map(escapeCSVField).join(',')
+      );
+      const csv = bom + header + '\n' + rows.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = deck.name + '_' + date + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, i * 300);
+  });
+  showToast('📄 全' + decks.length + 'デッキをCSVでエクスポートしました');
 }
 
 function importAllData(event) {
