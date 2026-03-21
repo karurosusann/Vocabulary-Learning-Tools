@@ -33,8 +33,8 @@
   --blue-500: #3B82F6;
   --yellow-400: #FACC15;
   --yellow-500: #EAB308;
-  --red-400: #F87171;
-  --red-500: #EF4444;
+  --red-400: #DC2626;
+  --red-500: #B91C1C;
   --blue-400: #60A5FA;
   --blue-500: #3B82F6;
   --blue-50: #EFF6FF;
@@ -70,8 +70,8 @@ body.dark-mode {
   --blue-500: #3B82F6;
   --yellow-400: #FACC15;
   --yellow-500: #EAB308;
-  --red-400: #F87171;
-  --red-500: #EF4444;
+  --red-400: #DC2626;
+  --red-500: #B91C1C;
   --blue-50: #1e1a2e;
   --gray-100: #2a2535;
   --gray-200: #3a3545;
@@ -660,13 +660,22 @@ body.dark-mode .heatmap-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 900;
-  color: var(--orange-500);
-  opacity: 0.7;
+  opacity: 0.5;
 }
-body.dark-mode .heatmap-cell .cal-check {
-  color: var(--orange-400);
+.heatmap-cell .cal-check.mark-o {
+  color: #EF4444;
+}
+.heatmap-cell .cal-check.mark-x {
+  color: #3B82F6;
+  font-size: 16px;
+}
+body.dark-mode .heatmap-cell .cal-check.mark-o {
+  color: #F87171;
+}
+body.dark-mode .heatmap-cell .cal-check.mark-x {
+  color: #60A5FA;
 }
 .cal-month-nav {
   display: flex;
@@ -4033,11 +4042,11 @@ function renderHeatmap() {
 
   // Header with navigation
   let html = '<div class="cal-month-nav">';
-  html += '<button onclick="changeHeatmapMonth(-1)">◀</button>';
-  html += `<span>${year}年${monthNames[month]}</span>`;
+  html += '<button onmousedown="startCalHold(-1)" ontouchstart="startCalHold(-1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()">◀</button>';
+  html += `<span onclick="showMonthSummary(${year}, ${month})" style="cursor:pointer;">${year}年${monthNames[month]}</span>`;
   // Only allow forward if not future
   const isCurrentMonth = (year === today.getFullYear() && month === today.getMonth());
-  html += `<button onclick="changeHeatmapMonth(1)" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
+  html += `<button onmousedown="startCalHold(1)" ontouchstart="startCalHold(1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
   html += '</div>';
 
   // Day of week headers
@@ -4061,8 +4070,14 @@ function renderHeatmap() {
     const studied = val > 0 ? ' studied' : '';
     const isToday = key === todayStr ? ' today' : '';
     const title = val > 0 ? `${key}: ${val}語` : key;
-    const check = val > 0 ? '<span class="cal-check">✓</span>' : '';
-    html += `<div class="heatmap-cell${studied}${isToday}" title="${title}" onclick="showCalDayPopup('${key}', event)"><span class="cal-day">${day}</span>${check}</div>`;
+    const cellDate = new Date(year, month, day);
+    let mark = '';
+    if (val > 0) {
+      mark = '<span class="cal-check mark-o">○</span>';
+    } else if (cellDate < today) {
+      mark = '<span class="cal-check mark-x">×</span>';
+    }
+    html += `<div class="heatmap-cell${studied}${isToday}" title="${title}" onclick="showCalDayPopup('${key}', event)"><span class="cal-day">${day}</span>${mark}</div>`;
   }
 
   // Empty cells after last day
@@ -4148,6 +4163,85 @@ function changeHeatmapMonth(delta) {
     heatmapMonth = now.getMonth();
   }
   renderHeatmap();
+}
+
+let calHoldTimer = null;
+let calHoldInterval = null;
+
+function startCalHold(delta) {
+  stopCalHold();
+  changeHeatmapMonth(delta);
+  calHoldTimer = setTimeout(() => {
+    calHoldInterval = setInterval(() => changeHeatmapMonth(delta), 200);
+  }, 400);
+}
+
+function stopCalHold() {
+  if (calHoldTimer) { clearTimeout(calHoldTimer); calHoldTimer = null; }
+  if (calHoldInterval) { clearInterval(calHoldInterval); calHoldInterval = null; }
+}
+
+function showMonthSummary(year, month) {
+  closeCalDayPopup();
+  const log = getStudyLog();
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const prefix = year + '-' + String(month + 1).padStart(2, '0') + '-';
+
+  let totalStudied = 0, totalCorrect = 0, totalTime = 0, totalSessions = 0, activeDays = 0;
+  for (const key in log) {
+    if (key.startsWith(prefix)) {
+      const d = log[key];
+      totalStudied += d.studied || 0;
+      totalCorrect += d.correct || 0;
+      totalTime += d.timeSec || 0;
+      totalSessions += d.sessions || 0;
+      if (d.studied > 0) activeDays++;
+    }
+  }
+
+  const pct = totalStudied > 0 ? Math.round((totalCorrect / totalStudied) * 100) : 0;
+  const displayDate = year + '年' + monthNames[month];
+
+  // Reuse calendar popup style
+  const backdrop = document.createElement('div');
+  backdrop.className = 'cal-popup-backdrop';
+  backdrop.id = 'calPopupBackdrop';
+  backdrop.onclick = closeCalDayPopup;
+  document.body.appendChild(backdrop);
+
+  const popup = document.createElement('div');
+  popup.className = 'cal-day-popup';
+  popup.id = 'calDayPopup';
+
+  if (totalStudied > 0) {
+    popup.innerHTML = `
+      <div class="cdp-date">${displayDate} のまとめ</div>
+      <div class="cdp-row"><span class="cdp-label">学習日数</span><span class="cdp-value">${activeDays}日</span></div>
+      <div class="cdp-row"><span class="cdp-label">問題数</span><span class="cdp-value">${totalStudied}問</span></div>
+      <div class="cdp-row"><span class="cdp-label">正答数</span><span class="cdp-value">${totalCorrect}問 (${pct}%)</span></div>
+      <div class="cdp-row"><span class="cdp-label">学習時間</span><span class="cdp-value">${formatStudyTime(totalTime)}</span></div>
+      <div class="cdp-row"><span class="cdp-label">セッション</span><span class="cdp-value">${totalSessions}回</span></div>
+    `;
+  } else {
+    popup.innerHTML = `
+      <div class="cdp-date">${displayDate} のまとめ</div>
+      <div class="cdp-none">学習記録なし</div>
+    `;
+  }
+  document.body.appendChild(popup);
+
+  // Position below the month label
+  const nav = document.querySelector('.cal-month-nav span');
+  const rect = nav.getBoundingClientRect();
+  const pw = popup.offsetWidth;
+  const ph = popup.offsetHeight;
+  let left = rect.left + rect.width / 2 - pw / 2;
+  let top = rect.bottom + 8;
+  if (left < 8) left = 8;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 8;
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
 }
 
 // ============ GOOGLE DRIVE SYNC ============
