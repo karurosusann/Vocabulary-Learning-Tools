@@ -2190,20 +2190,35 @@ body.dark-mode .quiz-img-picker button {
 }
 .missed-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
   border-bottom: 1px solid var(--gray-100);
   font-size: 14px;
+  gap: 8px;
 }
 .missed-item:last-child { border-bottom: none; }
 .missed-eng {
   font-weight: 600;
   color: var(--gray-800);
+  flex: 1;
 }
 .missed-jpn {
   color: var(--red-400);
   font-size: 13px;
+  text-align: right;
+}
+.result-pin-btn {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.3;
+  padding: 2px;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.result-pin-btn.active {
+  opacity: 1;
 }
 
 /* Level change summary */
@@ -6532,6 +6547,16 @@ function toggleBookmark() {
   saveState();
 }
 
+function toggleResultBookmark(btn, eng, jpn) {
+  const allWords = getActiveWords();
+  const word = allWords.find(w => w.english === eng && w.japanese === jpn);
+  if (!word) return;
+  word.bookmarked = !word.bookmarked;
+  btn.classList.toggle('active', word.bookmarked);
+  sfxBookmark();
+  saveState();
+}
+
 function copyQuizText() {
   if (!currentQuiz) return;
   closeCopyMenu();
@@ -7109,8 +7134,10 @@ function showResult() {
           ${uniqueMissed.map(r => {
             const engEsc = escapeForInlineJS(r.word.english);
             const jpnEsc = escapeForInlineJS(r.word.japanese);
+            const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
+              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
               <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtml(r.word.japanese)}</span>
             </div>
@@ -7138,8 +7165,10 @@ function showResult() {
           ${uniqueCorrect.map(r => {
             const engEsc = escapeForInlineJS(r.word.english);
             const jpnEsc = escapeForInlineJS(r.word.japanese);
+            const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
+              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
               <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtml(r.word.japanese)}</span>
             </div>
