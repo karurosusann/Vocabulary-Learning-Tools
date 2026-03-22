@@ -823,13 +823,20 @@ body.dark-mode .cal-day-popup {
     max-width: 700px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
-  .cal-grid { gap: 6px; }
-  .heatmap-cell { padding: 14px 0; border-radius: 8px; }
-  .heatmap-cell .cal-day { font-size: 14px; }
-  .heatmap-cell .cal-check { font-size: 28px; }
-  .heatmap-cell .cal-check.mark-x { font-size: 22px; }
-  .cal-dow { font-size: 12px; }
-  .cal-month-nav span { font-size: 14px; }
+  /* Calendar: slightly smaller than iPad */
+  .cal-grid { gap: 4px; }
+  .heatmap-cell { padding: 10px 0; border-radius: 6px; }
+  .heatmap-cell .cal-day { font-size: 12px; }
+  .heatmap-cell .cal-check { font-size: 24px; }
+  .heatmap-cell .cal-check.mark-x { font-size: 18px; }
+  .cal-dow { font-size: 11px; }
+  .cal-month-nav span { font-size: 13px; }
+  /* Deck cards: larger */
+  .deck-card { padding: 16px 22px; min-width: 200px; }
+  .deck-card .dc-name { font-size: 16px; }
+  .deck-card .dc-meta { font-size: 12px; }
+  .deck-card .dc-donut { width: 50px; height: 50px; }
+  .deck-card .dc-pct { font-size: 12px; }
 }
 
 /* Header */
