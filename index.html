@@ -1250,6 +1250,38 @@ body.dark-mode .cal-day-popup {
 .deck-list-grid.deck-reordering {
   overflow-x: hidden;
 }
+/* Deck select mode */
+.deck-card .dc-checkbox {
+  display: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  background: white;
+  font-size: 12px;
+  font-weight: 700;
+  color: transparent;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.deck-select-mode .deck-card .dc-checkbox {
+  display: flex;
+}
+.deck-card .dc-checkbox.checked {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  color: white;
+}
+body.dark-mode .deck-card .dc-checkbox {
+  background: #2a2535;
+  border-color: #3a3545;
+}
+body.dark-mode .deck-card .dc-checkbox.checked {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+}
 /* Deck edit overlay */
 .deck-edit-overlay {
   position: fixed;
@@ -3493,7 +3525,10 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="deck-carousel-section">
       <div class="deck-carousel-header">
         <h3>📚 デッキ</h3>
-        <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
+          <button class="editor-select-btn" id="deckSelectBtn" onclick="toggleDeckSelectMode()">選択</button>
+        </div>
       </div>
       <div class="deck-list-grid" id="deckListGrid"></div>
       <div style="margin-top:10px;">
@@ -3695,6 +3730,14 @@ body.dark-mode .gdrive-setup-hint code {
   </div>
 
 <!-- Bulk action toolbar -->
+<div class="bulk-toolbar" id="deckBulkToolbar">
+  <span class="bulk-count" id="deckBulkCount">0件選択</span>
+  <div class="bulk-actions">
+    <button class="bulk-action-btn select-all" onclick="deckBulkSelectAll()">全選択</button>
+    <button class="bulk-action-btn delete" onclick="deckBulkDelete()">削除</button>
+  </div>
+</div>
+
 <div class="bulk-toolbar" id="bulkToolbar">
   <span class="bulk-count" id="bulkCount">0件選択</span>
   <div class="bulk-actions">
@@ -5532,8 +5575,10 @@ function renderDeckList() {
     deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
     const total = deck.words.length;
     const isActive = deck.id === activeDeckId;
+    const isChecked = deckSelectedSet.has(deck.id);
     return `
       <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
+        <span class="dc-checkbox ${isChecked ? 'checked' : ''}">✓</span>
         <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
         <div class="deck-card-info">
           <div class="dc-name">${escapeHtml(deck.name)}</div>
@@ -5555,6 +5600,21 @@ function renderDeckList() {
 }
 
 function deckCardTap(id) {
+  if (deckSelectMode) {
+    if (deckSelectedSet.has(id)) {
+      deckSelectedSet.delete(id);
+    } else {
+      deckSelectedSet.add(id);
+    }
+    // Update checkbox visually without full re-render
+    const card = document.querySelector(`.deck-card[data-deck-id="${id}"]`);
+    if (card) {
+      const cb = card.querySelector('.dc-checkbox');
+      if (cb) cb.classList.toggle('checked', deckSelectedSet.has(id));
+    }
+    updateDeckBulkToolbar();
+    return;
+  }
   if (id === activeDeckId) {
     // Already selected → open edit
     openDeckEdit(id);
@@ -5574,6 +5634,87 @@ function selectDeck(id) {
   saveState();
   renderDeckList();
   updateDashboard();
+}
+
+// ============ DECK BULK SELECT ============
+let deckSelectMode = false;
+let deckSelectedSet = new Set();
+
+function toggleDeckSelectMode() {
+  deckSelectMode = !deckSelectMode;
+  deckSelectedSet.clear();
+  const btn = document.getElementById('deckSelectBtn');
+  btn.classList.toggle('active', deckSelectMode);
+  btn.textContent = deckSelectMode ? '完了' : '選択';
+  document.getElementById('screen-dashboard').classList.toggle('deck-select-mode', deckSelectMode);
+  updateDeckBulkToolbar();
+  renderDeckList();
+}
+
+function updateDeckBulkToolbar() {
+  const toolbar = document.getElementById('deckBulkToolbar');
+  const nav = document.getElementById('bottomNav');
+  if (deckSelectMode) {
+    toolbar.classList.add('show');
+    document.getElementById('deckBulkCount').textContent = deckSelectedSet.size + '件選択';
+    if (nav) nav.classList.remove('show');
+  } else {
+    toolbar.classList.remove('show');
+    if (nav) nav.classList.add('show');
+  }
+}
+
+function deckBulkSelectAll() {
+  if (deckSelectedSet.size === decks.length) {
+    deckSelectedSet.clear();
+  } else {
+    decks.forEach(d => deckSelectedSet.add(d.id));
+  }
+  renderDeckList();
+  updateDeckBulkToolbar();
+}
+
+function deckBulkDelete() {
+  const count = deckSelectedSet.size;
+  if (count === 0) { showToast('デッキを選択してください'); return; }
+  confirmAction(
+    `${count}件のデッキを削除`,
+    `選択した${count}件のデッキを削除しますか？この操作は取り消せません。`,
+    async function() {
+      for (const deckId of deckSelectedSet) {
+        const deck = decks.find(d => d.id === deckId);
+        if (deck) {
+          for (const w of deck.words) {
+            try {
+              if (w.questionImageId) await deleteImage(w.questionImageId);
+              if (w.answerImageId) await deleteImage(w.answerImageId);
+            } catch(e) {}
+          }
+          try { localStorage.removeItem('mikan_deckSettings_' + deckId); } catch(e) {}
+        }
+      }
+      decks = decks.filter(d => !deckSelectedSet.has(d.id));
+      if (deckSelectedSet.has(activeDeckId)) {
+        activeDeckId = decks.length > 0 ? decks[0].id : null;
+      }
+      saveState();
+      deckSelectedSet.clear();
+      deckSelectMode = false;
+      const btn = document.getElementById('deckSelectBtn');
+      btn.classList.remove('active');
+      btn.textContent = '選択';
+      document.getElementById('screen-dashboard').classList.remove('deck-select-mode');
+      updateDeckBulkToolbar();
+      if (decks.length === 0) {
+        showScreen('import');
+      } else {
+        renderDeckList();
+        updateDashboard();
+      }
+      showToast(`${count}件のデッキを削除しました`);
+    },
+    '削除する'
+  );
 }
 
 // ============ REORDER DECKS ============
@@ -5796,8 +5937,17 @@ function showScreen(name) {
   if (name !== 'word-editor') {
     exitEditorSelectMode();
   }
+  // Exit deck select mode when leaving dashboard
+  if (name !== 'dashboard' && deckSelectMode) {
+    deckSelectMode = false;
+    deckSelectedSet.clear();
+    const dBtn = document.getElementById('deckSelectBtn');
+    if (dBtn) { dBtn.classList.remove('active'); dBtn.textContent = '選択'; }
+    document.getElementById('screen-dashboard')?.classList.remove('deck-select-mode');
+    document.getElementById('deckBulkToolbar')?.classList.remove('show');
+  }
   if (nav) {
-    if (navScreens.includes(name) && !editorSelectMode) {
+    if (navScreens.includes(name) && !editorSelectMode && !deckSelectMode) {
       nav.classList.add('show');
       document.body.classList.add('has-bottom-nav');
     } else {
