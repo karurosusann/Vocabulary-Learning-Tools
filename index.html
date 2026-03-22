@@ -704,6 +704,10 @@ body.dark-mode .heatmap-cell .cal-check.mark-x {
   color: var(--gray-500);
   padding: 2px 6px;
   border-radius: 4px;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .cal-month-nav button:active { background: var(--gray-100); }
 .cal-month-nav span {
@@ -1929,6 +1933,11 @@ body.dark-mode .quiz-card-topbar .card-camera,
 body.dark-mode .quiz-card-topbar .card-bookmark {
   background: #2a2535;
   border-color: #3a3545;
+}
+body.dark-mode .quiz-card-topbar .card-bookmark.active {
+  background: var(--orange-500);
+  border-color: var(--orange-400);
+  opacity: 1;
 }
 .quiz-img-picker {
   position: fixed;
@@ -4262,11 +4271,11 @@ function renderHeatmap() {
 
   // Header with navigation
   let html = '<div class="cal-month-nav">';
-  html += '<button onmousedown="startCalHold(-1)" ontouchstart="startCalHold(-1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()">◀</button>';
+  html += '<button onmousedown="startCalHold(-1)" ontouchstart="event.preventDefault();startCalHold(-1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()">◀</button>';
   html += `<span onclick="showMonthSummary(${year}, ${month})" style="cursor:pointer;">${year}年${monthNames[month]}</span>`;
   // Only allow forward if not future
   const isCurrentMonth = (year === today.getFullYear() && month === today.getMonth());
-  html += `<button onmousedown="startCalHold(1)" ontouchstart="startCalHold(1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
+  html += `<button onmousedown="startCalHold(1)" ontouchstart="event.preventDefault();startCalHold(1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
   html += '</div>';
 
   // Day of week headers
