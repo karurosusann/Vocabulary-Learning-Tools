@@ -817,9 +817,6 @@ body.dark-mode .cal-day-popup {
   .deck-card .dc-name { font-size: 14px; }
   .deck-card .dc-meta { font-size: 11px; }
   .deck-card .dc-donut { width: 44px; height: 44px; }
-  /* More room for dual images on iPad */
-  .quiz-card.dual-img .quiz-question-img,
-  .quiz-card.dual-img .quiz-answer-img { max-height: 140px; }
 }
 @media (min-width: 1024px) {
   .app {
@@ -840,9 +837,6 @@ body.dark-mode .cal-day-popup {
   .deck-card .dc-meta { font-size: 12px; }
   .deck-card .dc-donut { width: 50px; height: 50px; }
   .deck-card .dc-pct { font-size: 12px; }
-  /* More room for dual images on PC */
-  .quiz-card.dual-img .quiz-question-img,
-  .quiz-card.dual-img .quiz-answer-img { max-height: 160px; }
 }
 
 /* Header */
@@ -1900,22 +1894,34 @@ body.dark-mode .cal-day-popup {
   border-color: var(--orange-500);
   opacity: 1;
 }
-.card-bookmark {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+.quiz-card-topbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
 }
-.card-camera {
-  position: absolute;
-  bottom: 16px;
-  right: 60px;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+.quiz-card-topbar .card-camera,
+.quiz-card-topbar .card-bookmark {
+  position: static;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
   color: var(--gray-400);
+  flex-shrink: 0;
+}
+.quiz-card-topbar .card-bookmark.active {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  opacity: 1;
+}
+.quiz-card-topbar .level-badge {
+  margin-bottom: 0;
+  margin-left: 2px;
+}
+body.dark-mode .quiz-card-topbar .card-camera,
+body.dark-mode .quiz-card-topbar .card-bookmark {
+  background: #2a2535;
+  border-color: #3a3545;
 }
 .quiz-img-picker {
   position: fixed;
@@ -3616,12 +3622,14 @@ body.dark-mode .gdrive-setup-hint code {
       <span class="quiz-timer-text" id="quizTimerText" style="display:none;"></span>
       <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
-      <div class="level-badge" id="quizBadge">未学習</div>
+      <div class="quiz-card-topbar">
+        <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
+        <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
+        <div class="level-badge" id="quizBadge">未学習</div>
+      </div>
       <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
-      <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
-      <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
       </div>
     </div>
     <div id="quizBody"></div>
@@ -4799,8 +4807,25 @@ let editImgA = null;
 
 function pickImage(target) {
   imgPickTarget = target;
-  document.getElementById('imgFileInput').value = '';
-  document.getElementById('imgFileInput').click();
+  // Temporarily unlock body scroll for iOS file picker (quiz mode locks body)
+  const wasLocked = document.body.style.overflow === 'hidden';
+  if (wasLocked) {
+    document.body.style.overflow = '';
+    document.body.style.height = '';
+  }
+  const input = document.getElementById('imgFileInput');
+  input.value = '';
+  input.click();
+  // Re-lock after picker opens
+  if (wasLocked) {
+    setTimeout(() => {
+      const quizScreen = document.getElementById('screen-quiz');
+      if (quizScreen && quizScreen.classList.contains('active')) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.height = '100dvh';
+      }
+    }, 500);
+  }
 }
 
 async function onImagePicked(event) {
@@ -7873,21 +7898,26 @@ async function saveWord() {
   }
 
   // Save images to IndexedDB
-  if (editImgQ) {
-    const imgId = word.questionImageId || ('img_' + Date.now() + '_q');
-    await saveImage(imgId, editImgQ);
-    word.questionImageId = imgId;
-  } else if (word.questionImageId) {
-    await deleteImage(word.questionImageId);
-    delete word.questionImageId;
-  }
-  if (editImgA) {
-    const imgId = word.answerImageId || ('img_' + Date.now() + '_a');
-    await saveImage(imgId, editImgA);
-    word.answerImageId = imgId;
-  } else if (word.answerImageId) {
-    await deleteImage(word.answerImageId);
-    delete word.answerImageId;
+  try {
+    if (editImgQ) {
+      const imgId = word.questionImageId || ('img_' + Date.now() + '_q');
+      await saveImage(imgId, editImgQ);
+      word.questionImageId = imgId;
+    } else if (word.questionImageId) {
+      await deleteImage(word.questionImageId);
+      delete word.questionImageId;
+    }
+    if (editImgA) {
+      const imgId = word.answerImageId || ('img_' + Date.now() + '_a');
+      await saveImage(imgId, editImgA);
+      word.answerImageId = imgId;
+    } else if (word.answerImageId) {
+      await deleteImage(word.answerImageId);
+      delete word.answerImageId;
+    }
+  } catch(e) {
+    console.error('Image save failed:', e);
+    showToast('⚠️ 画像の保存に失敗しました');
   }
 
   saveState();
