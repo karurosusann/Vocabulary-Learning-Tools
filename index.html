@@ -6444,10 +6444,10 @@ async function preRenderNextCard() {
 
   nextEl.innerHTML = `
     <div class="quiz-card-topbar">
-      <span class="bookmark-btn card-camera" style="pointer-events:none;">${editSvg}</span>
-      <span class="bookmark-btn card-bookmark ${pinActive}" style="pointer-events:none;">📌</span>
-      <span class="level-badge ${levelInfo.badge}">${levelInfo.label}</span>
-      <span class="quiz-copy-btn" style="pointer-events:none;">${copySvg}</span>
+      <button class="bookmark-btn card-camera" style="pointer-events:none;">${editSvg}</button>
+      <button class="bookmark-btn card-bookmark ${pinActive}" style="pointer-events:none;">📌</button>
+      <div class="level-badge ${levelInfo.badge}">${levelInfo.label}</div>
+      <button class="quiz-copy-btn" style="pointer-events:none;">${copySvg}</button>
     </div>
     <div class="english-word">${wordHtml}</div>
     <div class="answer-reveal">
