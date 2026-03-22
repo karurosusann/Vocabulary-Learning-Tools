@@ -4812,25 +4812,9 @@ let editImgA = null;
 
 function pickImage(target) {
   imgPickTarget = target;
-  // Temporarily unlock body scroll for iOS file picker (quiz mode locks body)
-  const wasLocked = document.body.style.overflow === 'hidden';
-  if (wasLocked) {
-    document.body.style.overflow = '';
-    document.body.style.height = '';
-  }
   const input = document.getElementById('imgFileInput');
   input.value = '';
   input.click();
-  // Re-lock after picker opens
-  if (wasLocked) {
-    setTimeout(() => {
-      const quizScreen = document.getElementById('screen-quiz');
-      if (quizScreen && quizScreen.classList.contains('active')) {
-        document.body.style.overflow = 'hidden';
-        document.body.style.height = '100dvh';
-      }
-    }, 500);
-  }
 }
 
 async function onImagePicked(event) {
@@ -7931,6 +7915,11 @@ async function saveWord() {
 
   // If editing from quiz, refresh quiz display and return
   if (wasQuizEdit) {
+    // Re-lock body scroll for quiz mode
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.body.style.height = '100dvh';
+    window.scrollTo(0, 0);
     showQuizQuestion();
     showToast('保存しました！');
     return;
