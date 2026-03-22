@@ -1730,11 +1730,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   flex-direction: column;
 }
 .quiz-card-next::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--orange-400), var(--orange-500));
+  display: none;
 }
 .quiz-card {
   background: white;
@@ -1793,13 +1789,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   50% { opacity: 0.4; }
 }
 .quiz-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--orange-400), var(--orange-500));
+  display: none;
 }
 .quiz-card .level-badge,
 .quiz-card-next .level-badge {
@@ -2982,6 +2972,16 @@ body.dark-mode .quiz-img-picker button {
   box-shadow: 0 4px 12px rgba(239,68,68,0.3);
 }
 .confirm-danger:hover { background: #DC2626; }
+.new-deck-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
 .rename-input {
   width: 100%;
   padding: 12px 14px;
@@ -3655,7 +3655,7 @@ body.dark-mode .gdrive-setup-hint code {
             <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
           </div>
 
-          <h4 class="setup-section-label">⏱️ 制限時間</h4>
+          <h4 class="setup-section-label">制限時間</h4>
           <div class="mode-toggle" id="timerToggle">
             <button class="mode-toggle-btn active" onclick="selectTimer(false, this)">なし</button>
             <button class="mode-toggle-btn" onclick="selectTimer(true, this)">あり</button>
@@ -3676,7 +3676,7 @@ body.dark-mode .gdrive-setup-hint code {
             <div class="drill-desc">時間切れで自動的に「知らない」になります</div>
           </div>
 
-          <h4 class="setup-section-label">🖼️ 画像表示</h4>
+          <h4 class="setup-section-label">画像表示</h4>
           <div class="mode-toggle" id="imageToggle">
             <button class="mode-toggle-btn active" onclick="selectShowImages(true, this)">表示する</button>
             <button class="mode-toggle-btn" onclick="selectShowImages(false, this)">非表示</button>
@@ -4052,12 +4052,11 @@ body.dark-mode .gdrive-setup-hint code {
 
 <!-- New Deck modal -->
 <div class="confirm-overlay" id="newDeckOverlay" onclick="closeNewDeckModal()">
-  <div class="confirm-modal" onclick="event.stopPropagation()" id="newDeckModalContent">
-    <div class="confirm-icon">📚</div>
-    <h3>新しいデッキを追加</h3>
-    <div class="confirm-buttons" style="flex-direction:column;gap:10px;margin-top:16px;">
-      <button class="confirm-danger" style="background:var(--orange-500);" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();">📄 CSVファイルから追加</button>
-      <button class="confirm-danger" style="background:var(--blue-500);" onclick="showCreateEmptyDeck()">✏️ 空のデッキを作成</button>
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()" id="newDeckModalContent">
+    <h3 style="text-align:center;margin-bottom:16px;">📚 新しいデッキを追加</h3>
+    <div class="demo-list">
+      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();"><span class="new-deck-btn-icon" style="background:#10B981;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>CSVファイルから追加</button>
+      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;" onclick="showCreateEmptyDeck()"><span class="new-deck-btn-icon" style="background:#6366F1;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span>空のデッキを作成</button>
     </div>
     <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeNewDeckModal()">キャンセル</button>
   </div>
@@ -4948,9 +4947,8 @@ let soundMuted = false; // Always on
 
 function initAudio() {
   try {
-    // If context exists but is in a bad state, destroy it
-    if (audioCtx && (audioCtx.state === 'closed' || audioCtx.state === 'suspended')) {
-      try { audioCtx.close(); } catch(e) {}
+    // Only destroy if truly closed (not just suspended)
+    if (audioCtx && audioCtx.state === 'closed') {
       audioCtx = null;
     }
     if (!audioCtx) {
@@ -4988,14 +4986,22 @@ document.addEventListener('click', initAudio);
 // Visibility change: force recreate audio context when coming back
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
-    // Force destroy and recreate on next interaction
-    if (audioCtx) {
-      try { audioCtx.close(); } catch(e) {}
-      audioCtx = null;
-      audioEnabled = false;
+    // Resume audio context instead of destroying (prevents crackling)
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().then(() => {
+        // Silent warmup to avoid crackling on first sound
+        try {
+          const g = audioCtx.createGain();
+          g.gain.value = 0;
+          g.connect(audioCtx.destination);
+          const o = audioCtx.createOscillator();
+          o.connect(g);
+          o.start();
+          o.stop(audioCtx.currentTime + 0.01);
+        } catch(e) {}
+      }).catch(() => {});
     }
-    // iOS Safari fix: when returning from file picker or background,
-    // ensure no phantom focus/touch state is blocking interactions
+    // iOS Safari fix: when returning from file picker or background
     setTimeout(() => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'file') {
         document.activeElement.blur();
