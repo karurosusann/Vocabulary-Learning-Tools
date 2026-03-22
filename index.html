@@ -1897,8 +1897,8 @@ body.dark-mode .cal-day-popup {
 .quiz-card-topbar {
   display: flex;
   align-items: center;
-  gap: 6px;
   z-index: 10;
+  position: relative;
 }
 .quiz-card-topbar .card-camera,
 .quiz-card-topbar .card-bookmark {
@@ -1909,14 +1909,19 @@ body.dark-mode .cal-day-popup {
   color: var(--gray-400);
   flex-shrink: 0;
 }
+.quiz-card-topbar .card-bookmark {
+  margin-right: 4px;
+}
 .quiz-card-topbar .card-bookmark.active {
   background: var(--orange-500);
   border-color: var(--orange-500);
   opacity: 1;
 }
 .quiz-card-topbar .level-badge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   margin-bottom: 0;
-  margin-left: 2px;
 }
 body.dark-mode .quiz-card-topbar .card-camera,
 body.dark-mode .quiz-card-topbar .card-bookmark {
