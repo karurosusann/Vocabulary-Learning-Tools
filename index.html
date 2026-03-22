@@ -1176,6 +1176,31 @@ body.dark-mode .cal-day-popup {
   color: var(--gray-400);
 }
 
+/* ===== Deck long-press drag reorder ===== */
+.deck-card.deck-drag-source {
+  opacity: 0.25;
+}
+.deck-card.deck-drag-over-right {
+  margin-right: 12px;
+  border-right: 3px solid var(--orange-400);
+}
+.deck-card.deck-drag-over-left {
+  margin-left: 12px;
+  border-left: 3px solid var(--orange-400);
+}
+.deck-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.9;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  border-radius: var(--radius-sm);
+  transition: none;
+}
+.deck-list-grid.deck-reordering {
+  overflow-x: hidden;
+}
 /* Deck edit overlay */
 .deck-edit-overlay {
   position: fixed;
@@ -5391,7 +5416,7 @@ function renderDeckList() {
     const total = deck.words.length;
     const isActive = deck.id === activeDeckId;
     return `
-      <div class="deck-card ${isActive ? 'active' : ''}" onclick="deckCardTap('${deck.id}')">
+      <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
         <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
         <div class="deck-card-info">
           <div class="dc-name">${escapeHtml(deck.name)}</div>
@@ -5544,9 +5569,16 @@ function deleteDeck(id) {
         if (w.answerImageId) await deleteImage(w.answerImageId);
       } catch(e) { console.error('Image delete failed:', e); }
     }
+    const deletedIndex = decks.findIndex(d => d.id === id);
     decks = decks.filter(d => d.id !== id);
     if (activeDeckId === id) {
-      activeDeckId = decks.length > 0 ? decks[0].id : null;
+      if (decks.length > 0) {
+        // Select the neighbor: same index if possible, otherwise the one before
+        const newIndex = Math.min(deletedIndex, decks.length - 1);
+        activeDeckId = decks[newIndex].id;
+      } else {
+        activeDeckId = null;
+      }
     }
     saveState();
     try { localStorage.removeItem('mikan_deckSettings_' + id); } catch(e) {}
@@ -8210,6 +8242,160 @@ function setupDragScroll(el) {
     document.querySelectorAll(dragSelector.split(',').map(s => s.trim() + ':not([data-drag])').join(',')).forEach(el => setupDragScroll(el));
   });
   observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+/* ===== Long-press deck reorder ===== */
+(function initDeckReorder() {
+  let longPressTimer = null;
+  let dragState = null;
+  let suppressNextClick = false;
+
+  const LONG_PRESS_MS = 400;
+  const MOVE_CANCEL_PX = 10;
+
+  document.addEventListener('touchstart', function(e) {
+    const card = e.target.closest('.deck-card[data-deck-id]');
+    if (!card) return;
+    const grid = card.closest('.deck-list-grid');
+    if (!grid) return;
+    if (decks.length < 2) return;
+
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    const deckId = card.getAttribute('data-deck-id');
+
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null;
+      startDrag(card, grid, deckId, startX, startY);
+    }, LONG_PRESS_MS);
+
+    function onMoveBeforeLong(ev) {
+      const t = ev.touches[0];
+      if (Math.abs(t.clientX - startX) > MOVE_CANCEL_PX || Math.abs(t.clientY - startY) > MOVE_CANCEL_PX) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        document.removeEventListener('touchmove', onMoveBeforeLong);
+      }
+    }
+    document.addEventListener('touchmove', onMoveBeforeLong, { passive: true });
+
+    function onEndBeforeLong() {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      document.removeEventListener('touchmove', onMoveBeforeLong);
+      document.removeEventListener('touchend', onEndBeforeLong);
+    }
+    document.addEventListener('touchend', onEndBeforeLong, { once: true });
+  }, { passive: true });
+
+  function startDrag(card, grid, deckId, startX, startY) {
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.className = 'deck-card deck-drag-ghost';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    document.body.appendChild(ghost);
+
+    card.classList.add('deck-drag-source');
+    grid.classList.add('deck-reordering');
+
+    dragState = {
+      deckId, ghost, sourceEl: card, grid,
+      offsetX: startX - rect.left,
+      offsetY: startY - rect.top
+    };
+    suppressNextClick = true;
+
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd, { once: true });
+  }
+
+  function onDragMove(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const { ghost, grid, offsetX, offsetY } = dragState;
+
+    ghost.style.left = (touch.clientX - offsetX) + 'px';
+    ghost.style.top = (touch.clientY - offsetY) + 'px';
+
+    const cards = Array.from(grid.querySelectorAll('.deck-card:not(.deck-drag-source)'));
+    clearDropIndicators(grid);
+
+    for (const c of cards) {
+      const r = c.getBoundingClientRect();
+      if (touch.clientX >= r.left && touch.clientX <= r.right) {
+        const midX = r.left + r.width / 2;
+        c.classList.add(touch.clientX < midX ? 'deck-drag-over-left' : 'deck-drag-over-right');
+        break;
+      }
+    }
+  }
+
+  function onDragEnd(e) {
+    if (!dragState) return;
+    const { ghost, sourceEl, grid, deckId } = dragState;
+    const touch = e.changedTouches[0];
+
+    const fromIdx = decks.findIndex(d => d.id === deckId);
+    let toIdx = fromIdx;
+
+    const cards = Array.from(grid.querySelectorAll('.deck-card:not(.deck-drag-source)'));
+    for (const c of cards) {
+      const r = c.getBoundingClientRect();
+      if (touch.clientX >= r.left - 10 && touch.clientX <= r.right + 10) {
+        const cId = c.getAttribute('data-deck-id');
+        const cIdx = decks.findIndex(d => d.id === cId);
+        const midX = r.left + r.width / 2;
+        toIdx = touch.clientX < midX ? cIdx : cIdx + 1;
+        break;
+      }
+    }
+    // Past the last card
+    if (cards.length > 0) {
+      const lastR = cards[cards.length - 1].getBoundingClientRect();
+      if (touch.clientX > lastR.right) toIdx = decks.length;
+      const firstR = cards[0].getBoundingClientRect();
+      if (touch.clientX < firstR.left) toIdx = 0;
+    }
+
+    if (toIdx !== fromIdx && toIdx !== fromIdx + 1) {
+      const [moved] = decks.splice(fromIdx, 1);
+      const insertIdx = toIdx > fromIdx ? toIdx - 1 : toIdx;
+      decks.splice(insertIdx, 0, moved);
+      saveState();
+    }
+
+    ghost.remove();
+    sourceEl.classList.remove('deck-drag-source');
+    grid.classList.remove('deck-reordering');
+    clearDropIndicators(grid);
+    document.removeEventListener('touchmove', onDragMove);
+    dragState = null;
+
+    renderDeckList();
+    updateDashboard();
+    setTimeout(() => { suppressNextClick = false; }, 300);
+  }
+
+  function clearDropIndicators(grid) {
+    grid.querySelectorAll('.deck-drag-over-left, .deck-drag-over-right').forEach(c => {
+      c.classList.remove('deck-drag-over-left', 'deck-drag-over-right');
+    });
+  }
+
+  document.addEventListener('click', function(e) {
+    if (suppressNextClick && e.target.closest('.deck-card')) {
+      e.preventDefault();
+      e.stopPropagation();
+      suppressNextClick = false;
+    }
+  }, true);
 })();
 
 // ============ INIT ============
