@@ -282,6 +282,9 @@ body.dark-mode .quiz-back {
   background: #2a2535;
   color: var(--gray-600);
 }
+body.dark-mode .quiz-img-toggle {
+  background: #2a2535;
+}
 body.dark-mode .result-btn.review-btn {
   background: #2a2535;
   color: var(--gray-700);
@@ -584,6 +587,7 @@ body.dark-mode .stat-box {
   font-weight: 800;
   color: var(--gray-500);
   line-height: 1;
+  white-space: nowrap;
 }
 .stat-box .stat-label {
   font-size: 8px;
@@ -3168,18 +3172,24 @@ body.dark-mode .img-attach-box {
 body.dark-mode .quiz-copy-btn { background: #2a2535; }
 /* Quiz image toggle */
 .quiz-img-toggle {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  background: none;
+  background: white;
   cursor: pointer;
   color: var(--orange-500);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
   transition: all 0.15s;
   position: relative;
+}
+.quiz-img-toggle:hover { background: var(--gray-100); }
+.quiz-img-toggle svg {
+  width: 22px;
+  height: 22px;
 }
 .quiz-img-toggle.off {
   color: var(--gray-300);
@@ -4087,6 +4097,20 @@ function updateStudyStats() {
     totalSec += log[key].timeSec || 0;
   }
   document.getElementById('statTotalTime').textContent = formatStudyTime(totalSec);
+  autoFitStatValues();
+}
+
+function autoFitStatValues() {
+  document.querySelectorAll('.stat-box .stat-value').forEach(el => {
+    el.style.fontSize = '';
+    const parent = el.parentElement;
+    const maxW = parent.clientWidth - 4;
+    const sizes = [16, 14, 12, 10, 9];
+    for (const s of sizes) {
+      el.style.fontSize = s + 'px';
+      if (el.scrollWidth <= maxW) return;
+    }
+  });
 }
 
 function formatStudyTime(sec) {
