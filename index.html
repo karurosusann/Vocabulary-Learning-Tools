@@ -3800,34 +3800,34 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
     <div class="settings-menu-list">
       <button class="settings-menu-item" onclick="toggleDarkMode()">
-        <span class="menu-icon" id="settingsDarkIcon" style="background:#6366F1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        <span class="menu-icon" id="settingsDarkIcon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         <span class="menu-label" id="settingsDarkLabel">ダークモード</span>
         <span class="menu-badge" id="settingsDarkBadge">OFF</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showExportPicker();">
-        <span class="menu-icon" style="background:#10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
         <span class="menu-label">データをエクスポート</span>
       </button>
       <button class="settings-menu-item" onclick="closeSettings();document.getElementById('settingsImportJson').click();">
-        <span class="menu-icon" style="background:#3B82F6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
         <span class="menu-label">データをインポート</span>
       </button>
       <input type="file" id="settingsImportJson" accept=".json" style="display:none;" onchange="importAllData(event)">
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showGdrivePanel();">
-        <span class="menu-icon" style="background:#F59E0B;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
         <span class="menu-label">Google Drive同期</span>
         <span class="menu-badge" id="gdriveBadge">未接続</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showHelp();">
-        <span class="menu-icon" style="background:#8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="menu-label">使い方ガイド</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
-        <span class="menu-icon" style="background:#EF4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
       </button>
     </div>
@@ -4014,8 +4014,8 @@ body.dark-mode .gdrive-setup-hint code {
   <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()" id="newDeckModalContent">
     <h3 style="text-align:center;margin-bottom:16px;">📚 新しいデッキを追加</h3>
     <div class="demo-list">
-      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();"><span class="new-deck-btn-icon" style="background:#10B981;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>CSVファイルから追加</button>
-      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;" onclick="showCreateEmptyDeck()"><span class="new-deck-btn-icon" style="background:#6366F1;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span>空のデッキを作成</button>
+      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;padding-left:58px;" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();"><span class="new-deck-btn-icon" style="background:var(--gray-400);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>CSVファイルから追加</button>
+      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;padding-left:58px;" onclick="showCreateEmptyDeck()"><span class="new-deck-btn-icon" style="background:var(--gray-400);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span>空のデッキを作成</button>
     </div>
     <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeNewDeckModal()">キャンセル</button>
   </div>
