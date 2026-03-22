@@ -817,6 +817,9 @@ body.dark-mode .cal-day-popup {
   .deck-card .dc-name { font-size: 14px; }
   .deck-card .dc-meta { font-size: 11px; }
   .deck-card .dc-donut { width: 44px; height: 44px; }
+  /* More room for dual images on iPad */
+  .quiz-card.dual-img .quiz-question-img,
+  .quiz-card.dual-img .quiz-answer-img { max-height: 140px; }
 }
 @media (min-width: 1024px) {
   .app {
@@ -837,6 +840,9 @@ body.dark-mode .cal-day-popup {
   .deck-card .dc-meta { font-size: 12px; }
   .deck-card .dc-donut { width: 50px; height: 50px; }
   .deck-card .dc-pct { font-size: 12px; }
+  /* More room for dual images on PC */
+  .quiz-card.dual-img .quiz-question-img,
+  .quiz-card.dual-img .quiz-answer-img { max-height: 160px; }
 }
 
 /* Header */
@@ -3208,6 +3214,10 @@ body.dark-mode .img-attach-box {
   margin: 6px auto;
   display: block;
   cursor: zoom-in;
+}
+.quiz-card.dual-img .quiz-question-img,
+.quiz-card.dual-img .quiz-answer-img {
+  max-height: 100px;
 }
 /* Copy button */
 .quiz-copy-btn {
@@ -6409,6 +6419,8 @@ async function showQuizQuestion() {
 
   // Answer area inside card (hint + hidden answer)
   const aImgData = (quizShowImages && aImgId) ? await loadImage(aImgId) : null;
+  const hasDualImages = !!(qImgData && aImgData);
+  card.classList.toggle('dual-img', hasDualImages);
   const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">` : '';
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
