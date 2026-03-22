@@ -6826,8 +6826,8 @@ function answerChoice(btn, index, isCorrect) {
 }
 
 function nextQuestion() {
-  // Always cancel speech before transitioning
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  // Cancel speech before transitioning — but not if swipe/key already started speaking next question
+  if (!skipNextTTS && 'speechSynthesis' in window) window.speechSynthesis.cancel();
   currentQuiz.index++;
   if (quizDrillMode) {
     if (currentQuiz.masteredCount >= currentQuiz.totalCount) {
