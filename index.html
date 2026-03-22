@@ -782,6 +782,15 @@ body.dark-mode .cal-day-popup {
     max-width: 600px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
+  #screen-dashboard {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  #screen-dashboard.active { display: flex; }
+  #screen-dashboard .action-section {
+    margin-top: auto;
+  }
 }
 @media (min-width: 1024px) {
   .app {
