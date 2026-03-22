@@ -141,9 +141,6 @@ body.dark-mode .edit-word-modal {
   background: #1e1a28;
   color: var(--gray-800);
 }
-body.dark-mode .quiz-card-next .next-card-word {
-  color: var(--gray-100);
-}
 body.dark-mode .import-area {
   background: #1e1a28;
   border-color: #3a3545;
@@ -1596,13 +1593,13 @@ body.dark-mode .cal-day-popup {
   top: 0; left: 0; right: 0; bottom: 0;
   background: white;
   border-radius: 24px;
+  padding: 14px 16px 10px;
+  text-align: center;
   box-shadow: var(--shadow-sm);
   z-index: 1;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  text-align: center;
-  padding: 14px 16px 10px;
-  overflow: hidden;
 }
 .quiz-card-next::before {
   content: '';
@@ -1610,28 +1607,6 @@ body.dark-mode .cal-day-popup {
   top: 0; left: 0; right: 0;
   height: 4px;
   background: linear-gradient(90deg, var(--orange-400), var(--orange-500));
-}
-.quiz-card-next .next-card-badge {
-  align-self: center;
-}
-.quiz-card-next .next-card-word {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--gray-900);
-  word-break: break-word;
-  overflow-wrap: break-word;
-  line-height: 1.3;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.quiz-card-next .next-card-hint {
-  font-size: 14px;
-  color: var(--gray-400);
-  font-weight: 500;
-  padding: 12px 0 4px;
 }
 .quiz-card {
   background: white;
@@ -1698,7 +1673,8 @@ body.dark-mode .cal-day-popup {
   height: 4px;
   background: linear-gradient(90deg, var(--orange-400), var(--orange-500));
 }
-.quiz-card .level-badge {
+.quiz-card .level-badge,
+.quiz-card-next .level-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
@@ -1707,7 +1683,8 @@ body.dark-mode .cal-day-popup {
   margin-bottom: 12px;
   align-self: center;
 }
-.quiz-card .english-word {
+.quiz-card .english-word,
+.quiz-card-next .english-word {
   font-family: 'DM Sans', sans-serif;
   font-size: 32px;
   font-weight: 700;
@@ -6229,9 +6206,11 @@ function preRenderNextCard() {
   const lvl = word.level === 'almost' ? 'mastered' : word.level;
   const levelInfo = LEVELS[lvl] || LEVELS.unlearned;
   nextEl.innerHTML = `
-    <span class="level-badge next-card-badge ${levelInfo.badge}">${levelInfo.label}</span>
-    <div class="next-card-word">${escapeHtml(questionText)}</div>
-    <div class="next-card-hint">👆 タップして答えを見る</div>
+    <span class="level-badge ${levelInfo.badge}">${levelInfo.label}</span>
+    <div class="english-word">${escapeHtml(questionText)}</div>
+    <div class="answer-reveal">
+      <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
+    </div>
   `;
 }
 
@@ -6290,17 +6269,18 @@ async function showQuizQuestion() {
   }
   skipNextTTS = false;
 
-  // Reset card state
+  // Reset card state — keep invisible until all content is ready
   const card = document.getElementById('quizCard');
-  card.classList.remove('revealed');
+  card.classList.remove('revealed', 'swiping', 'swipe-fly');
+  card.style.transition = 'none';
   card.style.transform = '';
-  card.style.opacity = '';
-  card.classList.remove('swiping', 'swipe-fly');
-  // Reset swipe overlays
+  card.style.opacity = '0'; // Stay invisible while updating content
+
+  // Reset swipe overlays immediately (bypass transition)
   const swRO = document.getElementById('swipeRightOverlay');
   const swLO = document.getElementById('swipeLeftOverlay');
-  if (swRO) swRO.style.opacity = '0';
-  if (swLO) swLO.style.opacity = '0';
+  if (swRO) { swRO.style.transition = 'none'; swRO.style.opacity = '0'; }
+  if (swLO) { swLO.style.transition = 'none'; swLO.style.opacity = '0'; }
   swipeEnabled = false;
   
   // Update bookmark button in card
@@ -6338,6 +6318,15 @@ async function showQuizQuestion() {
       </div>
     `;
   }
+
+  // All content updated — now reveal card
+  card.offsetHeight; // force reflow to apply all changes
+  card.style.transition = '';
+  card.style.opacity = '';
+  // Restore overlay transitions
+  if (swRO) swRO.style.transition = '';
+  if (swLO) swLO.style.transition = '';
+
   // Start timer for this question
   startQuizTimer();
   // Pre-render next card behind current one
