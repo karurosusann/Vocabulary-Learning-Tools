@@ -777,6 +777,18 @@ body.dark-mode .cal-day-popup {
   position: relative;
   z-index: 1;
 }
+@media (min-width: 768px) {
+  .app {
+    max-width: 600px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 1024px) {
+  .app {
+    max-width: 700px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+}
 
 /* Header */
 .header {
@@ -3140,8 +3152,8 @@ body.dark-mode .img-attach-box {
 }
 /* Quiz image display */
 .quiz-question-img, .quiz-answer-img {
-  max-width: 80%;
-  max-height: 120px;
+  max-width: 100%;
+  max-height: 180px;
   border-radius: 8px;
   object-fit: contain;
   margin: 6px auto;
@@ -4701,7 +4713,7 @@ async function getAllImages() {
 
 function resizeImage(file, maxWidth, quality) {
   maxWidth = maxWidth || 1200;
-  quality = quality || 0.92;
+  quality = quality || 0.97;
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -6713,16 +6725,18 @@ let swipeState = null;
       return;
     }
 
-    // → / ← — reveal if not yet revealed, answer if revealed (flashcard mode)
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    // → / ← / D / A — reveal if not yet revealed, answer if revealed (flashcard mode)
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'D' || e.key === 'a' || e.key === 'A') {
       e.preventDefault();
       if (!isRevealed) {
         revealAnswer();
         return;
       }
+      const known = e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D';
       if (quizMode === 'flashcard' && !keyLocked) {
         keyLocked = true;
-        keyAnswerWithAnimation(e.key === 'ArrowRight', card);
+        answerKnowledge(known);
+        setTimeout(() => { keyLocked = false; }, 200);
       }
     }
   });
@@ -7209,12 +7223,24 @@ function renderDeckTabs() {
   `).join('');
 }
 
+let wordListScrollMap = {}; // { deckId: scrollTop }
+
 function switchWordListDeck(deckId, el) {
+  // Save current scroll position
+  const list = document.getElementById('wordItems');
+  if (wordListDeckId && list) {
+    wordListScrollMap[wordListDeckId] = list.scrollTop;
+  }
   wordListDeckId = deckId;
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderFilterTabs();
   renderWordList('all');
+  // Restore scroll position after DOM update
+  const savedScroll = wordListScrollMap[deckId] || 0;
+  requestAnimationFrame(() => {
+    if (list) list.scrollTop = savedScroll;
+  });
 }
 
 function getWordListWords() {
@@ -7598,12 +7624,24 @@ function renderEditorDeckTabs() {
   `).join('');
 }
 
+let editorScrollMap = {}; // { deckId: scrollTop }
+
 function switchEditorDeck(deckId, el) {
+  // Save current scroll position
+  const list = document.getElementById('editorWordList');
+  if (editorDeckId && list) {
+    editorScrollMap[editorDeckId] = list.scrollTop;
+  }
   editorDeckId = deckId;
   updateBulkToolbar();
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderEditorList();
+  // Restore scroll position after DOM update
+  const savedScroll = editorScrollMap[deckId] || 0;
+  requestAnimationFrame(() => {
+    if (list) list.scrollTop = savedScroll;
+  });
 }
 
 function getEditorWords() {
