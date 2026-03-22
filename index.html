@@ -134,11 +134,15 @@ body.dark-mode::after {
   background: radial-gradient(circle, rgba(107,191,89,0.04) 0%, transparent 70%);
 }
 body.dark-mode .quiz-card,
+body.dark-mode .quiz-card-next,
 body.dark-mode .quiz-result,
 body.dark-mode .confirm-modal,
 body.dark-mode .edit-word-modal {
   background: #1e1a28;
   color: var(--gray-800);
+}
+body.dark-mode .quiz-card-next .next-card-word {
+  color: var(--gray-100);
 }
 body.dark-mode .import-area {
   background: #1e1a28;
@@ -1572,12 +1576,61 @@ body.dark-mode .cal-day-popup {
   height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: none;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   touch-action: none;
   overscroll-behavior: none;
 }
 #screen-quiz.active {
   display: flex;
+}
+.quiz-card-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 310px);
+  margin-bottom: 4px;
+  overflow: visible;
+}
+.quiz-card-next {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  overflow: hidden;
+}
+.quiz-card-next::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--orange-400), var(--orange-500));
+}
+.quiz-card-next .next-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.quiz-card-next .next-card-word {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gray-900);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+.quiz-card-next .next-card-hint {
+  font-size: 14px;
+  color: var(--gray-400);
+  font-weight: 500;
 }
 .quiz-card {
   background: white;
@@ -1585,17 +1638,16 @@ body.dark-mode .cal-day-popup {
   padding: 14px 16px 10px;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  margin-bottom: 4px;
-  position: relative;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
-  max-height: calc(100vh - 310px);
   display: flex;
   flex-direction: column;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  z-index: 2;
+  will-change: transform;
 }
 /* Timer bar */
 .quiz-timer-bar {
@@ -1714,7 +1766,7 @@ body.dark-mode .cal-day-popup {
   will-change: transform;
 }
 .quiz-card.swipe-fly {
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
 }
 .swipe-overlay {
   position: absolute;
@@ -3471,7 +3523,9 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="quiz-progress-bar">
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
-    <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
+    <div class="quiz-card-area">
+      <div class="quiz-card-next" id="quizCardNext"></div>
+      <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
       <div class="quiz-timer-bar" id="quizTimerBar" style="display:none;">
         <div class="quiz-timer-fill" id="quizTimerFill"></div>
       </div>
@@ -3484,6 +3538,7 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="answer-reveal" id="answerReveal"></div>
       <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
       <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
+      </div>
     </div>
     <div id="quizBody"></div>
   </div>
@@ -6156,6 +6211,42 @@ function startQuiz() {
   _launchQuiz(count);
 }
 
+let skipNextTTS = false;
+
+function preRenderNextCard() {
+  const nextEl = document.getElementById('quizCardNext');
+  if (!nextEl) return;
+  const q = currentQuiz;
+  if (!q) { nextEl.innerHTML = ''; return; }
+  const nextIdx = q.index + 1;
+  if (nextIdx >= q.words.length || (quizDrillMode && q.masteredCount >= q.totalCount)) {
+    nextEl.innerHTML = '';
+    return;
+  }
+  const word = q.words[nextIdx];
+  const questionText = reverseMode ? word.japanese : word.english;
+  const lvl = word.level === 'almost' ? 'mastered' : word.level;
+  const levelInfo = LEVELS[lvl] || LEVELS.unlearned;
+  nextEl.innerHTML = `
+    <div class="next-card-inner">
+      <span class="level-badge ${levelInfo.badge}">${levelInfo.label}</span>
+      <div class="next-card-word">${escapeHtml(questionText)}</div>
+      <div class="next-card-hint">👆 タップして答えを見る</div>
+    </div>
+  `;
+}
+
+function speakNextQuestionImmediate() {
+  if (ttsMode !== 'question' && ttsMode !== 'both') return;
+  if (!currentQuiz) return;
+  const nextIdx = currentQuiz.index + 1;
+  if (nextIdx >= currentQuiz.words.length) return;
+  const nextWord = currentQuiz.words[nextIdx];
+  const nextQ = reverseMode ? nextWord.japanese : nextWord.english;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  speakText(nextQ);
+}
+
 async function showQuizQuestion() {
   const q = currentQuiz;
   const word = q.words[q.index];
@@ -6194,10 +6285,11 @@ async function showQuizQuestion() {
   // ② Auto-size: shrink font for long text
   autoSizeQuizWord(quizWordEl);
 
-  // Read the question word aloud (respects ttsMode)
-  if (ttsMode === 'question' || ttsMode === 'both') {
+  // Read the question word aloud (respects ttsMode and skipNextTTS)
+  if (!skipNextTTS && (ttsMode === 'question' || ttsMode === 'both')) {
     speakText(questionText);
   }
+  skipNextTTS = false;
 
   // Reset card state
   const card = document.getElementById('quizCard');
@@ -6249,6 +6341,8 @@ async function showQuizQuestion() {
   }
   // Start timer for this question
   startQuizTimer();
+  // Pre-render next card behind current one
+  preRenderNextCard();
 }
 
 // ② Auto-size quiz question text to fit within card
@@ -6476,20 +6570,20 @@ let swipeState = null;
     if (Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dx) < 30) return;
     if (Math.abs(dx) > 10) e.preventDefault();
 
-    const maxDx = swipeState.cardWidth * 0.6;
-    const clampedDx = Math.max(-maxDx, Math.min(maxDx, dx));
-    const progress = clampedDx / maxDx;
-    const rotation = progress * MAX_ROTATION;
+    // Free movement - no clamping, card follows finger across full screen
+    const rotRange = swipeState.cardWidth * 0.5;
+    const rotation = Math.max(-MAX_ROTATION, Math.min(MAX_ROTATION, (dx / rotRange) * MAX_ROTATION));
+    card.style.transform = `translateX(${dx}px) rotate(${rotation}deg)`;
 
-    card.style.transform = `translateX(${clampedDx}px) rotate(${rotation}deg)`;
-
+    // Overlay opacity based on swipe distance
     const rightOverlay = document.getElementById('swipeRightOverlay');
     const leftOverlay = document.getElementById('swipeLeftOverlay');
-    if (progress > 0) {
-      rightOverlay.style.opacity = Math.min(progress * 1.5, 1);
+    const overlayProgress = Math.abs(dx) / (swipeState.cardWidth * 0.3);
+    if (dx > 0) {
+      rightOverlay.style.opacity = Math.min(overlayProgress, 1);
       leftOverlay.style.opacity = '0';
     } else {
-      leftOverlay.style.opacity = Math.min(-progress * 1.5, 1);
+      leftOverlay.style.opacity = Math.min(overlayProgress, 1);
       rightOverlay.style.opacity = '0';
     }
   }
@@ -6507,9 +6601,32 @@ let swipeState = null;
       swipeEnabled = false;
       const known = dx > 0;
 
-      // Immediately process answer (sfx + read aloud + next question)
-      // showQuizQuestion() will reset card state automatically
-      answerKnowledge(known);
+      // 1) Immediately play sfx + speak NEXT question
+      if (known) { sfxCorrect(); } else { sfxWrong(); }
+      speakNextQuestionImmediate();
+
+      // 2) Fly-out animation (card exits screen)
+      const flyX = dx > 0 ? window.innerWidth : -window.innerWidth;
+      card.classList.add('swipe-fly');
+      card.style.transform = `translateX(${flyX}px) rotate(${dx > 0 ? 15 : -15}deg)`;
+      card.style.opacity = '0';
+
+      // 3) After animation: process answer + show next (skip TTS)
+      setTimeout(() => {
+        card.classList.remove('swipe-fly');
+        card.style.transform = '';
+        card.style.opacity = '';
+        const rightOverlay = document.getElementById('swipeRightOverlay');
+        const leftOverlay = document.getElementById('swipeLeftOverlay');
+        if (rightOverlay) rightOverlay.style.opacity = '0';
+        if (leftOverlay) leftOverlay.style.opacity = '0';
+        // Process answer without re-playing sfx/TTS
+        skipNextTTS = true;
+        stopQuizTimer();
+        const word = currentQuiz.words[currentQuiz.index];
+        processQuizAnswer(word, known);
+        nextQuestion();
+      }, 200);
     } else {
       card.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
       card.style.transform = '';
@@ -6568,11 +6685,40 @@ let swipeState = null;
 
   function keyAnswerWithAnimation(known, card) {
     swipeEnabled = false;
+    const direction = known ? 1 : -1;
 
-    // Immediately process answer (sfx + read aloud + next question)
-    // showQuizQuestion() will reset card state automatically
-    keyLocked = false;
-    answerKnowledge(known);
+    // Show overlay briefly
+    const rightOverlay = document.getElementById('swipeRightOverlay');
+    const leftOverlay = document.getElementById('swipeLeftOverlay');
+    if (known) {
+      if (rightOverlay) rightOverlay.style.opacity = '1';
+    } else {
+      if (leftOverlay) leftOverlay.style.opacity = '1';
+    }
+
+    // 1) Immediately play sfx + speak NEXT question
+    if (known) { sfxCorrect(); } else { sfxWrong(); }
+    speakNextQuestionImmediate();
+
+    // 2) Fly-out animation
+    card.classList.add('swipe-fly');
+    card.style.transform = `translateX(${direction * window.innerWidth}px) rotate(${direction * 15}deg)`;
+    card.style.opacity = '0';
+
+    // 3) After animation: process answer + show next (skip TTS)
+    setTimeout(() => {
+      card.classList.remove('swipe-fly');
+      card.style.transform = '';
+      card.style.opacity = '';
+      if (rightOverlay) rightOverlay.style.opacity = '0';
+      if (leftOverlay) leftOverlay.style.opacity = '0';
+      keyLocked = false;
+      skipNextTTS = true;
+      stopQuizTimer();
+      const word = currentQuiz.words[currentQuiz.index];
+      processQuizAnswer(word, known);
+      nextQuestion();
+    }, 200);
   }
 })();
 
