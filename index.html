@@ -452,10 +452,18 @@ body.dark-mode .settings-menu-item:active {
   background: #2a2535;
 }
 .settings-menu-item .menu-icon {
-  font-size: 20px;
-  width: 28px;
-  text-align: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: white;
+}
+.settings-menu-item .menu-icon svg {
+  width: 18px;
+  height: 18px;
 }
 .settings-menu-item .menu-label {
   flex: 1;
@@ -1177,6 +1185,20 @@ body.dark-mode .cal-day-popup {
   height: 38px;
   flex-shrink: 0;
   position: relative;
+}
+.dc-crown {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+}
+.dc-crown.silver {
+  filter: grayscale(1) brightness(1.5);
+}
+.dc-crown.gold {
+  filter: none;
 }
 .dc-conic {
   width: 100%;
@@ -3577,6 +3599,34 @@ body.dark-mode .gdrive-setup-hint code {
       <div style="width:40px"></div>
     </div>
     <div class="unified-setup">
+          <div class="count-selector">
+            <label>出題数：</label>
+            <select id="quizCount">
+              <option value="10">10問</option>
+              <option value="20">20問</option>
+              <option value="30">30問</option>
+              <option value="40">40問</option>
+              <option value="50">50問</option>
+              <option value="60">60問</option>
+              <option value="70">70問</option>
+              <option value="80">80問</option>
+              <option value="90">90問</option>
+              <option value="100">100問</option>
+              <option value="150">150問</option>
+              <option value="200">200問</option>
+              <option value="250">250問</option>
+              <option value="300">300問</option>
+              <option value="400">400問</option>
+              <option value="500">500問</option>
+              <option value="600">600問</option>
+              <option value="700">700問</option>
+              <option value="800">800問</option>
+              <option value="900">900問</option>
+              <option value="1000">1000問</option>
+              <option value="all">すべて</option>
+            </select>
+          </div>
+
           <h4 class="setup-section-label" style="margin-top:0;">モード</h4>
           <div class="mode-toggle" id="modeToggle">
             <button class="mode-toggle-btn active" onclick="selectMode('normal', this)">ノーマル</button>
@@ -3632,22 +3682,6 @@ body.dark-mode .gdrive-setup-hint code {
             <button class="mode-toggle-btn" onclick="selectShowImages(false, this)">非表示</button>
           </div>
 
-          <div class="count-selector">
-            <label>出題数：</label>
-            <select id="quizCount">
-              <option value="10">10問</option>
-              <option value="20">20問</option>
-              <option value="30">30問</option>
-              <option value="40">40問</option>
-              <option value="50">50問</option>
-              <option value="60">60問</option>
-              <option value="70">70問</option>
-              <option value="80">80問</option>
-              <option value="90">90問</option>
-              <option value="100">100問</option>
-              <option value="all">すべて</option>
-            </select>
-          </div>
     </div>
   </div>
 
@@ -3712,7 +3746,7 @@ body.dark-mode .gdrive-setup-hint code {
   <div id="screen-word-editor" class="screen">
     <div class="editor-header" id="editorHeader">
       <div class="editor-header-top">
-        <button class="quiz-back" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
+        <button class="quiz-back" id="editorBackBtn" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
         <div style="display:flex;gap:6px;">
           <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
           <button class="editor-select-btn" id="editorSelectBtn" onclick="toggleEditorSelectMode()">選択</button>
@@ -3802,39 +3836,39 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()">
   <div class="settings-panel" onclick="event.stopPropagation()">
     <div class="settings-panel-header">
-      <h3>⚙️ 設定</h3>
+      <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;color:var(--gray-500);"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>設定</h3>
       <button class="settings-panel-close" onclick="closeSettings()">✕</button>
     </div>
     <div class="settings-menu-list">
       <button class="settings-menu-item" onclick="toggleDarkMode()">
-        <span class="menu-icon" id="settingsDarkIcon">🌙</span>
+        <span class="menu-icon" id="settingsDarkIcon" style="background:#6366F1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         <span class="menu-label" id="settingsDarkLabel">ダークモード</span>
         <span class="menu-badge" id="settingsDarkBadge">OFF</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showExportPicker();">
-        <span class="menu-icon">📤</span>
+        <span class="menu-icon" style="background:#10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
         <span class="menu-label">データをエクスポート</span>
       </button>
       <button class="settings-menu-item" onclick="closeSettings();document.getElementById('settingsImportJson').click();">
-        <span class="menu-icon">📥</span>
+        <span class="menu-icon" style="background:#3B82F6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
         <span class="menu-label">データをインポート</span>
       </button>
       <input type="file" id="settingsImportJson" accept=".json" style="display:none;" onchange="importAllData(event)">
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showGdrivePanel();">
-        <span class="menu-icon">☁️</span>
+        <span class="menu-icon" style="background:#F59E0B;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
         <span class="menu-label">Google Drive同期</span>
         <span class="menu-badge" id="gdriveBadge">未接続</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showHelp();">
-        <span class="menu-icon">❓</span>
+        <span class="menu-icon" style="background:#8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="menu-label">使い方ガイド</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
-        <span class="menu-icon">🗑️</span>
+        <span class="menu-icon" style="background:#EF4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
       </button>
     </div>
@@ -4121,7 +4155,12 @@ function updateSettingsDarkUI() {
   const isDark = document.body.classList.contains('dark-mode');
   const icon = document.getElementById('settingsDarkIcon');
   const badge = document.getElementById('settingsDarkBadge');
-  if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+  if (icon) {
+    icon.style.background = isDark ? '#F59E0B' : '#6366F1';
+    icon.innerHTML = isDark
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  }
   if (badge) {
     badge.textContent = isDark ? 'ON' : 'OFF';
     badge.style.color = isDark ? 'var(--orange-500)' : '';
@@ -5576,10 +5615,20 @@ function renderDeckList() {
     const total = deck.words.length;
     const isActive = deck.id === activeDeckId;
     const isChecked = deckSelectedSet.has(deck.id);
+    let crownHtml = '';
+    const goldFlag = localStorage.getItem('csvocab_allUnlocked_' + deck.id) === '1';
+    if (total > 0 && counts.mastered === total && !goldFlag) {
+      try { localStorage.setItem('csvocab_allUnlocked_' + deck.id, '1'); } catch(e) {}
+    }
+    if (goldFlag || (total > 0 && counts.mastered === total)) {
+      crownHtml = '<span class="dc-crown gold">👑</span>';
+    } else if (total > 0 && counts.unlearned === 0) {
+      crownHtml = '<span class="dc-crown silver">👑</span>';
+    }
     return `
       <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
         <span class="dc-checkbox ${isChecked ? 'checked' : ''}">✓</span>
-        <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
+        <div class="dc-donut">${buildDonutSVG(counts, total)}${crownHtml}</div>
         <div class="deck-card-info">
           <div class="dc-name">${escapeHtml(deck.name)}</div>
           <div class="dc-meta">${deck.words.length}問</div>
@@ -5691,6 +5740,7 @@ function deckBulkDelete() {
             } catch(e) {}
           }
           try { localStorage.removeItem('mikan_deckSettings_' + deckId); } catch(e) {}
+          try { localStorage.removeItem('csvocab_allUnlocked_' + deckId); } catch(e) {}
         }
       }
       decks = decks.filter(d => !deckSelectedSet.has(d.id));
@@ -5840,6 +5890,7 @@ function deleteDeck(id) {
     }
     saveState();
     try { localStorage.removeItem('mikan_deckSettings_' + id); } catch(e) {}
+    try { localStorage.removeItem('csvocab_allUnlocked_' + id); } catch(e) {}
     if (decks.length === 0) {
       showScreen('import');
     } else {
@@ -6092,9 +6143,17 @@ function showLevelSelect() {
   });
 
   const allMastered = words.length > 0 && counts.mastered === words.length;
+  const noUnlearned = words.length > 0 && counts.unlearned === 0;
+
+  // Permanently unlock "全て" once all words have been mastered
+  const unlockKey = 'csvocab_allUnlocked_' + activeDeckId;
+  if (allMastered) {
+    try { localStorage.setItem(unlockKey, '1'); } catch(e) {}
+  }
+  const allUnlocked = allMastered || localStorage.getItem(unlockKey) === '1';
 
   const options = [
-    { key: 'all', icon: allMastered ? '👑' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allMastered },
+    { key: 'all', icon: allUnlocked ? '👹' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allUnlocked },
     { key: 'bookmarked', icon: '📌', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
     { key: 'unlearned', icon: '📋', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔵', label: '苦手', count: counts.weak, cls: 'weak' },
@@ -6174,7 +6233,7 @@ function showLevelSelect() {
     if (counts.unlearned > 0) selectedRange = 'unlearned';
     else if (counts.weak > 0) selectedRange = 'weak';
     else if (counts.fuzzy > 0) selectedRange = 'fuzzy';
-    else if (allMastered) selectedRange = 'all';
+    else if (allUnlocked) selectedRange = 'all';
     else selectedRange = 'unlearned';
     // Re-highlight
     document.querySelectorAll('.level-select-card').forEach(c => c.classList.remove('selected'));
@@ -6193,7 +6252,7 @@ function selectRange(key, el) {
 }
 
 function showLockedMessage() {
-  showToast('🔒 全問を「覚えた」にすると解放されます！');
+  showToast('🔒 全問を一度「覚えた」にすると解放されます！');
 }
 
 // ============ QUIZ SETUP ============
@@ -7703,6 +7762,8 @@ function toggleEditorSelectMode() {
   btn.classList.toggle('active', editorSelectMode);
   btn.textContent = editorSelectMode ? '完了' : '選択';
   document.getElementById('screen-word-editor').classList.toggle('select-mode', editorSelectMode);
+  const backBtn = document.getElementById('editorBackBtn');
+  if (backBtn) { backBtn.disabled = editorSelectMode; backBtn.style.opacity = editorSelectMode ? '0.3' : ''; }
   updateBulkToolbar();
   renderEditorList();
 }
@@ -7714,6 +7775,8 @@ function exitEditorSelectMode() {
   if (btn) { btn.classList.remove('active'); btn.textContent = '選択'; }
   document.getElementById('screen-word-editor')?.classList.remove('select-mode');
   document.getElementById('bulkToolbar').classList.remove('show');
+  const backBtn = document.getElementById('editorBackBtn');
+  if (backBtn) { backBtn.disabled = false; backBtn.style.opacity = ''; }
 }
 
 function toggleEditorCheckbox(index, event) {
@@ -7786,9 +7849,9 @@ function bulkDelete() {
     }
     editorSelectedMap = {};
     saveState();
+    exitEditorSelectMode();
     renderEditorDeckTabs();
     renderEditorList();
-    updateBulkToolbar();
     showToast('🗑️ ' + total + '件を削除しました');
   }, '削除する');
 }
@@ -7860,9 +7923,9 @@ function bulkMoveTo(targetDeckId) {
   editorSelectedMap = {};
   saveState();
   closeBulkMoveModal();
+  exitEditorSelectMode();
   renderEditorDeckTabs();
   renderEditorList();
-  updateBulkToolbar();
   const action = isMove ? '移動' : 'コピー';
   const icon = isMove ? '📦' : '📋';
   showToast(icon + ' ' + count + '件を「' + targetDeck.name + '」に' + action + 'しました');
@@ -8231,6 +8294,7 @@ function doResetCurrentDeck() {
   const deck = getActiveDeck();
   if (!deck) return;
   deck.words.forEach(w => { w.level = 'unlearned'; w.correctStreak = 0; });
+  try { localStorage.removeItem('csvocab_allUnlocked_' + deck.id); } catch(e) {}
   saveState();
   renderDeckList();
   updateDashboard();
@@ -8241,6 +8305,7 @@ function doResetAll() {
   // Clean up per-deck settings
   decks.forEach(d => {
     try { localStorage.removeItem('mikan_deckSettings_' + d.id); } catch(e) {}
+    try { localStorage.removeItem('csvocab_allUnlocked_' + d.id); } catch(e) {}
   });
   decks = [];
   activeDeckId = null;
