@@ -782,21 +782,54 @@ body.dark-mode .cal-day-popup {
     max-width: 600px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
-  #screen-dashboard {
+  #screen-dashboard.active {
     display: flex;
     flex-direction: column;
     min-height: calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
-  #screen-dashboard.active { display: flex; }
-  #screen-dashboard .action-section {
+  #screen-dashboard .deck-carousel-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  #screen-dashboard .deck-carousel-section > div:last-child {
     margin-top: auto;
   }
+  #screen-dashboard .action-section {
+    margin-top: 12px;
+  }
+  /* Enlarge calendar */
+  .cal-grid { gap: 5px; }
+  .heatmap-cell { padding: 12px 0; border-radius: 6px; }
+  .heatmap-cell .cal-day { font-size: 13px; }
+  .heatmap-cell .cal-check { font-size: 26px; }
+  .heatmap-cell .cal-check.mark-x { font-size: 20px; }
+  .cal-dow { font-size: 11px; padding-bottom: 5px; }
+  .cal-month-nav span { font-size: 13px; }
+  .cal-month-nav button { font-size: 16px; }
+  .heatmap-header h4 { font-size: 14px; }
+  .heatmap-section { margin-top: 4px; }
+  /* Enlarge stats */
+  .stat-box { padding: 12px 4px; }
+  .stat-box .stat-label { font-size: 10px; }
+  /* Enlarge deck cards */
+  .deck-card { padding: 14px 18px; min-width: 180px; }
+  .deck-card .dc-name { font-size: 14px; }
+  .deck-card .dc-meta { font-size: 11px; }
+  .deck-card .dc-donut { width: 44px; height: 44px; }
 }
 @media (min-width: 1024px) {
   .app {
     max-width: 700px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
+  .cal-grid { gap: 6px; }
+  .heatmap-cell { padding: 14px 0; border-radius: 8px; }
+  .heatmap-cell .cal-day { font-size: 14px; }
+  .heatmap-cell .cal-check { font-size: 28px; }
+  .heatmap-cell .cal-check.mark-x { font-size: 22px; }
+  .cal-dow { font-size: 12px; }
+  .cal-month-nav span { font-size: 14px; }
 }
 
 /* Header */
