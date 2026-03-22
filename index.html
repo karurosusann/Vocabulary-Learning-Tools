@@ -1188,9 +1188,9 @@ body.dark-mode .cal-day-popup {
 }
 .dc-crown {
   position: absolute;
-  top: -4px;
-  left: -4px;
-  font-size: 14px;
+  top: -8px;
+  left: -8px;
+  font-size: 13px;
   line-height: 1;
   z-index: 2;
 }
@@ -6930,6 +6930,8 @@ let swipeState = null;
 
   function onTouchStart(e) {
     if (!swipeEnabled) return;
+    // Block swipe when any modal/overlay is open
+    if (document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show, .settings-overlay.show')) return;
     const card = document.getElementById('quizCard');
     if (!card.classList.contains('revealed')) return;
     if (quizMode !== 'flashcard') return;
