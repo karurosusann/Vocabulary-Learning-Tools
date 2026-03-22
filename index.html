@@ -7296,6 +7296,18 @@ function confirmQuit() {
   confirmAction('クイズを中断', '中断しますか？ここまでの進捗は保存されます。', function() {
     // Mark that quit was confirmed — timer should NOT resume
     timerRemaining = null;
+    // Record study time for the portion completed
+    const q = currentQuiz;
+    if (q && quizStartTime) {
+      const elapsedSec = Math.round((Date.now() - quizStartTime - quizPausedTotal) / 1000);
+      const studied = q.correct + q.wrong;
+      if (studied > 0) {
+        recordStudySession(studied, q.correct, elapsedSec);
+      }
+      quizStartTime = null;
+      quizPausedTotal = 0;
+      quizHiddenAt = null;
+    }
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
