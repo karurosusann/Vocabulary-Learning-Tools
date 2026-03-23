@@ -5006,12 +5006,16 @@ function removeEditImg(target) {
     if (isDragging) {
       const touch = e.changedTouches[0];
       doSwap(touch.clientX, touch.clientY);
+      touchTarget = null;
       return;
     }
-    // Tap (no drag, no movement) → click action
+    // Tap (no drag, no movement) on image → open lightbox
+    // Empty boxes are handled by the click event (needed for iOS file picker)
     if (touchTarget && !touchMoved && !suppressClick) {
-      if (!e.target.closest('.img-remove')) {
+      if (!e.target.closest('.img-remove') && getSourceData(touchTarget)) {
         handleBoxClick(touchTarget);
+        suppressClick = true;
+        setTimeout(() => { suppressClick = false; }, 300);
       }
     }
     touchTarget = null;
