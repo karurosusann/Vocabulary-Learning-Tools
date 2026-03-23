@@ -1800,6 +1800,9 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   justify-content: flex-start;
   padding-top: 10%;
 }
+.quiz-card.revealed .answer-reveal {
+  padding-top: 0;
+}
 .answer-tap-hint {
   font-size: 14px;
   color: var(--gray-400);
@@ -1823,14 +1826,22 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   font-size: 24px;
   color: var(--orange-500);
   font-weight: 700;
-  padding: 8px 0 4px;
   animation: revealFade 0.3s ease;
   text-align: center;
-  overflow: auto;
-  max-height: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 .quiz-card.revealed .answer-tap-hint { display: none; }
-.quiz-card.revealed .answer-text-area { display: block; }
+.quiz-card.revealed .answer-text-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 .quiz-card.revealed { cursor: default; }
 
 /* ===== Swipe feedback ===== */
@@ -6882,6 +6893,20 @@ function revealAnswer() {
 
   card.classList.add('revealed');
   sfxReveal();
+
+  // Auto-size answer text to fit within answer zone
+  const answerArea = card.querySelector('.answer-text-area');
+  if (answerArea) {
+    answerArea.style.fontSize = '';
+    // Force layout so clientHeight is available
+    card.offsetHeight;
+    const sizes = [24, 20, 17, 15, 13, 11];
+    for (const size of sizes) {
+      answerArea.style.fontSize = size + 'px';
+      if (answerArea.scrollHeight <= answerArea.clientHeight + 4) break;
+    }
+  }
+
   // Read the answer aloud (respects ttsMode)
   if (ttsMode === 'answer' || ttsMode === 'both') {
     const answerText = reverseMode ? word.english : word.japanese;
