@@ -1694,7 +1694,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 
 #screen-quiz {
-  height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: none;
   flex-direction: column;
   overflow: visible;
@@ -1708,7 +1708,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   position: relative;
   flex: 1;
   min-height: 0;
-  max-height: calc(100vh - 310px);
+  max-height: calc(100dvh - 310px);
   margin-bottom: 4px;
   overflow: visible;
 }
@@ -4998,7 +4998,7 @@ function removeEditImg(target) {
       holdTimer = setTimeout(() => {
         holdTimer = null;
         startDrag(box, target, tx, ty);
-      }, 400);
+      }, 200);
     }
   }, { passive: true });
 
@@ -5111,14 +5111,19 @@ function removeEditImg(target) {
 let audioCtx = null;
 let audioEnabled = false;
 let soundMuted = false; // Always on
+let audioNeedsRecreate = false; // Set when page goes to background
 
 function initAudio() {
   try {
     if (audioCtx && audioCtx.state === 'closed') {
       audioCtx = null;
     }
-    // iOS: suspended context after backgrounding won't resume without delay.
-    // Recreate immediately during user gesture for instant playback.
+    // Force recreate after returning from background (iOS zombie context fix)
+    if (audioNeedsRecreate && audioCtx) {
+      try { audioCtx.close(); } catch(e) {}
+      audioCtx = null;
+      audioNeedsRecreate = false;
+    }
     if (audioCtx && audioCtx.state === 'suspended') {
       try { audioCtx.close(); } catch(e) {}
       audioCtx = null;
@@ -5162,6 +5167,8 @@ document.addEventListener('visibilitychange', () => {
       quizTimerPausedRemaining = Math.max(0, quizTimerSeconds - elapsed);
       stopQuizTimer();
     }
+    // Mark audio context for forced recreation on next user gesture
+    if (audioCtx) audioNeedsRecreate = true;
   } else {
     // Accumulate away time so it can be subtracted from study duration
     if (quizHiddenAt && quizStartTime) {
@@ -5178,17 +5185,35 @@ document.addEventListener('visibilitychange', () => {
         onTimerExpired();
       }
     }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(() => {});
-    }
     // iOS Safari fix: when returning from file picker or background
     setTimeout(() => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'file') {
         document.activeElement.blur();
       }
     }, 100);
+    // Fix quiz screen position after returning from background
+    const quizScreen = document.getElementById('screen-quiz');
+    if (quizScreen && quizScreen.classList.contains('active')) {
+      window.scrollTo(0, 0);
+    }
   }
 });
+
+// iOS: keep quiz screen correctly sized when visual viewport changes (address bar, keyboard)
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const quizScreen = document.getElementById('screen-quiz');
+    if (quizScreen && quizScreen.classList.contains('active')) {
+      quizScreen.style.height = window.visualViewport.height + 'px';
+    }
+  });
+  window.visualViewport.addEventListener('scroll', () => {
+    const quizScreen = document.getElementById('screen-quiz');
+    if (quizScreen && quizScreen.classList.contains('active')) {
+      window.scrollTo(0, 0);
+    }
+  });
+}
 
 
 function playTone(freq, duration, type, vol) {
@@ -5198,16 +5223,17 @@ function playTone(freq, duration, type, vol) {
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       audioEnabled = true;
+      audioNeedsRecreate = false;
     } catch(e) { return; }
   }
-  // iOS: after backgrounding, AudioContext stays suspended and resume() is async.
-  // Since playTone is called during a user gesture, recreating the context
-  // gives us a fresh 'running' context that plays sound immediately.
-  if (audioCtx.state === 'suspended') {
+  // Force recreate after returning from background (iOS zombie context fix)
+  // or if suspended (iOS won't resume without user gesture)
+  if (audioNeedsRecreate || audioCtx.state === 'suspended') {
     try { audioCtx.close(); } catch(e) {}
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       audioEnabled = true;
+      audioNeedsRecreate = false;
     } catch(e) { return; }
   }
   try {
@@ -6099,11 +6125,21 @@ function showScreen(name) {
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
     document.body.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
-    document.body.style.height = '100dvh';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    // Set quiz screen to actual visible height (handles iOS address bar)
+    if (window.visualViewport) {
+      document.getElementById('screen-quiz').style.height = window.visualViewport.height + 'px';
+    }
   } else {
     document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
     document.body.style.height = '';
+    // Clear any visualViewport override on quiz screen
+    const qScreen = document.getElementById('screen-quiz');
+    if (qScreen) qScreen.style.height = '';
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -6754,6 +6790,13 @@ async function showQuizQuestion() {
   const aImgId = reverseMode ? word.questionImageId : word.answerImageId;
 
   const quizWordEl = document.getElementById('quizWord');
+
+  // Read the question word aloud BEFORE any await (iOS requires user gesture context)
+  if (!skipNextTTS && (ttsMode === 'question' || ttsMode === 'both')) {
+    speakText(questionText);
+  }
+  skipNextTTS = false;
+
   // Load question image
   const qImgData = (quizShowImages && qImgId) ? await loadImage(qImgId) : null;
   if (qImgData) {
@@ -6764,12 +6807,6 @@ async function showQuizQuestion() {
 
   // ② Auto-size: shrink font for long text
   autoSizeQuizWord(quizWordEl);
-
-  // Read the question word aloud (respects ttsMode and skipNextTTS)
-  if (!skipNextTTS && (ttsMode === 'question' || ttsMode === 'both')) {
-    speakText(questionText);
-  }
-  skipNextTTS = false;
 
   // Reset card state — keep invisible until all content is ready
   const card = document.getElementById('quizCard');
@@ -7213,7 +7250,7 @@ let swipeState = null;
   }
 })();
 
-const DRILL_MAX_RETRIES = 3; // Maximum times a word can be re-queued in drill mode
+const DRILL_MAX_RETRIES = 50; // Safety cap — effectively unlimited for normal use
 
 // Shared quiz answer processing: updates level, tracks drill state, re-queues if needed
 function processQuizAnswer(word, isCorrect) {
@@ -7250,18 +7287,16 @@ function processQuizAnswer(word, isCorrect) {
     // Track wrong answers in drill mode
     if (quizDrillMode) {
       q.drillWrongSet.add(wordKey(word));
-    }
 
-    // Drill mode: re-queue the word later (with retry limit to prevent infinite growth)
-    if (quizDrillMode) {
+      // Drill mode: re-queue the word later (with retry limit to prevent infinite growth)
       const key = wordKey(word);
       const retries = q.drillRetryCount.get(key) || 0;
       if (retries < DRILL_MAX_RETRIES) {
         q.drillRetryCount.set(key, retries + 1);
-        const remaining = q.words.slice(q.index + 1);
-        const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
-        remaining.splice(insertPos, 0, word);
-        q.words = [...q.words.slice(0, q.index + 1), ...remaining];
+        // Insert the word 2-5 positions after current, clamped to end of array
+        const gap = 2 + Math.floor(Math.random() * 4);
+        const insertAt = Math.min(q.index + 1 + gap, q.words.length);
+        q.words.splice(insertAt, 0, word);
       } else {
         // Exceeded retry limit — count as mastered for progress so quiz can finish
         q.masteredCount++;
@@ -8233,8 +8268,9 @@ async function saveWord() {
   if (wasQuizEdit) {
     // Re-lock body scroll for quiz mode
     document.body.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
-    document.body.style.height = '100dvh';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
     window.scrollTo(0, 0);
     showQuizQuestion();
     showToast('保存しました！');
