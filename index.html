@@ -1702,7 +1702,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   position: relative;
   flex: 1;
   min-height: 0;
-  margin-bottom: 4px;
+  margin-bottom: 40px;
   overflow: visible;
 }
 .quiz-card-next {
@@ -1786,6 +1786,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   overflow-wrap: break-word;
   line-height: 1.3;
   overflow: hidden;
+  border-bottom: 2px dashed var(--orange-300);
 }
 
 /* ===== Answer reveal area ===== */
@@ -1796,7 +1797,8 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 10%;
 }
 .answer-tap-hint {
   font-size: 14px;
