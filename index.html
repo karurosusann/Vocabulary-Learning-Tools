@@ -1800,6 +1800,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 .answer-reveal {
   margin-top: 16px;
   position: relative;
+  flex-shrink: 0;
 }
 .answer-tap-hint {
   font-size: 14px;
@@ -3882,7 +3883,7 @@ body.dark-mode .gdrive-setup-hint code {
       <div id="gdriveLoggedIn" style="display:none;">
         <div class="gdrive-actions">
           <button class="gdrive-btn upload" id="gdriveUploadBtn" onclick="gdriveUpload()">☁️ アップロード（保存）</button>
-          <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="gdriveDownload()">📥 ダウンロード（復元）</button>
+          <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="confirmGdriveDownload()">📥 ダウンロード（復元）</button>
         </div>
       </div>
       <button class="gdrive-btn disconnect" style="margin-top:10px;" onclick="gdriveDisconnect()">接続を解除</button>
@@ -4713,6 +4714,16 @@ async function gdriveUpload() {
     btn.disabled = false;
     btn.textContent = '☁️ アップロード（保存）';
   }
+}
+
+function confirmGdriveDownload() {
+  closeGdrivePanel();
+  confirmAction(
+    'データを復元',
+    'Google Driveのバックアップで現在のデータを上書きします。この操作は取り消せません。',
+    function() { gdriveDownload(); },
+    '復元する'
+  );
 }
 
 async function gdriveDownload() {
