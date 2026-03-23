@@ -1759,30 +1759,9 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 .quiz-timer-fill {
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, var(--green-500), var(--orange-500), var(--red-500));
+  background: var(--orange-500);
   transform-origin: left;
   transition: transform 0.1s linear;
-}
-.quiz-timer-fill.urgent {
-  background: var(--red-500);
-}
-.quiz-timer-text {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gray-400);
-  z-index: 2;
-}
-.quiz-timer-text.urgent {
-  color: var(--red-500);
-  animation: timerPulse 0.5s ease infinite;
-}
-@keyframes timerPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 .quiz-card::before {
   display: none;
@@ -3660,7 +3639,6 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="quiz-timer-bar" id="quizTimerBar" style="display:none;">
         <div class="quiz-timer-fill" id="quizTimerFill"></div>
       </div>
-      <span class="quiz-timer-text" id="quizTimerText" style="display:none;"></span>
       <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
       <div class="quiz-card-topbar">
@@ -4918,11 +4896,27 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     // Track when user leaves (for study time accuracy)
     if (quizStartTime) quizHiddenAt = Date.now();
+    // Pause quiz timer: save remaining time and stop interval
+    if (quizTimerInterval) {
+      const elapsed = (Date.now() - quizTimerStartTime) / 1000;
+      quizTimerPausedRemaining = Math.max(0, quizTimerSeconds - elapsed);
+      stopQuizTimer();
+    }
   } else {
     // Accumulate away time so it can be subtracted from study duration
     if (quizHiddenAt && quizStartTime) {
       quizPausedTotal += Date.now() - quizHiddenAt;
       quizHiddenAt = null;
+    }
+    // Resume quiz timer from where it was paused
+    if (quizTimerPausedRemaining !== null && currentQuiz) {
+      const remaining = quizTimerPausedRemaining;
+      quizTimerPausedRemaining = null;
+      if (remaining > 0) {
+        startQuizTimer(remaining);
+      } else {
+        onTimerExpired();
+      }
     }
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume().catch(() => {});
@@ -6146,6 +6140,7 @@ let quizTimerEnabled = false;
 let quizTimerSeconds = 5;
 let quizTimerInterval = null;
 let quizTimerStartTime = 0;
+let quizTimerPausedRemaining = null; // remaining seconds when paused by visibility change
 let quizShowImages = true;
 
 function startNextQuiz() {
@@ -6338,28 +6333,19 @@ function startQuizTimer(resumeFrom) {
   stopQuizTimer();
   if (!quizTimerEnabled) {
     document.getElementById('quizTimerBar').style.display = 'none';
-    document.getElementById('quizTimerText').style.display = 'none';
     return;
   }
   const bar = document.getElementById('quizTimerBar');
   const fill = document.getElementById('quizTimerFill');
-  const text = document.getElementById('quizTimerText');
   bar.style.display = 'block';
-  text.style.display = 'block';
   // If resuming, start partway through; otherwise fresh start
   if (typeof resumeFrom === 'number' && resumeFrom < quizTimerSeconds) {
     const alreadyElapsed = quizTimerSeconds - resumeFrom;
     quizTimerStartTime = Date.now() - alreadyElapsed * 1000;
     const ratio = resumeFrom / quizTimerSeconds;
     fill.style.transform = 'scaleX(' + ratio + ')';
-    text.textContent = Math.ceil(resumeFrom);
-    if (resumeFrom <= 3) { fill.classList.add('urgent'); text.classList.add('urgent'); }
-    else { fill.classList.remove('urgent'); text.classList.remove('urgent'); }
   } else {
-    fill.classList.remove('urgent');
-    text.classList.remove('urgent');
     fill.style.transform = 'scaleX(1)';
-    text.textContent = quizTimerSeconds;
     quizTimerStartTime = Date.now();
   }
   quizTimerInterval = setInterval(tickQuizTimer, 100);
@@ -6370,13 +6356,7 @@ function tickQuizTimer() {
   const remaining = Math.max(0, quizTimerSeconds - elapsed);
   const ratio = remaining / quizTimerSeconds;
   const fill = document.getElementById('quizTimerFill');
-  const text = document.getElementById('quizTimerText');
   fill.style.transform = 'scaleX(' + ratio + ')';
-  text.textContent = Math.ceil(remaining);
-  if (remaining <= 3) {
-    fill.classList.add('urgent');
-    text.classList.add('urgent');
-  }
   if (remaining <= 0) {
     stopQuizTimer();
     onTimerExpired();
