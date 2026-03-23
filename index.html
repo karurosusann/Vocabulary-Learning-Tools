@@ -3214,6 +3214,28 @@ body.dark-mode .bulk-action-btn.select-all {
 body.dark-mode .img-attach-box {
   border-color: #3a3545;
 }
+.img-attach-box.img-dragging {
+  opacity: 0.4;
+  border-color: var(--orange-400);
+}
+.img-attach-box.img-drop-target {
+  border-color: var(--orange-500);
+  border-style: solid;
+  background: var(--orange-50);
+}
+.img-drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.85;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  filter: brightness(0.95);
+  max-width: 100px;
+  max-height: 80px;
+  object-fit: contain;
+  transform: translate(-50%, -50%) scale(1.05);
+}
 /* Quiz image display */
 .quiz-question-img, .quiz-answer-img {
   max-width: 100%;
@@ -4831,7 +4853,7 @@ function renderImgBox(boxId, dataUrl, target) {
   if (dataUrl) {
     box.innerHTML = `
       <span class="img-label">${target === 'question' ? '問題の画像' : '答えの画像'}</span>
-      <img src="${dataUrl}">
+      <img src="${dataUrl}" draggable="false">
       <button class="img-remove" onclick="event.stopPropagation();removeEditImg('${target}')">✕</button>
     `;
   } else {
@@ -4846,6 +4868,165 @@ function removeEditImg(target) {
   if (target === 'question') { editImgQ = null; renderImgBox('imgBoxQ', null, 'question'); }
   else { editImgA = null; renderImgBox('imgBoxA', null, 'answer'); }
 }
+
+// ============ IMAGE DRAG BETWEEN Q/A BOXES ============
+(function initImgDrag() {
+  let holdTimer = null;
+  let dragSource = null; // 'question' or 'answer'
+  let isDragging = false;
+  let suppressClick = false;
+  let ghost = null;
+
+  function getSourceData(target) {
+    return target === 'question' ? editImgQ : editImgA;
+  }
+
+  function getBoxForTarget(target) {
+    return target === 'question' ? document.getElementById('imgBoxQ') : document.getElementById('imgBoxA');
+  }
+
+  function otherTarget(target) {
+    return target === 'question' ? 'answer' : 'question';
+  }
+
+  function isPointOverBox(x, y, box) {
+    const r = box.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
+
+  function createGhost(dataUrl, x, y) {
+    removeGhost();
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.className = 'img-drag-ghost';
+    img.style.left = x + 'px';
+    img.style.top = y + 'px';
+    document.body.appendChild(img);
+    ghost = img;
+  }
+
+  function moveGhost(x, y) {
+    if (ghost) {
+      ghost.style.left = x + 'px';
+      ghost.style.top = y + 'px';
+    }
+  }
+
+  function removeGhost() {
+    if (ghost) { ghost.remove(); ghost = null; }
+  }
+
+  function cleanup() {
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    document.getElementById('imgBoxQ')?.classList.remove('img-dragging', 'img-drop-target');
+    document.getElementById('imgBoxA')?.classList.remove('img-dragging', 'img-drop-target');
+    removeGhost();
+    dragSource = null;
+    isDragging = false;
+  }
+
+  function startDrag(box, target, x, y) {
+    isDragging = true;
+    dragSource = target;
+    suppressClick = true;
+    box.classList.add('img-dragging');
+    getBoxForTarget(otherTarget(target)).classList.add('img-drop-target');
+    createGhost(getSourceData(target), x, y);
+  }
+
+  function doSwap(clientX, clientY) {
+    const other = otherTarget(dragSource);
+    const otherBox = getBoxForTarget(other);
+
+    if (isPointOverBox(clientX, clientY, otherBox)) {
+      const tempQ = editImgQ;
+      const tempA = editImgA;
+      if (dragSource === 'question') {
+        editImgA = tempQ;
+        editImgQ = tempA;
+      } else {
+        editImgQ = tempA;
+        editImgA = tempQ;
+      }
+      renderImgBox('imgBoxQ', editImgQ, 'question');
+      renderImgBox('imgBoxA', editImgA, 'answer');
+      showToast('画像を入れ替えました');
+    }
+
+    cleanup();
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 300);
+  }
+
+  // === Touch events (long-press to start) ===
+  document.addEventListener('touchstart', function(e) {
+    const box = e.target.closest('.img-attach-box');
+    if (!box || !box.closest('.img-attach-row')) return;
+    const target = box.id === 'imgBoxQ' ? 'question' : 'answer';
+    if (!getSourceData(target)) return;
+    const touch = e.touches[0];
+    const tx = touch.clientX, ty = touch.clientY;
+    holdTimer = setTimeout(() => {
+      startDrag(box, target, tx, ty);
+    }, 400);
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!isDragging) {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      return;
+    }
+    e.preventDefault();
+    const touch = e.touches[0];
+    moveGhost(touch.clientX, touch.clientY);
+    const otherBox = getBoxForTarget(otherTarget(dragSource));
+    otherBox.classList.toggle('img-drop-target', isPointOverBox(touch.clientX, touch.clientY, otherBox));
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(e) {
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    if (!isDragging) return;
+    const touch = e.changedTouches[0];
+    doSwap(touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  // === Mouse events (immediate start) ===
+  document.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    const box = e.target.closest('.img-attach-box');
+    if (!box || !box.closest('.img-attach-row')) return;
+    if (e.target.closest('.img-remove')) return;
+    const target = box.id === 'imgBoxQ' ? 'question' : 'answer';
+    if (!getSourceData(target)) return;
+    e.preventDefault();
+    startDrag(box, target, e.clientX, e.clientY);
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    moveGhost(e.clientX, e.clientY);
+    const otherBox = getBoxForTarget(otherTarget(dragSource));
+    otherBox.classList.toggle('img-drop-target', isPointOverBox(e.clientX, e.clientY, otherBox));
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (!isDragging) return;
+    doSwap(e.clientX, e.clientY);
+  });
+
+  // Block native drag on images inside attach boxes
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.closest('.img-attach-box')) e.preventDefault();
+  });
+
+  // Suppress click after drag on both boxes
+  ['imgBoxQ', 'imgBoxA'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', function(e) {
+      if (suppressClick) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  });
+})();
 
 // ============ AUDIO SYSTEM ============
 let audioCtx = null;
