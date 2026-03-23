@@ -3176,6 +3176,7 @@ body.dark-mode .bulk-action-btn.select-all {
   -webkit-user-select: none;
   user-select: none;
   touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 .img-attach-box:hover { border-color: var(--orange-300); }
 .img-attach-box .img-label {
@@ -3193,6 +3194,8 @@ body.dark-mode .bulk-action-btn.select-all {
   max-height: 80px;
   border-radius: 6px;
   object-fit: contain;
+  -webkit-touch-callout: none;
+  pointer-events: none;
 }
 .img-attach-box .img-remove {
   position: absolute;
@@ -4950,7 +4953,6 @@ function removeEditImg(target) {
       }
       renderImgBox('imgBoxQ', editImgQ, 'question');
       renderImgBox('imgBoxA', editImgA, 'answer');
-      showToast('画像を入れ替えました');
     }
 
     cleanup();
@@ -5017,6 +5019,11 @@ function removeEditImg(target) {
 
   // Block native drag on images inside attach boxes
   document.addEventListener('dragstart', function(e) {
+    if (e.target.closest('.img-attach-box')) e.preventDefault();
+  });
+
+  // Block native long-press context menu on attach boxes (Android/iOS)
+  document.addEventListener('contextmenu', function(e) {
     if (e.target.closest('.img-attach-box')) e.preventDefault();
   });
 
