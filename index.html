@@ -2844,6 +2844,8 @@ body.dark-mode .quiz-img-picker button {
   padding: 24px;
   animation: fadeInOverlay 0.2s ease;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 .confirm-overlay.show { display: flex; }
 @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
@@ -2856,6 +2858,7 @@ body.dark-mode .quiz-img-picker button {
   width: 100%;
   box-shadow: var(--shadow-xl);
   animation: modalPop 0.25s ease;
+  touch-action: auto;
 }
 @keyframes modalPop {
   from { opacity: 0; transform: scale(0.9); }
@@ -3766,7 +3769,7 @@ body.dark-mode .gdrive-setup-hint code {
   <div class="confirm-overlay" id="editWordOverlay" onclick="closeEditWord()">
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="confirm-icon">✏️</div>
-      <h3 id="editWordTitle">単語を編集</h3>
+      <h3 id="editWordTitle">問題を編集</h3>
       <div id="editWordEng" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div>
       <div id="editWordJpn" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
       <div class="img-attach-row">
@@ -8118,7 +8121,7 @@ async function showEditWordModal(index) {
   const word = words[index];
   if (!word) return;
   editingWordIndex = index;
-  document.getElementById('editWordTitle').textContent = '単語を編集';
+  document.getElementById('editWordTitle').textContent = '問題を編集';
   document.getElementById('editWordEng').textContent = word.english;
   document.getElementById('editWordJpn').textContent = word.japanese;
 
