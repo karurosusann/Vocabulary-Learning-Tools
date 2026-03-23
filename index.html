@@ -17,6 +17,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+  background: linear-gradient(145deg, #FFF7ED 0%, #FFEDD5 30%, #FEE2C5 100%);
+}
+html.dark-mode {
+  background: linear-gradient(145deg, #121018 0%, #1a1525 30%, #1e1830 100%);
+}
 
 :root {
   --bg: #FFF7ED;
@@ -4110,6 +4116,7 @@ function closeSettings() {
 // ============ DARK MODE ============
 function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
+  document.documentElement.classList.toggle('dark-mode', isDark);
   localStorage.setItem('csvocab_dark_mode', isDark ? '1' : '0');
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', isDark ? '#1a1525' : '#F97316');
@@ -4134,6 +4141,7 @@ function updateSettingsDarkUI() {
   const saved = localStorage.getItem('csvocab_dark_mode');
   if (saved === '1') {
     document.body.classList.add('dark-mode');
+    document.documentElement.classList.add('dark-mode');
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', '#1a1525');
   }
@@ -5118,18 +5126,10 @@ function initAudio() {
     if (audioCtx && audioCtx.state === 'closed') {
       audioCtx = null;
     }
-    // Force recreate after returning from background (iOS zombie context fix)
-    if (audioNeedsRecreate && audioCtx) {
-      try { audioCtx.close(); } catch(e) {}
-      audioCtx = null;
-      audioNeedsRecreate = false;
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      try { audioCtx.close(); } catch(e) {}
-      audioCtx = null;
-    }
+    // Just create a context if none exists; playTone handles recreation when needed
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioNeedsRecreate = false;
     }
     audioEnabled = true;
   } catch(e) { audioEnabled = false; }
@@ -5237,16 +5237,21 @@ function playTone(freq, duration, type, vol) {
     } catch(e) { return; }
   }
   try {
+  const now = audioCtx.currentTime;
+  const dur = duration || 0.2;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = type || 'sine';
   osc.frequency.value = freq;
-  gain.gain.value = vol || 0.15;
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.2));
+  // Smooth fade-in to avoid pop/click at start
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.linearRampToValueAtTime(vol || 0.15, now + 0.005);
+  // Smooth fade-out
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + (duration || 0.2));
+  osc.start(now);
+  osc.stop(now + dur);
   } catch(e) { /* audio context may be in bad state, ignore */ }
 }
 
