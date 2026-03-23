@@ -3770,11 +3770,11 @@ body.dark-mode .gdrive-setup-hint code {
       <div id="editWordEng" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div>
       <div id="editWordJpn" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
       <div class="img-attach-row">
-        <div class="img-attach-box" id="imgBoxQ" onpointerdown="if(document.activeElement)document.activeElement.blur()" onclick="pickImage('question')">
+        <div class="img-attach-box" id="imgBoxQ" onpointerdown="if(document.activeElement)document.activeElement.blur()">
           <span class="img-label">問題の画像</span>
           <span class="img-add-icon" id="imgAddQ"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></span>
         </div>
-        <div class="img-attach-box" id="imgBoxA" onpointerdown="if(document.activeElement)document.activeElement.blur()" onclick="pickImage('answer')">
+        <div class="img-attach-box" id="imgBoxA" onpointerdown="if(document.activeElement)document.activeElement.blur()">
           <span class="img-label">答えの画像</span>
           <span class="img-add-icon" id="imgAddA"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></span>
         </div>
@@ -4875,10 +4875,12 @@ function removeEditImg(target) {
 // ============ IMAGE DRAG BETWEEN Q/A BOXES ============
 (function initImgDrag() {
   let holdTimer = null;
-  let dragSource = null; // 'question' or 'answer'
+  let dragSource = null;
   let isDragging = false;
   let suppressClick = false;
   let ghost = null;
+  let mouseStartX = 0, mouseStartY = 0;
+  let mouseHeld = false;
 
   function getSourceData(target) {
     return target === 'question' ? editImgQ : editImgA;
@@ -4909,10 +4911,7 @@ function removeEditImg(target) {
   }
 
   function moveGhost(x, y) {
-    if (ghost) {
-      ghost.style.left = x + 'px';
-      ghost.style.top = y + 'px';
-    }
+    if (ghost) { ghost.style.left = x + 'px'; ghost.style.top = y + 'px'; }
   }
 
   function removeGhost() {
@@ -4926,6 +4925,7 @@ function removeEditImg(target) {
     removeGhost();
     dragSource = null;
     isDragging = false;
+    mouseHeld = false;
   }
 
   function startDrag(box, target, x, y) {
@@ -4933,7 +4933,6 @@ function removeEditImg(target) {
     dragSource = target;
     suppressClick = true;
     box.classList.add('img-dragging');
-    getBoxForTarget(otherTarget(target)).classList.add('img-drop-target');
     createGhost(getSourceData(target), x, y);
   }
 
@@ -4945,11 +4944,9 @@ function removeEditImg(target) {
       const tempQ = editImgQ;
       const tempA = editImgA;
       if (dragSource === 'question') {
-        editImgA = tempQ;
-        editImgQ = tempA;
+        editImgA = tempQ; editImgQ = tempA;
       } else {
-        editImgQ = tempA;
-        editImgA = tempQ;
+        editImgQ = tempA; editImgA = tempQ;
       }
       renderImgBox('imgBoxQ', editImgQ, 'question');
       renderImgBox('imgBoxA', editImgA, 'answer');
@@ -4960,20 +4957,39 @@ function removeEditImg(target) {
     setTimeout(() => { suppressClick = false; }, 300);
   }
 
-  // === Touch events (long-press to start) ===
+  function handleBoxClick(target) {
+    const data = getSourceData(target);
+    if (data) {
+      openLightbox(data);
+    } else {
+      pickImage(target);
+    }
+  }
+
+  // === Touch events (tap = click, long-press = drag) ===
+  let touchTarget = null;
+  let touchMoved = false;
+
   document.addEventListener('touchstart', function(e) {
     const box = e.target.closest('.img-attach-box');
     if (!box || !box.closest('.img-attach-row')) return;
+    if (e.target.closest('.img-remove')) return;
     const target = box.id === 'imgBoxQ' ? 'question' : 'answer';
-    if (!getSourceData(target)) return;
-    const touch = e.touches[0];
-    const tx = touch.clientX, ty = touch.clientY;
-    holdTimer = setTimeout(() => {
-      startDrag(box, target, tx, ty);
-    }, 400);
+    touchTarget = target;
+    touchMoved = false;
+
+    if (getSourceData(target)) {
+      const touch = e.touches[0];
+      const tx = touch.clientX, ty = touch.clientY;
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        startDrag(box, target, tx, ty);
+      }, 400);
+    }
   }, { passive: true });
 
   document.addEventListener('touchmove', function(e) {
+    touchMoved = true;
     if (!isDragging) {
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
       return;
@@ -4987,12 +5003,24 @@ function removeEditImg(target) {
 
   document.addEventListener('touchend', function(e) {
     if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-    if (!isDragging) return;
-    const touch = e.changedTouches[0];
-    doSwap(touch.clientX, touch.clientY);
+    if (isDragging) {
+      const touch = e.changedTouches[0];
+      doSwap(touch.clientX, touch.clientY);
+      return;
+    }
+    // Tap (no drag, no movement) → click action
+    if (touchTarget && !touchMoved && !suppressClick) {
+      if (!e.target.closest('.img-remove')) {
+        handleBoxClick(touchTarget);
+      }
+    }
+    touchTarget = null;
   }, { passive: true });
 
-  // === Mouse events (immediate start) ===
+  // === Mouse events (move = drag, release without move = click) ===
+  let mouseBox = null;
+  let mouseTarget = null;
+
   document.addEventListener('mousedown', function(e) {
     if (e.button !== 0) return;
     const box = e.target.closest('.img-attach-box');
@@ -5001,10 +5029,21 @@ function removeEditImg(target) {
     const target = box.id === 'imgBoxQ' ? 'question' : 'answer';
     if (!getSourceData(target)) return;
     e.preventDefault();
-    startDrag(box, target, e.clientX, e.clientY);
+    mouseStartX = e.clientX;
+    mouseStartY = e.clientY;
+    mouseHeld = true;
+    mouseBox = box;
+    mouseTarget = target;
   });
 
   document.addEventListener('mousemove', function(e) {
+    // Waiting for drag threshold
+    if (mouseHeld && !isDragging) {
+      if (Math.abs(e.clientX - mouseStartX) > 5 || Math.abs(e.clientY - mouseStartY) > 5) {
+        startDrag(mouseBox, mouseTarget, e.clientX, e.clientY);
+      }
+      return;
+    }
     if (!isDragging) return;
     e.preventDefault();
     moveGhost(e.clientX, e.clientY);
@@ -5013,25 +5052,40 @@ function removeEditImg(target) {
   });
 
   document.addEventListener('mouseup', function(e) {
-    if (!isDragging) return;
-    doSwap(e.clientX, e.clientY);
+    if (isDragging) {
+      doSwap(e.clientX, e.clientY);
+      mouseBox = null;
+      mouseTarget = null;
+      return;
+    }
+    // Released without dragging → treat as click
+    if (mouseHeld && mouseTarget) {
+      mouseHeld = false;
+      handleBoxClick(mouseTarget);
+    }
+    mouseBox = null;
+    mouseTarget = null;
   });
 
-  // Block native drag on images inside attach boxes
+  // Mouse click handler for boxes — only handles empty boxes and suppresses post-drag
+  ['imgBoxQ', 'imgBoxA'].forEach(id => {
+    const box = document.getElementById(id);
+    if (!box) return;
+    box.addEventListener('click', function(e) {
+      if (suppressClick) { e.stopPropagation(); e.preventDefault(); return; }
+      if (e.target.closest('.img-remove')) return;
+      const target = id === 'imgBoxQ' ? 'question' : 'answer';
+      // Only handle empty boxes here (image boxes are handled by mouseup)
+      if (!getSourceData(target)) handleBoxClick(target);
+    });
+  });
+
+  // Block native drag and context menu on images inside attach boxes
   document.addEventListener('dragstart', function(e) {
     if (e.target.closest('.img-attach-box')) e.preventDefault();
   });
-
-  // Block native long-press context menu on attach boxes (Android/iOS)
   document.addEventListener('contextmenu', function(e) {
     if (e.target.closest('.img-attach-box')) e.preventDefault();
-  });
-
-  // Suppress click after drag on both boxes
-  ['imgBoxQ', 'imgBoxA'].forEach(id => {
-    document.getElementById(id)?.addEventListener('click', function(e) {
-      if (suppressClick) { e.stopPropagation(); e.preventDefault(); }
-    }, true);
   });
 })();
 
