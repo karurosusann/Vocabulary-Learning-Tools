@@ -198,7 +198,7 @@ body.dark-mode .editor-word-item {
 body.dark-mode .search-bar {
   background: #2a2535;
 }
-body.dark-mode .search-bar input {
+body.dark-mode .search-bar .search-ce {
   color: var(--gray-800);
 }
 body.dark-mode .rename-input {
@@ -2239,7 +2239,7 @@ body.dark-mode .quiz-img-picker button {
 }
 .search-bar:focus-within { border-color: var(--orange-400); }
 .search-bar .search-icon { font-size: 16px; margin-right: 8px; }
-.search-bar input {
+.search-ce {
   flex: 1;
   border: none;
   outline: none;
@@ -2247,8 +2247,17 @@ body.dark-mode .quiz-img-picker button {
   font-size: 15px;
   background: transparent;
   color: var(--gray-800);
+  min-height: 20px;
+  -webkit-user-select: text;
+  user-select: text;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.search-bar input::placeholder { color: var(--gray-300); }
+.search-ce:empty::before {
+  content: attr(data-placeholder);
+  color: var(--gray-300);
+  pointer-events: none;
+}
 .search-clear {
   display: none;
   border: none;
@@ -3674,7 +3683,7 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
     <div class="search-bar">
       <span class="search-icon">🔍</span>
-      <input type="text" id="wordSearchInput" placeholder="単語を検索..." oninput="onWordSearch()">
+      <div class="search-ce" id="wordSearchInput" contenteditable="true" role="textbox" data-placeholder="単語を検索..." oninput="onWordSearch()"></div>
       <button class="search-clear" id="searchClear" onclick="clearWordSearch()">✕</button>
     </div>
     <div class="deck-tabs" id="deckTabs"></div>
@@ -3699,7 +3708,7 @@ body.dark-mode .gdrive-setup-hint code {
       <h2 class="editor-title">問題を編集</h2>
       <div class="search-bar" style="margin-top:10px;">
         <span class="search-icon">🔍</span>
-        <input type="text" id="editorSearchInput" placeholder="問題を検索..." oninput="onEditorSearch()" autocomplete="off">
+        <div class="search-ce" id="editorSearchInput" contenteditable="true" role="textbox" data-placeholder="問題を検索..." oninput="onEditorSearch()"></div>
         <button class="search-clear" id="editorSearchClear" onclick="clearEditorSearch()">✕</button>
       </div>
       <div class="deck-tabs" id="editorDeckTabs"></div>
@@ -6020,7 +6029,7 @@ function editDeckContent(deckId) {
   showScreen('word-editor');
   editorSearchQuery = '';
   const si = document.getElementById('editorSearchInput');
-  if (si) si.value = '';
+  if (si) si.textContent = '';
   document.getElementById('editorSearchClear')?.classList.remove('show');
   renderEditorDeckTabs();
   renderEditorList();
@@ -7653,7 +7662,7 @@ function showWordList() {
   const qbtn = document.getElementById('questionToggleBtn');
   if (qbtn) { qbtn.textContent = '問題を隠す'; qbtn.classList.remove('hiding'); }
   const searchInput = document.getElementById('wordSearchInput');
-  if (searchInput) { searchInput.value = ''; }
+  if (searchInput) { searchInput.textContent = ''; }
   document.getElementById('searchClear')?.classList.remove('show');
   currentWordFilter = 'all';
   renderDeckTabs();
@@ -7720,12 +7729,12 @@ let currentWordFilter = 'all';
 function onWordSearch() {
   const input = document.getElementById('wordSearchInput');
   const clearBtn = document.getElementById('searchClear');
-  clearBtn.classList.toggle('show', input.value.length > 0);
+  clearBtn.classList.toggle('show', input.textContent.length > 0);
   renderWordList(currentWordFilter);
 }
 
 function clearWordSearch() {
-  document.getElementById('wordSearchInput').value = '';
+  document.getElementById('wordSearchInput').textContent = '';
   document.getElementById('searchClear').classList.remove('show');
   renderWordList(currentWordFilter);
 }
@@ -7769,7 +7778,7 @@ function renderWordList(level) {
   else filtered = words.filter(w => w.level === level);
 
   // Apply search filter
-  const query = (document.getElementById('wordSearchInput')?.value || '').trim().toLowerCase();
+  const query = (document.getElementById('wordSearchInput')?.textContent || '').trim().toLowerCase();
   if (query) {
     filtered = filtered.filter(w =>
       w.english.toLowerCase().includes(query) || w.japanese.includes(query)
@@ -8059,7 +8068,7 @@ function showWordEditor() {
   showScreen('word-editor');
   editorSearchQuery = '';
   const si = document.getElementById('editorSearchInput');
-  if (si) si.value = '';
+  if (si) si.textContent = '';
   document.getElementById('editorSearchClear')?.classList.remove('show');
   renderEditorDeckTabs();
   renderEditorList();
@@ -8101,13 +8110,13 @@ function getEditorWords() {
 function onEditorSearch() {
   const input = document.getElementById('editorSearchInput');
   const clearBtn = document.getElementById('editorSearchClear');
-  editorSearchQuery = (input?.value || '').trim().toLowerCase();
+  editorSearchQuery = (input?.textContent || '').trim().toLowerCase();
   clearBtn?.classList.toggle('show', editorSearchQuery.length > 0);
   renderEditorList();
 }
 
 function clearEditorSearch() {
-  document.getElementById('editorSearchInput').value = '';
+  document.getElementById('editorSearchInput').textContent = '';
   editorSearchQuery = '';
   document.getElementById('editorSearchClear')?.classList.remove('show');
   renderEditorList();
