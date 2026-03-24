@@ -120,6 +120,9 @@ body.dark-mode .edit-word-modal {
   background: #1e1a28;
   color: var(--gray-800);
 }
+body.dark-mode .edit-word-textarea {
+  color: var(--gray-800);
+}
 body.dark-mode .import-area {
   background: #1e1a28;
   border-color: #3a3545;
@@ -205,6 +208,12 @@ body.dark-mode .secondary-btn {
   border-color: #3a3545;
 }
 body.dark-mode .confirm-overlay {
+  background: rgba(0,0,0,0.7);
+}
+body.overlay-kb-open {
+  background: rgba(0,0,0,0.5);
+}
+body.dark-mode.overlay-kb-open {
   background: rgba(0,0,0,0.7);
 }
 body.dark-mode .result-close-btn {
@@ -3219,8 +3228,6 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 }
 .rename-editable br { display: none; }
 .rename-editable * { display: inline; }
-#editWordEng br, #editWordJpn br { display: block; }
-#editWordEng div, #editWordJpn div { display: block; }
 .edit-word-wrap {
   text-align: center;
 }
@@ -3238,6 +3245,25 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   margin: 0;
   -webkit-touch-callout: default;
   touch-action: auto;
+}
+.edit-word-textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.4;
+  resize: none;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  min-height: 2.8em;
+  color: inherit;
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 /* Word editor */
@@ -3727,6 +3753,37 @@ body.dark-mode .gdrive-btn.disconnect { background: #2a2535; color: var(--gray-5
 body.dark-mode .gdrive-setup-hint code {
   background: #2a2535;
 }
+/* iOS: prevent sticky :hover states on touch devices */
+@media (hover: none) {
+  .confirm-cancel:hover { background: white; }
+  .confirm-danger:hover { background: var(--red-500); }
+  .confirm-danger:disabled:hover { background: var(--gray-300); }
+  .deck-edit-btn:hover { background: var(--gray-50); }
+  .deck-edit-btn.danger:hover { background: var(--gray-50); }
+  .secondary-btn:hover { background: white; }
+  .action-btn:hover { transform: none; box-shadow: var(--shadow-md); }
+  .quiz-back:hover { background: white; }
+  .quiz-img-toggle:hover { background: white; }
+  .know-btn.dont-know:hover { background: #EFF6FF; }
+  .know-btn.know:hover { background: #F0FFF4; }
+  .result-close-btn:hover { background: var(--gray-100); }
+  .result-btn:hover { background: var(--orange-500); transform: none; }
+  .start-quiz-btn:hover { background: var(--orange-500); }
+  .demo-btn:hover { background: var(--orange-500); transform: none; }
+  .demo-item:hover { border-color: var(--gray-200); background: white; }
+  .mode-option:hover { border-color: var(--gray-200); }
+  .deck-tab:hover { border-color: transparent; }
+  .word-item:hover { transform: none; }
+  .import-area:hover { border-color: var(--gray-300); }
+  .import-json-area:hover { border-color: var(--gray-300); }
+  .img-attach-box:hover { border-color: var(--gray-200); }
+  .reorder-item .ro-arrow-btn:hover { background: transparent; color: inherit; }
+  .reset-btn:hover { color: var(--gray-500); }
+  .color-dot:hover { transform: none; }
+  body.dark-mode .confirm-cancel:hover { background: #2a2535; }
+  body.dark-mode .know-btn.dont-know:hover { background: #1a1e35; }
+  body.dark-mode .know-btn.know:hover { background: #1a2818; }
+}
 </style>
 </head>
 <body>
@@ -4070,8 +4127,8 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="confirm-icon">✏️</div>
       <h3 id="editWordTitle">問題を編集</h3>
-      <div class="edit-word-wrap rename-input"><div id="editWordEng" class="edit-word-ce rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div></div>
-      <div class="edit-word-wrap rename-input"><div id="editWordJpn" class="edit-word-ce rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div></div>
+      <div class="edit-word-wrap rename-input"><textarea id="editWordEng" class="edit-word-textarea" placeholder="問題文を入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
+      <div class="edit-word-wrap rename-input"><textarea id="editWordJpn" class="edit-word-textarea" placeholder="答えを入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
       <div class="img-attach-row">
         <div class="img-attach-box" id="imgBoxQ" onpointerdown="if(document.activeElement)document.activeElement.blur()">
           <span class="img-label">問題の画像</span>
@@ -5530,13 +5587,19 @@ let audioNeedsRecreate = false; // Set when page goes to background
 
 function initAudio() {
   try {
-    if (audioCtx && audioCtx.state === 'closed') {
+    if (audioCtx && (audioCtx.state === 'closed' || audioNeedsRecreate)) {
+      // iOS: old context is unusable after background, close and recreate
+      if (audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch(e) {}
+      }
       audioCtx = null;
     }
-    // Just create a context if none exists; playTone handles recreation when needed
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       audioNeedsRecreate = false;
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
     }
     audioEnabled = true;
   } catch(e) { audioEnabled = false; }
@@ -5555,43 +5618,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter' && el.id !== 'editWordEng' && el.id !== 'editWordJpn') e.preventDefault();
     });
   });
-  // Auto-switch text alignment on word editor fields
+  // Auto-resize textarea for word editor fields
   ['editWordEng', 'editWordJpn'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', () => {
-      // Remove zero-width spaces if real content exists
-      if (el.textContent.replace(/\u200B/g, '').length > 0) {
-        const cleaned = el.innerHTML.replace(/\u200B/g, '');
-        if (cleaned !== el.innerHTML) {
-          const sel = window.getSelection();
-          const range = sel.rangeCount ? sel.getRangeAt(0) : null;
-          const offset = range ? range.startOffset : 0;
-          el.innerHTML = cleaned;
-          // Restore cursor
-          try {
-            const newRange = document.createRange();
-            const node = el.childNodes[0] || el;
-            newRange.setStart(node, Math.min(offset, node.textContent?.length || 0));
-            newRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-          } catch(e) {}
-        }
-      }
-      updateEditAlign(el);
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
     });
-    // Insert zero-width space on focus when empty for centered cursor
     el.addEventListener('focus', () => {
-      if (el.textContent.trim() === '' || el.textContent === '\u200B') {
-        el.innerHTML = '\u200B';
-        const range = document.createRange();
-        range.setStart(el.childNodes[0], 1);
-        range.collapse(true);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
       // Scroll into view when keyboard appears (especially on iOS quiz edit)
       setTimeout(() => {
         const overlay = document.getElementById('editWordOverlay');
@@ -5694,6 +5729,7 @@ if (window.visualViewport) {
       editOverlay.style.top = window.visualViewport.offsetTop + 'px';
       if (kbOpen) {
         editOverlay.classList.add('kb-open');
+        document.body.classList.add('overlay-kb-open');
         // Scroll focused element into view
         const focused = editOverlay.querySelector(':focus');
         if (focused) {
@@ -5701,6 +5737,7 @@ if (window.visualViewport) {
         }
       } else {
         editOverlay.classList.remove('kb-open');
+        document.body.classList.remove('overlay-kb-open');
         editOverlay.style.height = '';
         editOverlay.style.top = '';
       }
@@ -5722,9 +5759,13 @@ if (window.visualViewport) {
 
 function playTone(freq, duration, type, vol) {
   if (soundMuted) return;
-  if (!audioCtx || audioCtx.state === 'closed') {
+  if (!audioCtx || audioCtx.state === 'closed' || audioNeedsRecreate) {
     try {
+      if (audioCtx && audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch(e) {}
+      }
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioNeedsRecreate = false;
       audioEnabled = true;
     } catch(e) { return; }
   }
@@ -6661,11 +6702,21 @@ function escapeHtmlBr(str) {
 function setCEText(el, text) {
   // Clean up any stray trailing/leading newlines
   const cleaned = text.replace(/^\n+|\n+$/g, '');
-  el.innerHTML = escapeHtmlBr(cleaned);
+  if (el.tagName === 'TEXTAREA') {
+    el.value = cleaned;
+    // Auto-resize
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  } else {
+    el.innerHTML = escapeHtmlBr(cleaned);
+  }
   updateEditAlign(el);
 }
-// Get text from contenteditable preserving line breaks
+// Get text from contenteditable or textarea preserving line breaks
 function getCEText(el) {
+  if (el.tagName === 'TEXTAREA') {
+    return el.value.replace(/^\n+|\n+$/g, '').trim();
+  }
   return el.innerText.replace(/\u200B/g, '').replace(/^\n+|\n+$/g, '').trim();
 }
 // Switch to left-align when content has line breaks, center otherwise
@@ -8939,10 +8990,10 @@ function renderEditorList() {
 function addWordDirect() {
   editingWordIndex = null;
   document.getElementById('editWordTitle').textContent = '単語を追加';
-  document.getElementById('editWordEng').innerHTML = '';
-  document.getElementById('editWordJpn').innerHTML = '';
-  updateEditAlign(document.getElementById('editWordEng'));
-  updateEditAlign(document.getElementById('editWordJpn'));
+  document.getElementById('editWordEng').value = '';
+  document.getElementById('editWordEng').style.height = 'auto';
+  document.getElementById('editWordJpn').value = '';
+  document.getElementById('editWordJpn').style.height = 'auto';
 
   // Reset images
   editImgQ = null; editImgA = null;
@@ -9012,6 +9063,7 @@ function closeEditWord() {
   overlay.style.height = '';
   overlay.style.top = '';
   overlay.scrollTop = 0;
+  document.body.classList.remove('overlay-kb-open');
   window._quizEditReturn = false;
 }
 
