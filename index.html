@@ -455,20 +455,21 @@ body.dark-mode .settings-menu-item .menu-badge {
 }
 .answer-color-picker {
   display: flex;
-  gap: 8px;
-  padding: 8px 16px 12px;
+  gap: 6px;
+  padding: 8px 12px 12px;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .color-dot {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 3px solid transparent;
   cursor: pointer;
   transition: all 0.1s;
   padding: 0;
   outline: none;
+  flex-shrink: 0;
 }
 .color-dot:hover {
   transform: scale(1.1);
@@ -965,8 +966,11 @@ body.dark-mode .cal-day-popup {
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .demo-item:hover { border-color: var(--orange-400); background: var(--orange-50); }
+.demo-item.selected { border-color: var(--orange-400); background: var(--orange-50); color: var(--orange-500); }
 .demo-item span {
   font-size: 12px;
   color: var(--gray-400);
@@ -1767,7 +1771,6 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   width: 100%;
   background: var(--orange-500);
   transform-origin: left;
-  transition: transform 0.1s linear;
 }
 .quiz-card::before {
   display: none;
@@ -3069,8 +3072,8 @@ body.dark-mode .quiz-count-slider {
   touch-action: auto;
 }
 @keyframes modalPop {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from { transform: scale(0.9); }
+  to { transform: scale(1); }
 }
 .confirm-modal .confirm-icon {
   font-size: 40px;
@@ -3829,7 +3832,7 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="level-select-grid" id="levelSelectGrid"></div>
 
       <div style="text-align:center;margin-top:12px;">
-        <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')">⚙️ 詳細設定</button>
+        <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>詳細設定</button>
       </div>
 
       <button class="start-quiz-btn" id="startQuizBtn" onclick="startQuiz()">スタート！</button>
@@ -3899,7 +3902,7 @@ body.dark-mode .gdrive-setup-hint code {
               <input type="checkbox" id="timerSwitch" onchange="selectTimer(this.checked)">
               <span class="toggle-slider"></span>
             </label>
-            <select id="timerSeconds" class="timer-seconds-select" style="display:none;" onchange="changeTimerSeconds(this.value)">
+            <select id="timerSeconds" class="timer-seconds-select" style="visibility:hidden;" onchange="changeTimerSeconds(this.value)">
               <option value="3">3秒</option>
               <option value="5" selected>5秒</option>
               <option value="7">7秒</option>
@@ -4244,14 +4247,15 @@ body.dark-mode .gdrive-setup-hint code {
   <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
     <h3 style="text-align:center;margin-bottom:16px;">📚 デモ問題を選択</h3>
     <div class="demo-list">
-      <button class="demo-item" onclick="loadDemoData('english')">🔤 英単語<span>10語</span></button>
-      <button class="demo-item" onclick="loadDemoData('history')">📜 歴史<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('math')">📐 数学公式<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('spi')">💼 SPI<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('civil')">🏛️ 公務員試験<span>10問</span></button>
-      <button class="demo-item" onclick="loadDemoData('license')">📝 資格試験<span>10問</span></button>
+      <button class="demo-item" onclick="selectDemoItem('english', this)">🔤 英単語<span>10語</span></button>
+      <button class="demo-item" onclick="selectDemoItem('history', this)">📜 歴史<span>10問</span></button>
+      <button class="demo-item" onclick="selectDemoItem('math', this)">📐 数学公式<span>10問</span></button>
+      <button class="demo-item" onclick="selectDemoItem('spi', this)">💼 SPI<span>10問</span></button>
+      <button class="demo-item" onclick="selectDemoItem('civil', this)">🏛️ 公務員試験<span>10問</span></button>
+      <button class="demo-item" onclick="selectDemoItem('license', this)">📝 資格試験<span>10問</span></button>
     </div>
-    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeDemoPicker()">閉じる</button>
+    <button class="start-quiz-btn" id="demoStartBtn" style="margin-top:12px;opacity:0.4;pointer-events:none;" onclick="loadSelectedDemo()">始める</button>
+    <button class="confirm-cancel" style="width:100%;margin-top:8px;" onclick="closeDemoPicker()">閉じる</button>
   </div>
 </div>
 
@@ -6118,11 +6122,38 @@ function closeHelp() {
 }
 
 function loadDemo() {
+  sfxTap();
+  selectedDemoKey = null;
+  document.querySelectorAll('#demoPickerOverlay .demo-item').forEach(b => b.classList.remove('selected'));
+  const startBtn = document.getElementById('demoStartBtn');
+  if (startBtn) { startBtn.style.opacity = '0.4'; startBtn.style.pointerEvents = 'none'; }
   document.getElementById('demoPickerOverlay').classList.add('show');
 }
 
 function closeDemoPicker() {
   document.getElementById('demoPickerOverlay').classList.remove('show');
+  selectedDemoKey = null;
+}
+
+let selectedDemoKey = null;
+
+function selectDemoItem(key, el) {
+  sfxTap();
+  selectedDemoKey = key;
+  document.querySelectorAll('#demoPickerOverlay .demo-item').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const startBtn = document.getElementById('demoStartBtn');
+  if (startBtn) { startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
+}
+
+function loadSelectedDemo() {
+  if (!selectedDemoKey) return;
+  sfxSelect();
+  closeDemoPicker();
+  const data = DEMO_DECKS[selectedDemoKey];
+  if (data) {
+    addDeckFromCSV(data.csv, data.name);
+  }
 }
 
 function loadDemoData(key) {
@@ -7045,7 +7076,7 @@ function applyAdvancedSettingsUI() {
   // Timer switch
   const timerSwitch = document.getElementById('timerSwitch');
   if (timerSwitch) timerSwitch.checked = quizTimerEnabled;
-  document.getElementById('timerSeconds').style.display = quizTimerEnabled ? '' : 'none';
+  document.getElementById('timerSeconds').style.visibility = quizTimerEnabled ? '' : 'hidden';
   document.getElementById('timerSeconds').value = String(quizTimerSeconds);
   // Image switch
   const imageSwitch = document.getElementById('imageSwitch');
@@ -7087,7 +7118,7 @@ function selectOrder(order, el) {
 
 function selectTimer(enabled) {
   quizTimerEnabled = enabled;
-  document.getElementById('timerSeconds').style.display = enabled ? '' : 'none';
+  document.getElementById('timerSeconds').style.visibility = enabled ? '' : 'hidden';
   saveDeckSettings(activeDeckId);
 }
 
@@ -7130,35 +7161,45 @@ function startQuizTimer(resumeFrom) {
   const bar = document.getElementById('quizTimerBar');
   const fill = document.getElementById('quizTimerFill');
   bar.style.display = 'block';
-  // If resuming, start partway through; otherwise fresh start
+
+  let duration;
   if (typeof resumeFrom === 'number' && resumeFrom < quizTimerSeconds) {
-    const alreadyElapsed = quizTimerSeconds - resumeFrom;
-    quizTimerStartTime = Date.now() - alreadyElapsed * 1000;
+    duration = resumeFrom;
     const ratio = resumeFrom / quizTimerSeconds;
+    fill.style.transition = 'none';
     fill.style.transform = 'scaleX(' + ratio + ')';
   } else {
+    duration = quizTimerSeconds;
+    fill.style.transition = 'none';
     fill.style.transform = 'scaleX(1)';
-    quizTimerStartTime = Date.now();
   }
-  quizTimerInterval = setInterval(tickQuizTimer, 100);
+  quizTimerStartTime = Date.now() - (quizTimerSeconds - duration) * 1000;
+  // Force reflow then start CSS animation
+  fill.offsetHeight;
+  fill.style.transition = 'transform ' + duration + 's linear';
+  fill.style.transform = 'scaleX(0)';
+  // Set timeout for expiry
+  quizTimerInterval = setTimeout(() => {
+    quizTimerInterval = null;
+    onTimerExpired();
+  }, duration * 1000);
 }
 
 function tickQuizTimer() {
-  const elapsed = (Date.now() - quizTimerStartTime) / 1000;
-  const remaining = Math.max(0, quizTimerSeconds - elapsed);
-  const ratio = remaining / quizTimerSeconds;
-  const fill = document.getElementById('quizTimerFill');
-  fill.style.transform = 'scaleX(' + ratio + ')';
-  if (remaining <= 0) {
-    stopQuizTimer();
-    onTimerExpired();
-  }
+  // No longer used — CSS transition handles animation
 }
 
 function stopQuizTimer() {
   if (quizTimerInterval) {
-    clearInterval(quizTimerInterval);
+    clearTimeout(quizTimerInterval);
     quizTimerInterval = null;
+  }
+  // Freeze the bar at current position
+  const fill = document.getElementById('quizTimerFill');
+  if (fill) {
+    const computed = getComputedStyle(fill).transform;
+    fill.style.transition = 'none';
+    fill.style.transform = computed;
   }
 }
 
