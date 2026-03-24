@@ -7316,7 +7316,10 @@ function onTimerExpired() {
       card.classList.add('revealed');
       sfxWrong();
       const answerArea = card.querySelector('.answer-text-area');
-      if (answerArea) answerArea.style.display = 'none';
+      if (answerArea) {
+        answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none');
+        if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
+      }
       processQuizAnswer(word, false);
       setTimeout(() => nextQuestion(), 1000);
     }
@@ -8044,7 +8047,8 @@ function normalizeAnswer(str) {
     .replace(/[！-～]/g, c =>            // fullwidth → halfwidth
       String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[ァ-ヶ]/g, c =>            // katakana → hiragana
-      String.fromCharCode(c.charCodeAt(0) - 0x60));
+      String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .replace(/[^a-z0-9\u3040-\u309f\u4e00-\u9faf ]/g, ''); // strip symbols
 }
 
 function submitInputAnswer() {
@@ -8070,7 +8074,7 @@ function submitInputAnswer() {
   const wrap = card.querySelector('.input-answer-wrap');
   if (wrap) {
     if (isCorrect) {
-      wrap.innerHTML = `<div class="input-result correct">${escapeHtml(userRaw)}</div>`;
+      wrap.innerHTML = `<div class="input-result correct">${escapeHtml(answerText)}</div>`;
       sfxCorrect();
     } else {
       wrap.innerHTML = `
@@ -8083,8 +8087,9 @@ function submitInputAnswer() {
 
   const answerArea = card.querySelector('.answer-text-area');
   if (answerArea) {
-    // Hide answer-text-area in both cases — input-result already shows the answer
-    answerArea.style.display = 'none';
+    // Hide text (already shown in input-result) but keep answer image visible
+    answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none');
+    if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
   }
 
   // Show next button
