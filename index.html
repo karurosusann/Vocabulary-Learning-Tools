@@ -2407,6 +2407,8 @@ body.dark-mode .quiz-img-picker button {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding-right: 4px;
   padding-bottom: 16px;
 }
@@ -3067,6 +3069,8 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -3239,6 +3243,17 @@ body.dark-mode .bulk-action-btn.select-all {
   word-break: break-word;
 }
 .edit-word-modal .rename-input { margin-bottom: 10px; }
+#editWordOverlay {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  align-items: flex-start;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+#editWordOverlay .confirm-modal {
+  flex-shrink: 0;
+}
 /* Image attachment */
 .img-attach-row {
   display: flex;
@@ -3684,6 +3699,13 @@ body.dark-mode .gdrive-setup-hint code {
           </div>
           <div class="drill-desc" id="drillDesc" style="display:none;">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
 
+          <h4 class="setup-section-label">出題順</h4>
+          <div class="mode-toggle" id="orderToggle">
+            <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
+            <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
+            <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
+          </div>
+
           <h4 class="setup-section-label">出題形式</h4>
           <div class="mode-toggle" id="reverseToggle">
             <button class="mode-toggle-btn active" onclick="selectReverse(false, this)">問題→答え</button>
@@ -3694,15 +3716,7 @@ body.dark-mode .gdrive-setup-hint code {
           <div class="mode-toggle" id="ttsToggle">
             <button class="mode-toggle-btn active" onclick="selectTTS('question', this)">問題のみ</button>
             <button class="mode-toggle-btn" onclick="selectTTS('answer', this)">答えのみ</button>
-            <button class="mode-toggle-btn" onclick="selectTTS('both', this)">両方</button>
             <button class="mode-toggle-btn" onclick="selectTTS('none', this)">なし</button>
-          </div>
-
-          <h4 class="setup-section-label">出題順</h4>
-          <div class="mode-toggle" id="orderToggle">
-            <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
-            <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
-            <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
           </div>
 
           <h4 class="setup-section-label">制限時間</h4>
@@ -3876,7 +3890,7 @@ body.dark-mode .gdrive-setup-hint code {
         <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(74,158,63,0.3);" onclick="saveWord()">保存</button>
       </div>
       <div id="editWordDeleteRow" style="display:none;margin-top:12px;text-align:center;">
-        <button onclick="deleteEditingWord()" style="border:none;background:none;color:var(--red-500);font-size:13px;font-weight:600;cursor:pointer;padding:8px 16px;font-family:inherit;">🗑️ この単語を削除</button>
+        <button onclick="deleteEditingWord()" style="border:none;background:none;color:var(--red-500);font-size:13px;font-weight:600;cursor:pointer;padding:8px 16px;font-family:inherit;display:flex;align-items:center;gap:4px;margin:0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>この問題を削除</button>
       </div>
     </div>
   </div>
@@ -5350,6 +5364,13 @@ document.addEventListener('DOMContentLoaded', () => {
         sel.removeAllRanges();
         sel.addRange(range);
       }
+      // Scroll into view when keyboard appears (especially on iOS quiz edit)
+      setTimeout(() => {
+        const overlay = document.getElementById('editWordOverlay');
+        if (overlay && overlay.classList.contains('show')) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 350);
     });
   });
 });
@@ -5463,27 +5484,28 @@ function playTone(freq, duration, type, vol) {
 }
 
 // Sound effects
-function sfxTap() { playTone(800, 0.08, 'sine', 0.18); }
-function sfxSelect() { playTone(600, 0.06, 'sine', 0.15); playTone(900, 0.06, 'sine', 0.15); }
+function sfxTap() { playTone(600, 0.06, 'sine', 0.15); }
+function sfxSelect() { playTone(440, 0.06, 'sine', 0.12); setTimeout(() => playTone(660, 0.06, 'sine', 0.15), 50); setTimeout(() => playTone(880, 0.06, 'sine', 0.12), 100); }
 function sfxCorrect() {
-  playTone(523, 0.12, 'sine', 0.22);
-  setTimeout(() => playTone(659, 0.12, 'sine', 0.22), 80);
-  setTimeout(() => playTone(784, 0.18, 'sine', 0.22), 160);
+  playTone(523, 0.12, 'sine', 0.11);
+  setTimeout(() => playTone(659, 0.12, 'sine', 0.11), 80);
+  setTimeout(() => playTone(784, 0.18, 'sine', 0.11), 160);
 }
 function sfxWrong() {
-  playTone(392, 0.12, 'sine', 0.18);
-  setTimeout(() => playTone(330, 0.2, 'sine', 0.18), 100);
+  playTone(500, 0.08, 'sine', 0.15);
+  setTimeout(() => playTone(400, 0.08, 'sine', 0.15), 70);
+  setTimeout(() => playTone(300, 0.15, 'sine', 0.12), 140);
 }
-function sfxReveal() { playTone(440, 0.1, 'triangle', 0.18); }
+function sfxReveal() { playTone(523, 0.1, 'sine', 0.15); }
 function sfxBookmark() {
-  playTone(700, 0.08, 'sine', 0.18);
-  setTimeout(() => playTone(1050, 0.12, 'sine', 0.2), 60);
+  playTone(1000, 0.05, 'sine', 0.15);
+  setTimeout(() => playTone(1300, 0.08, 'sine', 0.12), 40);
 }
 function sfxStart() {
-  playTone(523, 0.1, 'sine', 0.2);
-  setTimeout(() => playTone(659, 0.1, 'sine', 0.2), 100);
-  setTimeout(() => playTone(784, 0.1, 'sine', 0.2), 200);
-  setTimeout(() => playTone(1047, 0.2, 'sine', 0.22), 300);
+  playTone(440, 0.08, 'sine', 0.18);
+  setTimeout(() => playTone(554, 0.08, 'sine', 0.18), 80);
+  setTimeout(() => playTone(659, 0.08, 'sine', 0.18), 160);
+  setTimeout(() => playTone(880, 0.15, 'sine', 0.2), 240);
 }
 function sfxComplete() {
   [523, 659, 784, 1047].forEach((f, i) => {
@@ -6613,6 +6635,7 @@ function showLevelSelect() {
     quizDrillMode = saved.drillMode || false;
     reverseMode = saved.reverse || false;
     ttsMode = saved.tts || 'question';
+    if (ttsMode === 'both') ttsMode = 'question'; // legacy fallback
     quizOrder = saved.order || 'asc';
     quizTimerEnabled = saved.timerEnabled || false;
     quizTimerSeconds = saved.timerSeconds || 5;
@@ -6627,8 +6650,9 @@ function showLevelSelect() {
     quizShowImages = true;
   }
 
-  // Auto-select first available range if none selected
-  if (!selectedRange || (selectedRange !== 'all' && selectedRange !== 'bookmarked' && counts[selectedRange] === 0)) {
+  // Auto-select first available range if none selected, or if selected range is unavailable
+  const allLocked = !allUnlocked && selectedRange === 'all';
+  if (!selectedRange || allLocked || (selectedRange !== 'all' && selectedRange !== 'bookmarked' && counts[selectedRange] === 0)) {
     if (counts.unlearned > 0) selectedRange = 'unlearned';
     else if (counts.weak > 0) selectedRange = 'weak';
     else if (counts.fuzzy > 0) selectedRange = 'fuzzy';
@@ -6659,7 +6683,7 @@ let quizDrillMode = false;
 let reviewMode = false;
 let lastMainQuizCount = 10; // remembers the count from non-review quizzes
 let reverseMode = false;
-let ttsMode = 'question'; // 'question', 'answer', 'both', 'none'
+let ttsMode = 'question'; // 'question', 'answer', 'none'
 let quizOrder = 'asc'; // 'asc', 'desc', 'random'
 let quizTimerEnabled = false;
 let quizTimerSeconds = 5;
@@ -6803,7 +6827,7 @@ function applyAdvancedSettingsUI() {
   document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', reverseMode ? i === 1 : i === 0);
   });
-  const ttsIdx = { question: 0, answer: 1, both: 2, none: 3 }[ttsMode] ?? 0;
+  const ttsIdx = { question: 0, answer: 1, none: 2 }[ttsMode] ?? 0;
   document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', i === ttsIdx);
   });
@@ -7013,7 +7037,7 @@ async function preRenderNextCard() {
 }
 
 function speakNextQuestionImmediate() {
-  if (ttsMode !== 'question' && ttsMode !== 'both') return;
+  if (ttsMode !== 'question') return;
   if (!currentQuiz) return;
   const nextIdx = currentQuiz.index + 1;
   if (nextIdx >= currentQuiz.words.length) return;
@@ -7052,7 +7076,7 @@ async function showQuizQuestion() {
   const quizWordEl = document.getElementById('quizWord');
 
   // Read the question word aloud BEFORE any await (iOS requires user gesture context)
-  if (!skipNextTTS && (ttsMode === 'question' || ttsMode === 'both')) {
+  if (!skipNextTTS && ttsMode === 'question') {
     speakText(questionText);
   }
   skipNextTTS = false;
@@ -7151,7 +7175,6 @@ function revealAnswer() {
     const answerText = reverseMode ? word.english : word.japanese;
     if (ttsMode === 'question') speakText(questionText);
     else if (ttsMode === 'answer') speakText(answerText);
-    else if (ttsMode === 'both') speakTextSequence(questionText, answerText);
     return;
   }
 
@@ -7164,7 +7187,7 @@ function revealAnswer() {
     autoSizeQuizWord(answerArea);
   }
   // Read the answer aloud (respects ttsMode)
-  if (ttsMode === 'answer' || ttsMode === 'both') {
+  if (ttsMode === 'answer') {
     const answerText = reverseMode ? word.english : word.japanese;
     setTimeout(() => speakText(answerText), 200);
   }
@@ -8084,42 +8107,6 @@ function onTapJpn(el) {
 }
 
 // Speak two texts in sequence (wait for first to finish)
-function speakTextSequence(text1, text2) {
-  if (soundMuted || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  
-  const speak = (text, onEnd) => {
-    let cleanText = text.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
-    if (!cleanText || /^[\d\s.,:;!?()\/\-]+$/.test(cleanText)) {
-      if (onEnd) onEnd();
-      return;
-    }
-    const lang = detectLang(cleanText);
-    const langMap = { en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
-    const u = new SpeechSynthesisUtterance(cleanText);
-    u.lang = langMap[lang] || 'en-US';
-    u.rate = lang === 'en' ? 0.85 : 1.0;
-    u.volume = 0.45;
-    if (ttsVoiceCache[lang]) u.voice = ttsVoiceCache[lang];
-    
-    // iOS keepAlive workaround
-    let iosKeepAlive = setInterval(() => {
-      if (!window.speechSynthesis.speaking) {
-        clearInterval(iosKeepAlive);
-      } else {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }
-    }, 5000);
-    
-    u.onend = () => { clearInterval(iosKeepAlive); if (onEnd) setTimeout(onEnd, 300); };
-    u.onerror = () => { clearInterval(iosKeepAlive); if (onEnd) onEnd(); };
-    window.speechSynthesis.speak(u);
-  };
-
-  speak(text1, () => speak(text2, null));
-}
-
 // ============ WORD EDITOR ============
 let editingWordIndex = null;
 let editorSearchQuery = '';
@@ -8206,7 +8193,7 @@ function updateBulkToolbar() {
 function bulkDelete() {
   const total = getTotalSelectedCount();
   if (total === 0) { showToast('単語を選択してください'); return; }
-  confirmAction(total + '件を削除', '選択した' + total + '件の単語を削除します。この操作は取り消せません。', async function() {
+  confirmAction(total + '件を削除', '選択した' + total + '件の問題を削除します。この操作は取り消せません。', async function() {
     // Collect image IDs before deleting words
     const imageIds = [];
     for (const deckId in editorSelectedMap) {
@@ -8231,7 +8218,7 @@ function bulkDelete() {
     exitEditorSelectMode();
     renderEditorDeckTabs();
     renderEditorList();
-    showToast('🗑️ ' + total + '件を削除しました');
+    showToast(total + '件を削除しました');
   }, '削除する');
 }
 
@@ -8571,7 +8558,7 @@ async function saveWord() {
 function deleteWord(index) {
   const words = getEditorWords();
   const word = words[index];
-  confirmAction('単語を削除', `「${word.english}」を削除しますか？`, async function() {
+  confirmAction('問題を削除', `「${word.english}」を削除しますか？`, async function() {
     if (word.questionImageId) await deleteImage(word.questionImageId);
     if (word.answerImageId) await deleteImage(word.answerImageId);
     words.splice(index, 1);
