@@ -1882,20 +1882,9 @@ body.answer-match-question .answer-text-area {
 .input-answer-field:focus {
   border-color: var(--orange-500);
 }
-.input-answer-field:empty::before {
-  content: attr(data-placeholder);
+.input-answer-field::placeholder {
   color: var(--gray-400);
-  pointer-events: none;
-}
-.input-answer-field.input-correct {
-  border-color: var(--green-500);
-  color: var(--green-500);
-  background: #F0FDF4;
-}
-.input-answer-field.input-wrong {
-  border-color: var(--red-500);
-  color: var(--red-500);
-  background: #FEF2F2;
+  font-weight: 500;
 }
 body.dark-mode .input-answer-field {
   background: #2a2535;
@@ -1905,15 +1894,8 @@ body.dark-mode .input-answer-field {
 body.dark-mode .input-answer-field:focus {
   border-color: var(--orange-500);
 }
-body.dark-mode .input-answer-field.input-correct {
-  background: #0a2a1a;
-  border-color: var(--green-500);
-  color: var(--green-500);
-}
-body.dark-mode .input-answer-field.input-wrong {
-  background: #2a0a0a;
-  border-color: var(--red-500);
-  color: var(--red-500);
+body.dark-mode .input-answer-field::placeholder {
+  color: #6b6580;
 }
 .input-submit-btn {
   padding: 10px 32px;
@@ -1945,7 +1927,10 @@ body.dark-mode .input-answer-field.input-wrong {
   opacity: 0.7;
 }
 .input-result.correct {
-  color: var(--green-500);
+  color: var(--answer-color, #F97316);
+}
+body.answer-match-question .input-result.correct {
+  color: var(--gray-900);
 }
 
 /* ===== Swipe feedback ===== */
@@ -3118,7 +3103,6 @@ body.dark-mode .quiz-count-slider {
   font-weight: 700;
   color: var(--gray-600);
   cursor: pointer;
-  transition: background 0.15s;
 }
 .confirm-cancel:hover { background: var(--gray-100); }
 .confirm-danger {
@@ -3132,7 +3116,7 @@ body.dark-mode .quiz-count-slider {
   font-weight: 700;
   color: white;
   cursor: pointer;
-  transition: background 0.05s, box-shadow 0.05s, opacity 0.05s;
+  transition: background 0.05s, box-shadow 0.05s;
   box-shadow: 0 4px 12px rgba(239,68,68,0.3);
 }
 .confirm-danger:hover { background: #DC2626; }
@@ -3721,7 +3705,7 @@ body.dark-mode .gdrive-setup-hint code {
   <!-- Screen: Import -->
   <div id="screen-import" class="screen active">
     <div class="header">
-      <button class="hamburger-btn" onclick="openSettings()" title="設定">☰</button>
+      <div style="width:40px"></div>
       <button class="help-toggle" onclick="showHelp()">❓</button>
     </div>
 
@@ -3756,9 +3740,9 @@ body.dark-mode .gdrive-setup-hint code {
         <button class="format-tab" onclick="switchFormatTab(5, this)">資格試験</button>
       </div>
       <code id="formatExample">
-        abandon,見捨てる<br>
-        accomplish,達成する<br>
-        adequate,十分な
+        apple,りんご<br>
+        book,本<br>
+        cat,猫
       </code>
     </div>
     <div style="text-align:center;margin-top:20px;">
@@ -5588,13 +5572,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
-document.addEventListener('paste', (e) => {
-  if (e.target.id === 'inputAnswerField') {
-    e.preventDefault();
-    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-    document.execCommand('insertText', false, text);
-  }
-});
 
 // Unlock and keep audio alive on every user interaction (iOS kills AudioContext in background)
 document.addEventListener('touchstart', initAudio, { passive: true });
@@ -5664,69 +5641,51 @@ if (window.visualViewport) {
 
 function playTone(freq, duration, type, vol) {
   if (soundMuted) return;
-  // Always try to ensure audio context is alive
   if (!audioCtx || audioCtx.state === 'closed') {
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       audioEnabled = true;
-      audioNeedsRecreate = false;
     } catch(e) { return; }
   }
-  // Force recreate after returning from background (iOS zombie context fix)
-  // or if suspended (iOS won't resume without user gesture)
-  if (audioNeedsRecreate || audioCtx.state === 'suspended') {
-    try { audioCtx.close(); } catch(e) {}
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      audioEnabled = true;
-      audioNeedsRecreate = false;
-    } catch(e) { return; }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
   }
   try {
-  const now = audioCtx.currentTime;
-  const dur = duration || 0.2;
-  const fadeIn = 0.01;
-  const fadeOut = Math.min(0.015, dur * 0.2);
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type || 'sine';
-  osc.frequency.value = freq;
-  // Smooth fade-in to avoid pop/click at start
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(vol || 0.15, now + fadeIn);
-  // Smooth fade-out to avoid pop/click at end
-  gain.gain.setValueAtTime(vol || 0.15, now + dur - fadeOut);
-  gain.gain.linearRampToValueAtTime(0, now + dur);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(now);
-  osc.stop(now + dur + 0.01);
-  } catch(e) { /* audio context may be in bad state, ignore */ }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.value = vol || 0.15;
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.2));
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + (duration || 0.2));
+  } catch(e) {}
 }
 
 // Sound effects
-function sfxTap() { playTone(600, 0.06, 'sine', 0.15); }
-function sfxSelect() { playTone(440, 0.06, 'sine', 0.12); setTimeout(() => playTone(660, 0.06, 'sine', 0.15), 50); setTimeout(() => playTone(880, 0.06, 'sine', 0.12), 100); }
+function sfxTap() { playTone(800, 0.08, 'sine', 0.18); }
+function sfxSelect() { playTone(600, 0.06, 'sine', 0.15); playTone(900, 0.06, 'sine', 0.15); }
 function sfxCorrect() {
-  playTone(523, 0.12, 'sine', 0.11);
-  setTimeout(() => playTone(659, 0.12, 'sine', 0.11), 80);
-  setTimeout(() => playTone(784, 0.18, 'sine', 0.11), 160);
+  playTone(523, 0.12, 'sine', 0.22);
+  setTimeout(() => playTone(659, 0.12, 'sine', 0.22), 80);
+  setTimeout(() => playTone(784, 0.18, 'sine', 0.22), 160);
 }
 function sfxWrong() {
-  playTone(500, 0.08, 'sine', 0.15);
-  setTimeout(() => playTone(400, 0.08, 'sine', 0.15), 70);
-  setTimeout(() => playTone(300, 0.15, 'sine', 0.12), 140);
+  playTone(300, 0.15, 'square', 0.15);
+  setTimeout(() => playTone(250, 0.2, 'square', 0.15), 120);
 }
-function sfxReveal() { playTone(523, 0.1, 'sine', 0.15); }
+function sfxReveal() { playTone(440, 0.1, 'triangle', 0.18); }
 function sfxBookmark() {
-  playTone(1000, 0.05, 'sine', 0.15);
-  setTimeout(() => playTone(1300, 0.08, 'sine', 0.12), 40);
+  playTone(700, 0.08, 'sine', 0.18);
+  setTimeout(() => playTone(1050, 0.12, 'sine', 0.2), 60);
 }
 function sfxStart() {
-  playTone(440, 0.08, 'sine', 0.18);
-  setTimeout(() => playTone(554, 0.08, 'sine', 0.18), 80);
-  setTimeout(() => playTone(659, 0.08, 'sine', 0.18), 160);
-  setTimeout(() => playTone(880, 0.15, 'sine', 0.2), 240);
+  playTone(523, 0.1, 'sine', 0.2);
+  setTimeout(() => playTone(659, 0.1, 'sine', 0.2), 100);
+  setTimeout(() => playTone(784, 0.1, 'sine', 0.2), 200);
+  setTimeout(() => playTone(1047, 0.2, 'sine', 0.22), 300);
 }
 function sfxComplete() {
   [523, 659, 784, 1047].forEach((f, i) => {
@@ -5738,6 +5697,7 @@ function sfxComplete() {
     });
   }, 500);
 }
+function sfxBack() { playTone(500, 0.06, 'sine', 0.06); }
 
 // ============ TTS (Text-to-Speech) ============
 let ttsVoicesLoaded = false;
@@ -6136,7 +6096,7 @@ function parseCSVLine(line, delimiter) {
 
 // ============ FORMAT EXAMPLES & HELP ============
 const formatExamples = [
-  `abandon,見捨てる<br>accomplish,達成する<br>adequate,十分な`,
+  `apple,りんご<br>book,本<br>cat,猫`,
   `鎌倉幕府の成立,1185年<br>関ヶ原の戦い,1600年<br>明治維新,1868年`,
   `三角形の面積の公式,底辺×高さ÷2<br>円の面積の公式,π×r²<br>速さの公式,距離÷時間`,
   `損益算：原価800円の品に25%の利益を見込んだ定価は？,1000円<br>仕事算：Aは12日・Bは6日で完了。一緒にやると？,4日`,
@@ -6176,16 +6136,16 @@ function loadDemoData(key) {
 const DEMO_DECKS = {
   english: {
     name: '英単語',
-    csv: `abandon,見捨てる
-accomplish,達成する
-adequate,十分な
-brief,簡潔な
-comprehend,理解する
-deliberate,意図的な
-enthusiasm,熱意
-inevitable,避けられない
-persuade,説得する
-sufficient,十分な`
+    csv: `apple,りんご
+book,本
+cat,猫
+dog,犬
+egg,卵
+flower,花
+happy,幸せな
+music,音楽
+school,学校
+water,水`
   },
   history: {
     name: '歴史',
@@ -6897,6 +6857,12 @@ function showLevelSelect() {
   }
 
   updateStartBtn();
+
+  // Scroll selected card into view (e.g. うろ覚え/覚えた may be off-screen)
+  setTimeout(() => {
+    const sel = document.querySelector('.level-select-card.selected');
+    if (sel) sel.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, 50);
 }
 
 function selectRange(key, el) {
@@ -7205,13 +7171,13 @@ function onTimerExpired() {
       const word = currentQuiz.words[currentQuiz.index];
       const answerText = reverseMode ? word.english : word.japanese;
       const field = document.getElementById('inputAnswerField');
-      const userRaw = field ? (field.textContent || '').trim() : '';
+      const userRaw = field ? (field.value || '').trim() : '';
       // Replace input with comparison display
       const wrap = card.querySelector('.input-answer-wrap');
       if (wrap) {
         wrap.innerHTML = `
-          <div class="input-result wrong">✗ ${escapeHtml(userRaw || '（時間切れ）')}</div>
-          <div class="input-result correct">✓ ${escapeHtml(answerText)}</div>
+          <div class="input-result wrong">${escapeHtml(userRaw || '（時間切れ）')}</div>
+          <div class="input-result correct">${escapeHtml(answerText)}</div>
         `;
       }
       card.classList.add('revealed');
@@ -7322,7 +7288,7 @@ async function preRenderNextCard() {
     <div class="english-word">${wordHtml}</div>
     <div class="answer-reveal">
       ${quizInputMode
-        ? '<div class="input-answer-wrap"><div class="input-answer-field" style="pointer-events:none;" data-placeholder="答えを入力"></div></div>'
+        ? '<div class="input-answer-wrap"><input type="text" class="input-answer-field" placeholder="答えを入力" disabled></div>'
         : '<div class="answer-tap-hint">タップして答えを見る</div>'}
     </div>
   `;
@@ -7428,7 +7394,7 @@ async function showQuizQuestion() {
     // Input mode: show text input + submit button, answer hidden until submit
     answerReveal.innerHTML = `
       <div class="input-answer-wrap">
-        <div class="input-answer-field" id="inputAnswerField" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
+        <input type="text" class="input-answer-field" id="inputAnswerField" placeholder="答えを入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <button class="input-submit-btn" id="inputSubmitBtn" onclick="submitInputAnswer()">回答する</button>
       </div>
       <div class="answer-text-area">${answerContentHtml}</div>
@@ -7464,10 +7430,15 @@ async function showQuizQuestion() {
   preRenderNextCard();
   // Auto-focus input field in typing mode
   if (quizInputMode) {
-    setTimeout(() => {
-      const field = document.getElementById('inputAnswerField');
-      if (field) field.focus();
-    }, 100);
+    const field = document.getElementById('inputAnswerField');
+    if (field) {
+      field.focus(); // Synchronous focus (keeps keyboard on iOS)
+      // Fallback for cases where sync focus doesn't work
+      requestAnimationFrame(() => {
+        const f = document.getElementById('inputAnswerField');
+        if (f && document.activeElement !== f) f.focus();
+      });
+    }
   }
   } finally { quizBusy = false; }
 }
@@ -7950,13 +7921,13 @@ function submitInputAnswer() {
 
   const field = document.getElementById('inputAnswerField');
   if (!field) return;
-  const userAnswer = normalizeAnswer(field.textContent || '');
+  const userAnswer = normalizeAnswer(field.value || '');
   const word = currentQuiz.words[currentQuiz.index];
   const answerText = reverseMode ? word.english : word.japanese;
   const correctAnswer = normalizeAnswer(answerText);
 
   const isCorrect = userAnswer === correctAnswer;
-  const userRaw = (field.textContent || '').trim();
+  const userRaw = (field.value || '').trim();
 
   // Show result
   card.classList.add('revealed');
@@ -7966,12 +7937,12 @@ function submitInputAnswer() {
   const wrap = card.querySelector('.input-answer-wrap');
   if (wrap) {
     if (isCorrect) {
-      wrap.innerHTML = `<div class="input-result correct">✓ ${escapeHtml(userRaw)}</div>`;
+      wrap.innerHTML = `<div class="input-result correct">${escapeHtml(userRaw)}</div>`;
       sfxCorrect();
     } else {
       wrap.innerHTML = `
-        <div class="input-result wrong">✗ ${escapeHtml(userRaw || '（未入力）')}</div>
-        <div class="input-result correct">✓ ${escapeHtml(answerText)}</div>
+        <div class="input-result wrong">${escapeHtml(userRaw || '（未入力）')}</div>
+        <div class="input-result correct">${escapeHtml(answerText)}</div>
       `;
       sfxWrong();
     }
@@ -7992,7 +7963,7 @@ function submitInputAnswer() {
     <div class="know-buttons-wrap">
       <div class="know-buttons">
         <button class="know-btn ${isCorrect ? 'know' : 'dont-know'}" onclick="processInputResult(${isCorrect})" style="flex:1;">
-          ${isCorrect ? '⭕ 正解！次へ' : '❌ 不正解　次へ'}
+          ${isCorrect ? '正解　次へ' : '不正解　次へ'}
         </button>
       </div>
     </div>
