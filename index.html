@@ -1759,9 +1759,9 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   font-size: 32px;
   font-weight: 700;
   color: var(--gray-900);
-  margin-bottom: 8px;
   letter-spacing: -0.5px;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1769,21 +1769,24 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   word-break: break-word;
   overflow-wrap: break-word;
   line-height: 1.3;
-  max-height: 35vh;
   overflow: hidden;
 }
 
 /* ===== Answer reveal area ===== */
 .answer-reveal {
-  margin-top: 16px;
+  flex: 1;
+  min-height: 0;
   position: relative;
-  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 .answer-tap-hint {
   font-size: 14px;
   color: var(--gray-400);
   font-weight: 500;
-  padding: 12px 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1799,17 +1802,27 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 .answer-text-area {
   display: none;
-  font-size: 24px;
-  color: var(--orange-500);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 32px;
   font-weight: 700;
-  padding: 8px 0 4px;
+  color: var(--orange-500);
+  letter-spacing: -0.5px;
+  line-height: 1.3;
   animation: revealFade 0.3s ease;
   word-break: break-word;
   overflow-wrap: break-word;
   overflow: hidden;
+  text-align: center;
+  width: 100%;
+  height: 100%;
 }
 .quiz-card.revealed .answer-tap-hint { display: none; }
-.quiz-card.revealed .answer-text-area { display: block; }
+.quiz-card.revealed .answer-text-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 .quiz-card.revealed { cursor: default; }
 
 /* ===== Swipe feedback ===== */
@@ -6964,10 +6977,15 @@ async function showQuizQuestion() {
   const aImgData = (quizShowImages && aImgId) ? await loadImage(aImgId) : null;
   const hasDualImages = !!(qImgData && aImgData);
   card.classList.toggle('dual-img', hasDualImages);
-  const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">` : '';
+  let answerContentHtml;
+  if (aImgData) {
+    answerContentHtml = `<div>${escapeHtmlBr(answerText)}</div><img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">`;
+  } else {
+    answerContentHtml = escapeHtmlBr(answerText);
+  }
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
-    <div class="answer-text-area">${answerImgHtml}${escapeHtmlBr(answerText)}</div>
+    <div class="answer-text-area">${answerContentHtml}</div>
   `;
 
   body.innerHTML = `
@@ -7023,6 +7041,12 @@ function revealAnswer() {
 
   card.classList.add('revealed');
   sfxReveal();
+  // Auto-size answer text (answer-reveal is flex:1 with fixed height, so autoSize works)
+  const answerArea = card.querySelector('.answer-text-area');
+  if (answerArea) {
+    card.offsetHeight; // force reflow
+    autoSizeQuizWord(answerArea);
+  }
   // Read the answer aloud (respects ttsMode)
   if (ttsMode === 'answer' || ttsMode === 'both') {
     const answerText = reverseMode ? word.english : word.japanese;
