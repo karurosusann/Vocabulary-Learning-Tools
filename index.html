@@ -4567,6 +4567,11 @@ function showGdrivePanel() {
     } else {
       document.getElementById('gdriveLoggedOut').style.display = 'block';
       document.getElementById('gdriveLoggedIn').style.display = 'none';
+      // Try silent auto-login in background
+      gdriveGetToken().then(() => {
+        document.getElementById('gdriveLoggedOut').style.display = 'none';
+        document.getElementById('gdriveLoggedIn').style.display = 'block';
+      }).catch(() => {}); // silent fail — user can click login manually
     }
     updateGdriveLastSync();
     document.getElementById('gdriveBadge').textContent = '接続済み';
@@ -4664,9 +4669,19 @@ async function gdriveGetToken() {
     throw new Error('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。');
   }
 
+  // Try silent auth first (no popup if previously authorized)
+  try {
+    const silentToken = await _gdriveRequestToken(clientId, '');
+    return silentToken;
+  } catch (e) {
+    // Silent auth failed — fall back to interactive popup
+    return _gdriveRequestToken(clientId, 'consent');
+  }
+}
+
+function _gdriveRequestToken(clientId, prompt) {
   return new Promise((resolve, reject) => {
     let settled = false;
-    // Timeout after 60 seconds
     const timer = setTimeout(() => {
       if (!settled) { settled = true; reject('認証がタイムアウトしました。もう一度お試しください。'); }
     }, 60000);
@@ -4674,6 +4689,7 @@ async function gdriveGetToken() {
     gdriveTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: GDRIVE_SCOPES,
+      prompt: prompt,
       callback: (resp) => {
         if (settled) return;
         settled = true;
@@ -4692,7 +4708,7 @@ async function gdriveGetToken() {
     });
 
     try {
-      gdriveTokenClient.requestAccessToken();
+      gdriveTokenClient.requestAccessToken({ prompt: prompt });
     } catch (e) {
       if (!settled) { settled = true; clearTimeout(timer); reject(e.message || '認証の開始に失敗しました'); }
     }
@@ -5330,19 +5346,22 @@ function playTone(freq, duration, type, vol) {
   try {
   const now = audioCtx.currentTime;
   const dur = duration || 0.2;
+  const fadeIn = 0.01;
+  const fadeOut = Math.min(0.015, dur * 0.2);
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = type || 'sine';
   osc.frequency.value = freq;
   // Smooth fade-in to avoid pop/click at start
-  gain.gain.setValueAtTime(0.001, now);
-  gain.gain.linearRampToValueAtTime(vol || 0.15, now + 0.005);
-  // Smooth fade-out
-  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(vol || 0.15, now + fadeIn);
+  // Smooth fade-out to avoid pop/click at end
+  gain.gain.setValueAtTime(vol || 0.15, now + dur - fadeOut);
+  gain.gain.linearRampToValueAtTime(0, now + dur);
   osc.connect(gain);
   gain.connect(audioCtx.destination);
   osc.start(now);
-  osc.stop(now + dur);
+  osc.stop(now + dur + 0.01);
   } catch(e) { /* audio context may be in bad state, ignore */ }
 }
 
