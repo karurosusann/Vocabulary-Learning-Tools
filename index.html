@@ -1864,7 +1864,7 @@ body.answer-match-question .answer-text-area {
   min-height: 0;
 }
 .quiz-card.revealed .input-answer-wrap {
-  flex: 0;
+  flex: 1;
   padding: 8px 0;
 }
 .input-answer-field {
@@ -1922,9 +1922,10 @@ body.dark-mode .input-answer-field::placeholder {
   text-align: center;
   line-height: 1.4;
   word-break: break-word;
+  padding: 4px 0;
 }
 .input-result.wrong {
-  color: var(--red-500);
+  color: #9CA3AF;
   text-decoration: line-through;
   text-decoration-thickness: 2px;
   opacity: 0.7;
@@ -3431,11 +3432,13 @@ body.dark-mode .bulk-action-btn.select-all {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   align-items: flex-start;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 #editWordOverlay .confirm-modal {
   flex-shrink: 0;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 /* Image attachment */
 .img-attach-row {
@@ -4177,8 +4180,6 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="gdrive-btn disconnect" style="margin-top:10px;" onclick="gdriveDisconnect()">接続を解除</button>
       <div class="gdrive-last-sync" id="gdriveLastSync"></div>
     </div>
-
-    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeGdrivePanel()">閉じる</button>
   </div>
 </div>
 
@@ -4223,8 +4224,6 @@ body.dark-mode .gdrive-setup-hint code {
         <p><strong>特訓モード：</strong> 間違えた問題を覚えるまで繰り返し出題</p>
         <p><strong>📌 保存：</strong> 気になる単語をピンして後でまとめて復習</p>
       </div>
-
-      <button class="result-btn" style="width:100%;margin-top:16px;" onclick="closeHelp()">閉じる</button>
     </div>
   </div>
 </div>
@@ -4255,7 +4254,6 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="demo-item" onclick="selectDemoItem('license', this)">📝 資格試験<span>10問</span></button>
     </div>
     <button class="start-quiz-btn" id="demoStartBtn" style="margin-top:12px;opacity:0.4;pointer-events:none;" onclick="loadSelectedDemo()">始める</button>
-    <button class="confirm-cancel" style="width:100%;margin-top:8px;" onclick="closeDemoPicker()">閉じる</button>
   </div>
 </div>
 
@@ -4278,7 +4276,6 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="deck-edit-btn" onclick="closeExportPicker();exportAllData();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> JSON（バックアップ用）</button>
       <button class="deck-edit-btn" onclick="closeExportPicker();showCsvExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> CSV（表計算ソフト用）</button>
     </div>
-    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeExportPicker()">閉じる</button>
   </div>
 </div>
 
@@ -4288,7 +4285,6 @@ body.dark-mode .gdrive-setup-hint code {
     <h3 style="text-align:center;margin-bottom:16px;">📄 CSVエクスポート</h3>
     <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
     <div class="demo-list" id="csvExportDeckList"></div>
-    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeCsvExport()">閉じる</button>
   </div>
 </div>
 
@@ -6193,9 +6189,10 @@ function selectDemoItem(key, el) {
 
 function loadSelectedDemo() {
   if (!selectedDemoKey) return;
+  const key = selectedDemoKey;
   sfxSelect();
   closeDemoPicker();
-  const data = DEMO_DECKS[selectedDemoKey];
+  const data = DEMO_DECKS[key];
   if (data) {
     addDeckFromCSV(data.csv, data.name);
   }
@@ -8035,12 +8032,9 @@ function submitInputAnswer() {
   }
 
   const answerArea = card.querySelector('.answer-text-area');
-  if (answerArea && !isCorrect) {
-    // Hide the duplicate answer text area when wrong (already shown in comparison)
+  if (answerArea) {
+    // Hide answer-text-area in both cases — input-result already shows the answer
     answerArea.style.display = 'none';
-  } else if (answerArea) {
-    card.offsetHeight;
-    autoSizeQuizWord(answerArea);
   }
 
   // Show next button
