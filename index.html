@@ -1853,6 +1853,88 @@ body.answer-match-question .answer-text-area {
 }
 .quiz-card.revealed { cursor: default; }
 
+/* ===== Input mode ===== */
+.input-answer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+.quiz-card.revealed .input-answer-wrap {
+  flex: 0;
+  padding: 8px 0;
+}
+.input-answer-field {
+  width: 85%;
+  padding: 12px 14px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-900);
+  text-align: center;
+  outline: none;
+  min-height: 44px;
+  background: white;
+  transition: border-color 0.15s;
+}
+.input-answer-field:focus {
+  border-color: var(--orange-500);
+}
+.input-answer-field:empty::before {
+  content: attr(data-placeholder);
+  color: var(--gray-400);
+  pointer-events: none;
+}
+.input-answer-field.input-correct {
+  border-color: var(--green-500);
+  color: var(--green-500);
+  background: #F0FDF4;
+}
+.input-answer-field.input-wrong {
+  border-color: var(--red-500);
+  color: var(--red-500);
+  background: #FEF2F2;
+}
+body.dark-mode .input-answer-field {
+  background: #2a2535;
+  border-color: #3a3545;
+  color: var(--gray-900);
+}
+body.dark-mode .input-answer-field:focus {
+  border-color: var(--orange-500);
+}
+body.dark-mode .input-answer-field.input-correct {
+  background: #0a2a1a;
+  border-color: var(--green-500);
+  color: var(--green-500);
+}
+body.dark-mode .input-answer-field.input-wrong {
+  background: #2a0a0a;
+  border-color: var(--red-500);
+  color: var(--red-500);
+}
+.input-submit-btn {
+  padding: 10px 32px;
+  border-radius: 12px;
+  border: none;
+  background: var(--orange-500);
+  color: white;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.input-submit-btn:active {
+  background: #EA6A0E;
+}
+
 /* ===== Swipe feedback ===== */
 .quiz-card.swiping {
   transition: none !important;
@@ -3746,6 +3828,12 @@ body.dark-mode .gdrive-setup-hint code {
             <button class="mode-toggle-btn" onclick="selectShowImages(false, this)">非表示</button>
           </div>
 
+          <h4 class="setup-section-label">回答方式</h4>
+          <div class="mode-toggle" id="inputModeToggle">
+            <button class="mode-toggle-btn active" onclick="selectInputMode(false, this)">フラッシュカード</button>
+            <button class="mode-toggle-btn" onclick="selectInputMode(true, this)">入力式</button>
+          </div>
+
     </div>
   </div>
 
@@ -5376,6 +5464,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Delegated handlers for dynamically created input answer field
+document.addEventListener('keydown', (e) => {
+  if (e.target.id === 'inputAnswerField' && e.key === 'Enter') {
+    e.preventDefault();
+    submitInputAnswer();
+  }
+});
+document.addEventListener('paste', (e) => {
+  if (e.target.id === 'inputAnswerField') {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  }
+});
+
 // Unlock and keep audio alive on every user interaction (iOS kills AudioContext in background)
 document.addEventListener('touchstart', initAudio, { passive: true });
 document.addEventListener('touchend', initAudio, { passive: true });
@@ -5659,7 +5762,8 @@ function saveDeckSettings(deckId) {
       order: quizOrder,
       timerEnabled: quizTimerEnabled,
       timerSeconds: quizTimerSeconds,
-      showImages: quizShowImages
+      showImages: quizShowImages,
+      inputMode: quizInputMode
     };
     localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
   } catch(e) {
@@ -6324,6 +6428,11 @@ function deleteDeck(id) {
     saveState();
     try { localStorage.removeItem('mikan_deckSettings_' + id); } catch(e) {}
     try { localStorage.removeItem('csvocab_allUnlocked_' + id); } catch(e) {}
+    // Clear rotation positions for this deck
+    Object.keys(quizPoolLastKey).forEach(k => {
+      if (k.startsWith(id + '_')) delete quizPoolLastKey[k];
+    });
+    savePoolLastKey();
     if (decks.length === 0) {
       showScreen('import');
     } else {
@@ -6641,6 +6750,7 @@ function showLevelSelect() {
     quizTimerEnabled = saved.timerEnabled || false;
     quizTimerSeconds = saved.timerSeconds || 5;
     quizShowImages = saved.showImages !== undefined ? saved.showImages : true;
+    quizInputMode = saved.inputMode || false;
   } else {
     quizDrillMode = false;
     reverseMode = false;
@@ -6649,6 +6759,7 @@ function showLevelSelect() {
     quizTimerEnabled = false;
     quizTimerSeconds = 5;
     quizShowImages = true;
+    quizInputMode = false;
   }
 
   // Auto-select first available range if none selected, or if selected range is unavailable
@@ -6692,6 +6803,7 @@ let quizTimerInterval = null;
 let quizTimerStartTime = 0;
 let quizTimerPausedRemaining = null; // remaining seconds when paused by visibility change
 let quizShowImages = true;
+let quizInputMode = false;
 let quizPoolLastKey = (() => { try { return JSON.parse(localStorage.getItem('csvocab_pool_lastkey')) || {}; } catch(e) { return {}; } })();
 
 function savePoolLastKey() {
@@ -6851,6 +6963,10 @@ function applyAdvancedSettingsUI() {
   document.querySelectorAll('#imageToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', quizShowImages ? i === 0 : i === 1);
   });
+  // Input mode toggle UI
+  document.querySelectorAll('#inputModeToggle .mode-toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', quizInputMode ? i === 1 : i === 0);
+  });
 }
 
 function selectMode(mode, el) {
@@ -6897,6 +7013,13 @@ function changeTimerSeconds(val) {
 
 function selectShowImages(show, el) {
   quizShowImages = show;
+  el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  saveDeckSettings(activeDeckId);
+}
+
+function selectInputMode(mode, el) {
+  quizInputMode = mode;
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   saveDeckSettings(activeDeckId);
@@ -6959,11 +7082,27 @@ function stopQuizTimer() {
 function onTimerExpired() {
   if (!currentQuiz) return;
   const card = document.getElementById('quizCard');
+  if (quizInputMode) {
+    // Input mode: auto-submit as wrong if not yet answered
+    if (!card.classList.contains('revealed')) {
+      const field = document.getElementById('inputAnswerField');
+      if (field) field.contentEditable = 'false';
+      const submitBtn = document.getElementById('inputSubmitBtn');
+      if (submitBtn) submitBtn.style.display = 'none';
+      // Reveal answer and process as wrong
+      card.classList.add('revealed');
+      sfxWrong();
+      const answerArea = card.querySelector('.answer-text-area');
+      if (answerArea) { card.offsetHeight; autoSizeQuizWord(answerArea); }
+      const word = currentQuiz.words[currentQuiz.index];
+      processQuizAnswer(word, false);
+      setTimeout(() => nextQuestion(), 1000);
+    }
+    return;
+  }
   if (card.classList.contains('revealed')) {
-    // 答え表示済みで未回答 → 知らないとして処理
     answerKnowledge(false);
   } else {
-    // 答え未表示 → まず表示してから知らないとして処理
     revealAnswer();
     setTimeout(() => answerKnowledge(false), 600);
   }
@@ -7033,7 +7172,9 @@ async function preRenderNextCard() {
     </div>
     <div class="english-word">${wordHtml}</div>
     <div class="answer-reveal">
-      <div class="answer-tap-hint">タップして答えを見る</div>
+      ${quizInputMode
+        ? '<div class="input-answer-wrap"><div class="input-answer-field" style="pointer-events:none;" data-placeholder="答えを入力"></div></div>'
+        : '<div class="answer-tap-hint">タップして答えを見る</div>'}
     </div>
   `;
 
@@ -7053,7 +7194,12 @@ function speakNextQuestionImmediate() {
   speakText(nextQ);
 }
 
+let quizBusy = false; // Prevent re-entry during async image loading
+
 async function showQuizQuestion() {
+  if (quizBusy) return;
+  quizBusy = true;
+  try {
   const q = currentQuiz;
   const word = q.words[q.index];
 
@@ -7129,12 +7275,23 @@ async function showQuizQuestion() {
   } else {
     answerContentHtml = escapeHtmlBr(answerText);
   }
-  answerReveal.innerHTML = `
-    <div class="answer-tap-hint">タップして答えを見る</div>
-    <div class="answer-text-area">${answerContentHtml}</div>
-  `;
-
-  body.innerHTML = `
+  if (quizInputMode) {
+    // Input mode: show text input + submit button, answer hidden until submit
+    answerReveal.innerHTML = `
+      <div class="input-answer-wrap">
+        <div class="input-answer-field" id="inputAnswerField" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
+        <button class="input-submit-btn" id="inputSubmitBtn" onclick="submitInputAnswer()">回答する</button>
+      </div>
+      <div class="answer-text-area">${answerContentHtml}</div>
+    `;
+    body.innerHTML = '';
+  } else {
+    // Flashcard mode: tap hint + hidden answer + know buttons
+    answerReveal.innerHTML = `
+      <div class="answer-tap-hint">タップして答えを見る</div>
+      <div class="answer-text-area">${answerContentHtml}</div>
+    `;
+    body.innerHTML = `
       <div class="know-buttons-wrap">
         <div class="know-buttons" id="knowButtons" style="opacity:0.3;">
           <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない</button>
@@ -7142,6 +7299,7 @@ async function showQuizQuestion() {
         </div>
       </div>
     `;
+  }
 
   // All content updated — now reveal card
   card.offsetHeight; // force reflow to apply all changes
@@ -7155,6 +7313,7 @@ async function showQuizQuestion() {
   startQuizTimer();
   // Pre-render next card behind current one
   preRenderNextCard();
+  } finally { quizBusy = false; }
 }
 
 // ② Auto-size quiz question text to fit within card
@@ -7170,6 +7329,12 @@ function autoSizeQuizWord(el) {
 function revealAnswer() {
   const card = document.getElementById('quizCard');
   if (!currentQuiz) return;
+  // In input mode, tap focuses input field instead of revealing
+  if (quizInputMode && !card.classList.contains('revealed')) {
+    const field = document.getElementById('inputAnswerField');
+    if (field) field.focus();
+    return;
+  }
   // Don't trigger reveal if a swipe just completed
   if (swipeState && swipeState.answered) return;
   const word = currentQuiz.words[currentQuiz.index];
@@ -7486,6 +7651,9 @@ let swipeState = null;
     const anyOverlay = document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show');
     if (anyOverlay) return;
 
+    // In input mode, don't intercept keyboard (user is typing)
+    if (quizInputMode) return;
+
     const card = document.getElementById('quizCard');
     const isRevealed = card && card.classList.contains('revealed');
 
@@ -7606,14 +7774,93 @@ function processQuizAnswer(word, isCorrect) {
   saveState();
 }
 
+let answerLocked = false;
+// ============ INPUT MODE ============
+function normalizeAnswer(str) {
+  return str
+    .trim()
+    .toLowerCase()
+    .replace(/[\s　]+/g, ' ')           // normalize whitespace
+    .replace(/[！-～]/g, c =>            // fullwidth → halfwidth
+      String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[ァ-ヶ]/g, c =>            // katakana → hiragana
+      String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+
+function submitInputAnswer() {
+  if (!currentQuiz) return;
+  const card = document.getElementById('quizCard');
+  if (card.classList.contains('revealed')) return; // already answered
+
+  const field = document.getElementById('inputAnswerField');
+  if (!field) return;
+  const userAnswer = normalizeAnswer(field.textContent || '');
+  const word = currentQuiz.words[currentQuiz.index];
+  const answerText = reverseMode ? word.english : word.japanese;
+  const correctAnswer = normalizeAnswer(answerText);
+
+  const isCorrect = userAnswer === correctAnswer;
+
+  // Show result
+  card.classList.add('revealed');
+  sfxReveal();
+  const answerArea = card.querySelector('.answer-text-area');
+  if (answerArea) {
+    card.offsetHeight;
+    autoSizeQuizWord(answerArea);
+  }
+
+  // Style the input field to show correct/incorrect
+  field.contentEditable = 'false';
+  const submitBtn = document.getElementById('inputSubmitBtn');
+  if (submitBtn) submitBtn.style.display = 'none';
+
+  if (isCorrect) {
+    field.classList.add('input-correct');
+    sfxCorrect();
+  } else {
+    field.classList.add('input-wrong');
+    sfxWrong();
+  }
+
+  // Show next button
+  const body = document.getElementById('quizBody');
+  body.innerHTML = `
+    <div class="know-buttons-wrap">
+      <div class="know-buttons">
+        <button class="know-btn ${isCorrect ? 'know' : 'dont-know'}" onclick="processInputResult(${isCorrect})" style="flex:1;">
+          ${isCorrect ? '⭕ 正解！次へ' : '❌ 不正解　次へ'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Read answer aloud
+  if (ttsMode === 'answer') {
+    setTimeout(() => speakText(answerText), 200);
+  }
+
+  stopQuizTimer();
+}
+
+function processInputResult(isCorrect) {
+  if (!currentQuiz) return;
+  const word = currentQuiz.words[currentQuiz.index];
+  processQuizAnswer(word, isCorrect);
+  nextQuestion();
+}
+
 function answerKnowledge(known) {
   if (!currentQuiz) return;
+  if (answerLocked) return;
   const card = document.getElementById('quizCard');
   // If answer not yet revealed, just reveal it (don't judge yet)
   if (card && !card.classList.contains('revealed')) {
     revealAnswer();
     return;
   }
+  answerLocked = true;
+  setTimeout(() => { answerLocked = false; }, 300);
   stopQuizTimer();
   const word = currentQuiz.words[currentQuiz.index];
 
@@ -8701,6 +8948,11 @@ function doResetCurrentDeck() {
   if (!deck) return;
   deck.words.forEach(w => { w.level = 'unlearned'; w.correctStreak = 0; });
   try { localStorage.removeItem('csvocab_allUnlocked_' + deck.id); } catch(e) {}
+  // Clear rotation positions for this deck
+  Object.keys(quizPoolLastKey).forEach(k => {
+    if (k.startsWith(deck.id + '_')) delete quizPoolLastKey[k];
+  });
+  savePoolLastKey();
   saveState();
   renderDeckList();
   updateDashboard();
@@ -8715,6 +8967,8 @@ function doResetAll() {
   });
   decks = [];
   activeDeckId = null;
+  quizPoolLastKey = {};
+  savePoolLastKey();
   localStorage.removeItem('mikan_decks');
   localStorage.removeItem('mikan_activeDeck');
   localStorage.removeItem(STUDY_LOG_KEY);
