@@ -1280,9 +1280,6 @@ body.dark-mode .cal-day-popup {
   border-radius: 50%;
   border: 2px solid var(--gray-300);
   background: white;
-  font-size: 12px;
-  font-weight: 700;
-  color: transparent;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -1294,7 +1291,15 @@ body.dark-mode .cal-day-popup {
 .deck-card .dc-checkbox.checked {
   background: var(--orange-500);
   border-color: var(--orange-500);
-  color: white;
+}
+.deck-card .dc-checkbox.checked::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
 }
 body.dark-mode .deck-card .dc-checkbox {
   background: #2a2535;
@@ -1820,14 +1825,6 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   justify-content: center;
   gap: 6px;
 }
-.answer-tap-hint .tap-icon {
-  font-size: 18px;
-  animation: tapBounce 2s ease infinite;
-}
-@keyframes tapBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
 .answer-text-area {
   display: none;
   font-family: 'DM Sans', sans-serif;
@@ -2287,7 +2284,7 @@ body.dark-mode .quiz-img-picker button {
   flex-shrink: 0;
 }
 .search-bar:focus-within { border-color: var(--orange-400); }
-.search-bar .search-icon { font-size: 16px; margin-right: 8px; }
+.search-bar .search-icon { margin-right: 8px; color: var(--gray-400); display: flex; align-items: center; }
 .search-bar input {
   flex: 1;
   border: none;
@@ -3126,9 +3123,6 @@ body.dark-mode .editor-select-btn.active {
   flex-shrink: 0;
   cursor: pointer;
   transition: all 0.15s;
-  font-size: 15px;
-  font-weight: 900;
-  color: transparent;
 }
 body.dark-mode .ew-checkbox {
   background: #2a2535;
@@ -3138,8 +3132,16 @@ body.dark-mode .ew-checkbox {
   display: flex;
 }
 .ew-checkbox.checked {
-  color: var(--orange-500);
   border-color: var(--orange-500);
+}
+.ew-checkbox.checked::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid var(--orange-500);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
 }
 .bulk-toolbar {
   position: fixed;
@@ -3776,7 +3778,7 @@ body.dark-mode .gdrive-setup-hint code {
       <h2>問題一覧</h2>
     </div>
     <div class="search-bar">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
       <input type="text" id="wordSearchInput" placeholder="単語を検索..." oninput="onWordSearch()">
       <button class="search-clear" id="searchClear" onclick="clearWordSearch()">✕</button>
     </div>
@@ -3801,7 +3803,7 @@ body.dark-mode .gdrive-setup-hint code {
       </div>
       <h2 class="editor-title">問題を編集</h2>
       <div class="search-bar" style="margin-top:10px;">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <input type="text" id="editorSearchInput" placeholder="問題を検索..." oninput="onEditorSearch()" autocomplete="off">
         <button class="search-clear" id="editorSearchClear" onclick="clearEditorSearch()">✕</button>
       </div>
@@ -6043,7 +6045,7 @@ function renderDeckList() {
     }
     return `
       <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
-        <span class="dc-checkbox ${isChecked ? 'checked' : ''}">✓</span>
+        <span class="dc-checkbox ${isChecked ? 'checked' : ''}"></span>
         <div class="dc-donut">${buildDonutSVG(counts, total)}${crownHtml}</div>
         <div class="deck-card-info">
           <div class="dc-name">${escapeHtml(deck.name)}</div>
@@ -7001,7 +7003,7 @@ async function preRenderNextCard() {
     </div>
     <div class="english-word">${wordHtml}</div>
     <div class="answer-reveal">
-      <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
+      <div class="answer-tap-hint">タップして答えを見る</div>
     </div>
   `;
 
@@ -7098,13 +7100,13 @@ async function showQuizQuestion() {
     answerContentHtml = escapeHtmlBr(answerText);
   }
   answerReveal.innerHTML = `
-    <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
+    <div class="answer-tap-hint">タップして答えを見る</div>
     <div class="answer-text-area">${answerContentHtml}</div>
   `;
 
   body.innerHTML = `
       <div class="know-buttons-wrap">
-        <div class="know-buttons" id="knowButtons" style="opacity:0.3;pointer-events:none;">
+        <div class="know-buttons" id="knowButtons" style="opacity:0.3;">
           <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない</button>
           <button class="know-btn know" onclick="answerKnowledge(true)">知ってる</button>
         </div>
@@ -7166,12 +7168,9 @@ function revealAnswer() {
     const answerText = reverseMode ? word.english : word.japanese;
     setTimeout(() => speakText(answerText), 200);
   }
-  // Enable the know/don't-know buttons
+  // Make know/don't-know buttons fully visible
   const btns = document.getElementById('knowButtons');
-  if (btns) {
-    btns.style.opacity = '1';
-    btns.style.pointerEvents = 'auto';
-  }
+  if (btns) btns.style.opacity = '1';
   // Enable swipe
   swipeEnabled = true;
 }
@@ -7576,6 +7575,12 @@ function processQuizAnswer(word, isCorrect) {
 }
 
 function answerKnowledge(known) {
+  const card = document.getElementById('quizCard');
+  // If answer not yet revealed, just reveal it (don't judge yet)
+  if (card && !card.classList.contains('revealed')) {
+    revealAnswer();
+    return;
+  }
   stopQuizTimer();
   const word = currentQuiz.words[currentQuiz.index];
 
@@ -8398,7 +8403,7 @@ function renderEditorList() {
   el.innerHTML = items.map(({ w, i }) => `
     <div class="editor-word-item" data-index="${i}" onclick="${editorSelectMode ? 'toggleEditorCheckbox('+i+', event)' : 'showEditWordModal('+i+')'}">
       <div class="ew-inner">
-        <div class="ew-checkbox ${getEditorSelected().has(i) ? 'checked' : ''}">✓</div>
+        <div class="ew-checkbox ${getEditorSelected().has(i) ? 'checked' : ''}"></div>
         <div class="ew-content">
           <div class="ew-eng">${escapeHtmlBr(w.english)}</div>
           <div class="ew-jpn">${escapeHtmlBr(w.japanese)}</div>
