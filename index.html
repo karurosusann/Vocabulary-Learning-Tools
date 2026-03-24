@@ -108,38 +108,9 @@ body {
   touch-action: manipulation;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  top: -120px;
-  right: -120px;
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(74,158,63,0.10) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 0;
-}
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -80px;
-  left: -80px;
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(107,191,89,0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 0;
-}
-
 body.dark-mode {
   background: linear-gradient(145deg, #121018 0%, #1a1525 30%, #1e1830 100%);
   color: var(--gray-800);
-}
-body.dark-mode::before {
-  background: radial-gradient(circle, rgba(74,158,63,0.06) 0%, transparent 70%);
-}
-body.dark-mode::after {
-  background: radial-gradient(circle, rgba(107,191,89,0.04) 0%, transparent 70%);
 }
 body.dark-mode .quiz-card,
 body.dark-mode .quiz-card-next,
@@ -2923,6 +2894,48 @@ body.dark-mode .quiz-img-picker button {
   box-shadow: 0 4px 12px rgba(239,68,68,0.3);
 }
 .confirm-danger:hover { background: #DC2626; }
+.confirm-danger:disabled {
+  background: var(--gray-300);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.confirm-danger:disabled:hover { background: var(--gray-300); }
+.confirm-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.confirm-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.confirm-checkbox.checked {
+  background: var(--red-500);
+  border-color: var(--red-500);
+}
+.confirm-checkbox.checked::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+.confirm-check-label {
+  font-size: 13px;
+  color: var(--gray-500);
+  text-align: left;
+}
 .new-deck-btn-icon {
   display: inline-flex;
   align-items: center;
@@ -2968,6 +2981,24 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 }
 .rename-editable br { display: none; }
 .rename-editable * { display: inline; }
+#editWordEng br, #editWordJpn br { display: block; }
+#editWordEng div, #editWordJpn div { display: block; }
+.edit-word-wrap {
+  text-align: center;
+}
+.edit-word-wrap:focus-within {
+  border-color: var(--orange-400);
+}
+.edit-word-ce {
+  display: inline-block;
+  text-align: left;
+  min-width: 1ch;
+  max-width: 100%;
+  outline: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
 
 /* Word editor */
 #screen-word-editor {
@@ -3255,7 +3286,7 @@ body.dark-mode .img-attach-box {
 /* Quiz image display */
 .quiz-question-img, .quiz-answer-img {
   max-width: 100%;
-  max-height: 60%;
+  max-height: 120px;
   border-radius: 8px;
   object-fit: contain;
   margin: 4px auto;
@@ -3265,7 +3296,7 @@ body.dark-mode .img-attach-box {
 }
 .quiz-card.dual-img .quiz-question-img,
 .quiz-card.dual-img .quiz-answer-img {
-  max-height: 50%;
+  max-height: 80px;
 }
 /* Copy button */
 .quiz-copy-btn {
@@ -3781,8 +3812,8 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="confirm-icon">✏️</div>
       <h3 id="editWordTitle">問題を編集</h3>
-      <div id="editWordEng" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div>
-      <div id="editWordJpn" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
+      <div class="edit-word-wrap rename-input"><div id="editWordEng" class="edit-word-ce rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div></div>
+      <div class="edit-word-wrap rename-input"><div id="editWordJpn" class="edit-word-ce rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div></div>
       <div class="img-attach-row">
         <div class="img-attach-box" id="imgBoxQ" onpointerdown="if(document.activeElement)document.activeElement.blur()">
           <span class="img-label">問題の画像</span>
@@ -4056,9 +4087,13 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="confirm-icon">⚠️</div>
     <h3 id="confirmTitle">本当にリセットしますか？</h3>
     <p id="confirmDesc">この操作は取り消せません。</p>
+    <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
+      <div class="confirm-checkbox" id="confirmCheckbox"></div>
+      <span class="confirm-check-label">理解しました</span>
+    </div>
     <div class="confirm-buttons">
       <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-      <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+      <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
     </div>
   </div>
 </div>
@@ -5147,9 +5182,48 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = (e.clipboardData || window.clipboardData).getData('text/plain');
       document.execCommand('insertText', false, text);
     });
-    // Prevent Enter creating new lines
+    // Prevent Enter creating new lines (except in word editor fields)
     el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') e.preventDefault();
+      if (e.key === 'Enter' && el.id !== 'editWordEng' && el.id !== 'editWordJpn') e.preventDefault();
+    });
+  });
+  // Auto-switch text alignment on word editor fields
+  ['editWordEng', 'editWordJpn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      // Remove zero-width spaces if real content exists
+      if (el.textContent.replace(/\u200B/g, '').length > 0) {
+        const cleaned = el.innerHTML.replace(/\u200B/g, '');
+        if (cleaned !== el.innerHTML) {
+          const sel = window.getSelection();
+          const range = sel.rangeCount ? sel.getRangeAt(0) : null;
+          const offset = range ? range.startOffset : 0;
+          el.innerHTML = cleaned;
+          // Restore cursor
+          try {
+            const newRange = document.createRange();
+            const node = el.childNodes[0] || el;
+            newRange.setStart(node, Math.min(offset, node.textContent?.length || 0));
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+          } catch(e) {}
+        }
+      }
+      updateEditAlign(el);
+    });
+    // Insert zero-width space on focus when empty for centered cursor
+    el.addEventListener('focus', () => {
+      if (el.textContent.trim() === '' || el.textContent === '\u200B') {
+        el.innerHTML = '\u200B';
+        const range = document.createRange();
+        range.setStart(el.childNodes[0], 1);
+        range.collapse(true);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     });
   });
 });
@@ -5268,8 +5342,8 @@ function sfxCorrect() {
   setTimeout(() => playTone(784, 0.18, 'sine', 0.22), 160);
 }
 function sfxWrong() {
-  playTone(300, 0.15, 'square', 0.15);
-  setTimeout(() => playTone(250, 0.2, 'square', 0.15), 120);
+  playTone(392, 0.12, 'sine', 0.18);
+  setTimeout(() => playTone(330, 0.2, 'sine', 0.18), 100);
 }
 function sfxReveal() { playTone(440, 0.1, 'triangle', 0.18); }
 function sfxBookmark() {
@@ -6117,6 +6191,23 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+// Escape HTML and convert \n to <br> for display
+function escapeHtmlBr(str) {
+  return escapeHtml(str).replace(/\n/g, '<br>');
+}
+// Set contenteditable content preserving line breaks
+function setCEText(el, text) {
+  // Clean up any stray trailing/leading newlines
+  const cleaned = text.replace(/^\n+|\n+$/g, '');
+  el.innerHTML = escapeHtmlBr(cleaned);
+  updateEditAlign(el);
+}
+// Get text from contenteditable preserving line breaks
+function getCEText(el) {
+  return el.innerText.replace(/\u200B/g, '').replace(/^\n+|\n+$/g, '').trim();
+}
+// Switch to left-align when content has line breaks, center otherwise
+function updateEditAlign() {}
 // Escape a string for safe use inside JS string literals in inline HTML attributes (onclick etc.)
 function escapeForInlineJS(str) {
   return escapeHtml(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -6766,9 +6857,9 @@ async function preRenderNextCard() {
 
   let wordHtml;
   if (qImgData) {
-    wordHtml = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}">`;
+    wordHtml = `<div>${escapeHtmlBr(questionText)}</div><img class="quiz-question-img" src="${qImgData}">`;
   } else {
-    wordHtml = escapeHtml(questionText);
+    wordHtml = escapeHtmlBr(questionText);
   }
 
   const copySvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
@@ -6840,9 +6931,9 @@ async function showQuizQuestion() {
   // Load question image
   const qImgData = (quizShowImages && qImgId) ? await loadImage(qImgId) : null;
   if (qImgData) {
-    quizWordEl.innerHTML = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}" onclick="event.stopPropagation();openLightbox(this.src)">`;
+    quizWordEl.innerHTML = `<div>${escapeHtmlBr(questionText)}</div><img class="quiz-question-img" src="${qImgData}" onclick="event.stopPropagation();openLightbox(this.src)">`;
   } else {
-    quizWordEl.textContent = questionText;
+    quizWordEl.innerHTML = escapeHtmlBr(questionText);
   }
 
   // ② Auto-size: shrink font for long text
@@ -6876,7 +6967,7 @@ async function showQuizQuestion() {
   const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">` : '';
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
-    <div class="answer-text-area">${answerImgHtml}${escapeHtml(answerText)}</div>
+    <div class="answer-text-area">${answerImgHtml}${escapeHtmlBr(answerText)}</div>
   `;
 
   body.innerHTML = `
@@ -6932,12 +7023,6 @@ function revealAnswer() {
 
   card.classList.add('revealed');
   sfxReveal();
-  // Auto-size answer text to fit (same function as question text)
-  const answerArea = card.querySelector('.answer-text-area');
-  if (answerArea) {
-    card.offsetHeight; // force reflow
-    autoSizeQuizWord(answerArea);
-  }
   // Read the answer aloud (respects ttsMode)
   if (ttsMode === 'answer' || ttsMode === 'both') {
     const answerText = reverseMode ? word.english : word.japanese;
@@ -7066,8 +7151,8 @@ function quizEditCurrentWord() {
   editingWordIndex = wordIndex;
   editorDeckId = deck.id;
   document.getElementById('editWordTitle').textContent = '問題を編集';
-  document.getElementById('editWordEng').textContent = word.english;
-  document.getElementById('editWordJpn').textContent = word.japanese;
+  setCEText(document.getElementById('editWordEng'), word.english);
+  setCEText(document.getElementById('editWordJpn'), word.japanese);
 
   // Load images
   editImgQ = null; editImgA = null;
@@ -7516,8 +7601,8 @@ function showResult() {
             return `
             <div class="missed-item">
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
-              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
-              <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtml(r.word.japanese)}</span>
+              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
+              <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.japanese)}</span>
             </div>
           `}).join('')}
         </div>
@@ -7547,7 +7632,7 @@ function showResult() {
             return `
             <div class="missed-item">
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
-              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
+              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
               <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtml(r.word.japanese)}</span>
             </div>
           `}).join('')}
@@ -7823,8 +7908,8 @@ function renderWordList(level) {
   items.innerHTML = filtered.map(w => `
     <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
       <div class="level-dot ${w.level}"></div>
-      <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtml(w.english)}</div>
-      <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
+      <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtmlBr(w.english)}</div>
+      <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtmlBr(w.japanese)}</div></div>
     </div>
   `).join('');
 }
@@ -8177,8 +8262,8 @@ function renderEditorList() {
       <div class="ew-inner">
         <div class="ew-checkbox ${getEditorSelected().has(i) ? 'checked' : ''}">✓</div>
         <div class="ew-content">
-          <div class="ew-eng">${escapeHtml(w.english)}</div>
-          <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
+          <div class="ew-eng">${escapeHtmlBr(w.english)}</div>
+          <div class="ew-jpn">${escapeHtmlBr(w.japanese)}</div>
         </div>
       </div>
     </div>
@@ -8189,8 +8274,10 @@ function renderEditorList() {
 function addWordDirect() {
   editingWordIndex = null;
   document.getElementById('editWordTitle').textContent = '単語を追加';
-  document.getElementById('editWordEng').textContent = '';
-  document.getElementById('editWordJpn').textContent = '';
+  document.getElementById('editWordEng').innerHTML = '';
+  document.getElementById('editWordJpn').innerHTML = '';
+  updateEditAlign(document.getElementById('editWordEng'));
+  updateEditAlign(document.getElementById('editWordJpn'));
 
   // Reset images
   editImgQ = null; editImgA = null;
@@ -8225,8 +8312,8 @@ async function showEditWordModal(index) {
   if (!word) return;
   editingWordIndex = index;
   document.getElementById('editWordTitle').textContent = '問題を編集';
-  document.getElementById('editWordEng').textContent = word.english;
-  document.getElementById('editWordJpn').textContent = word.japanese;
+  setCEText(document.getElementById('editWordEng'), word.english);
+  setCEText(document.getElementById('editWordJpn'), word.japanese);
 
   // Load images
   editImgQ = word.questionImageId ? await loadImage(word.questionImageId) : null;
@@ -8260,8 +8347,8 @@ function closeEditWord() {
 }
 
 async function saveWord() {
-  const eng = document.getElementById('editWordEng').textContent.trim();
-  const jpn = document.getElementById('editWordJpn').textContent.trim();
+  const eng = getCEText(document.getElementById('editWordEng'));
+  const jpn = getCEText(document.getElementById('editWordJpn'));
   if (!eng || !jpn) {
     showToast('問題文と答えを両方入力してください');
     return;
@@ -8372,9 +8459,13 @@ function confirmAction(title, desc, action, btnLabel) {
         <div class="confirm-icon">⚠️</div>
         <h3 id="confirmTitle">本当にリセットしますか？</h3>
         <p id="confirmDesc">この操作は取り消せません。</p>
+        <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
+          <div class="confirm-checkbox" id="confirmCheckbox"></div>
+          <span class="confirm-check-label">理解しました</span>
+        </div>
         <div class="confirm-buttons">
           <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-          <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+          <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
         </div>
       `;
     }
@@ -8387,6 +8478,11 @@ function confirmAction(title, desc, action, btnLabel) {
   titleEl.textContent = title;
   descEl.textContent = desc;
   btn.textContent = btnLabel || 'リセットする';
+  btn.disabled = true;
+  // Reset checkbox
+  const cb = document.getElementById('confirmCheckbox');
+  if (cb) cb.classList.remove('checked');
+  
   pendingConfirmAction = action;
   btn.onclick = function() {
     const actionToRun = pendingConfirmAction;
@@ -8394,6 +8490,14 @@ function confirmAction(title, desc, action, btnLabel) {
     if (actionToRun) actionToRun();
   };
   document.getElementById('confirmOverlay').classList.add('show');
+}
+
+function toggleConfirmCheck() {
+  const cb = document.getElementById('confirmCheckbox');
+  const btn = document.getElementById('confirmDangerBtn');
+  if (!cb || !btn) return;
+  cb.classList.toggle('checked');
+  btn.disabled = !cb.classList.contains('checked');
 }
 
 function closeConfirm() {
@@ -8406,9 +8510,13 @@ function closeConfirm() {
       <div class="confirm-icon">⚠️</div>
       <h3 id="confirmTitle">本当にリセットしますか？</h3>
       <p id="confirmDesc">この操作は取り消せません。</p>
+      <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
+        <div class="confirm-checkbox" id="confirmCheckbox"></div>
+        <span class="confirm-check-label">理解しました</span>
+      </div>
       <div class="confirm-buttons">
         <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-        <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+        <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
       </div>
     `;
   }
@@ -8431,9 +8539,13 @@ function closeAllOverlays() {
       <div class="confirm-icon">⚠️</div>
       <h3 id="confirmTitle">本当にリセットしますか？</h3>
       <p id="confirmDesc">この操作は取り消せません。</p>
+      <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
+        <div class="confirm-checkbox" id="confirmCheckbox"></div>
+        <span class="confirm-check-label">理解しました</span>
+      </div>
       <div class="confirm-buttons">
         <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-        <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+        <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
       </div>
     `;
   }
