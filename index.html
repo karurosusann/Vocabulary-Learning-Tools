@@ -4205,7 +4205,7 @@ body.dark-mode .gdrive-setup-hint code {
 let decks = [];
 let activeDeckId = null;
 let currentQuiz = null;
-let selectedRange = 'all';
+let selectedRange = 'unlearned';
 
 const LEVELS = {
   unlearned: { label: '未学習', badge: 'badge-unlearned' },
@@ -4235,6 +4235,7 @@ function toggleDarkMode() {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', isDark ? '#1a1525' : '#F97316');
   updateSettingsDarkUI();
+  updateAnswerColorUI(localStorage.getItem(ANSWER_COLOR_KEY) || DEFAULT_ANSWER_COLOR);
 }
 function updateSettingsDarkUI() {
   const isDark = document.body.classList.contains('dark-mode');
@@ -4682,7 +4683,7 @@ function showGdrivePanel() {
       gdriveGetToken().then(() => {
         document.getElementById('gdriveLoggedOut').style.display = 'none';
         document.getElementById('gdriveLoggedIn').style.display = 'block';
-      }).catch(() => {}); // silent fail — user can click login manually
+      }).catch(e => { console.error('Silent auth failed:', e); }); // user can click login manually
     }
     updateGdriveLastSync();
     document.getElementById('gdriveBadge').textContent = '接続済み';
@@ -6361,7 +6362,7 @@ function getCEText(el) {
 function updateEditAlign() {}
 // Escape a string for safe use inside JS string literals in inline HTML attributes (onclick etc.)
 function escapeForInlineJS(str) {
-  return escapeHtml(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  return escapeHtml(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
 }
 
 // ============ SCREENS ============
@@ -6691,7 +6692,11 @@ let quizTimerInterval = null;
 let quizTimerStartTime = 0;
 let quizTimerPausedRemaining = null; // remaining seconds when paused by visibility change
 let quizShowImages = true;
-let quizPoolLastKey = {}; // Tracks last word per deck+range: { 'deckId_range_order': wordKey }
+let quizPoolLastKey = (() => { try { return JSON.parse(localStorage.getItem('csvocab_pool_lastkey')) || {}; } catch(e) { return {}; } })();
+
+function savePoolLastKey() {
+  try { localStorage.setItem('csvocab_pool_lastkey', JSON.stringify(quizPoolLastKey)); } catch(e) {}
+}
 
 function startNextQuiz() {
   // Re-start a quiz with the same settings (range, mode, drill, reverse, tts, order, count)
@@ -6777,6 +6782,7 @@ function _launchQuiz(count) {
 }
 
 function startMissedReview() {
+  if (!currentQuiz) return;
   const missed = currentQuiz.results.filter(r => !r.correct);
   const seen = new Set();
   const pool = missed.filter(r => {
@@ -7199,6 +7205,7 @@ function revealAnswer() {
 }
 
 function toggleBookmark() {
+  if (!currentQuiz) return;
   const word = currentQuiz.words[currentQuiz.index];
   word.bookmarked = !word.bookmarked;
   sfxBookmark();
@@ -7442,6 +7449,7 @@ let swipeState = null;
         // Process answer without re-playing sfx/TTS
         skipNextTTS = true;
         stopQuizTimer();
+        if (!currentQuiz) return;
         const word = currentQuiz.words[currentQuiz.index];
         processQuizAnswer(word, known);
         nextQuestion();
@@ -7534,6 +7542,7 @@ let swipeState = null;
       keyLocked = false;
       skipNextTTS = true;
       stopQuizTimer();
+      if (!currentQuiz) return;
       const word = currentQuiz.words[currentQuiz.index];
       processQuizAnswer(word, known);
       nextQuestion();
@@ -7598,6 +7607,7 @@ function processQuizAnswer(word, isCorrect) {
 }
 
 function answerKnowledge(known) {
+  if (!currentQuiz) return;
   const card = document.getElementById('quizCard');
   // If answer not yet revealed, just reveal it (don't judge yet)
   if (card && !card.classList.contains('revealed')) {
@@ -7617,6 +7627,7 @@ function answerKnowledge(known) {
 }
 
 function nextQuestion() {
+  if (!currentQuiz) return;
   // Cancel speech before transitioning — but not if swipe/key already started speaking next question
   if (!skipNextTTS && 'speechSynthesis' in window) window.speechSynthesis.cancel();
   currentQuiz.index++;
@@ -7660,6 +7671,7 @@ function showResult() {
   if (q && q.rotationKey && q.results.length > 0) {
     const lastAnswered = q.results[q.results.length - 1].word;
     quizPoolLastKey[q.rotationKey] = wordKey(lastAnswered);
+    savePoolLastKey();
   }
 
   // In drill mode, count unique words only (not re-queued attempts)
@@ -7799,7 +7811,7 @@ function showResult() {
             <div class="missed-item">
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
-              <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtml(r.word.japanese)}</span>
+              <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtmlBr(r.word.japanese)}</span>
             </div>
           `}).join('')}
         </div>
@@ -7906,6 +7918,7 @@ function confirmQuit() {
     if (q && q.rotationKey && q.results.length > 0) {
       const lastAnswered = q.results[q.results.length - 1].word;
       quizPoolLastKey[q.rotationKey] = wordKey(lastAnswered);
+      savePoolLastKey();
     }
     showScreen('dashboard');
     renderDeckList();
@@ -8472,7 +8485,9 @@ async function showEditWordModal(index) {
 }
 
 function closeEditWord() {
-  document.getElementById('editWordOverlay').classList.remove('show');
+  const overlay = document.getElementById('editWordOverlay');
+  overlay.classList.remove('show');
+  overlay.scrollTop = 0;
   window._quizEditReturn = false;
 }
 
