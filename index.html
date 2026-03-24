@@ -4839,6 +4839,7 @@ const GDRIVE_FILE_NAME = 'csvocab_backup.json';
 const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 let gdriveTokenClient = null;
 let gdriveAccessToken = null;
+let gdriveTokenExpiryTimer = null;
 
 function showGdrivePanel() {
   const overlay = document.getElementById('gdriveOverlay');
@@ -4908,6 +4909,7 @@ function gdriveDisconnect() {
     localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
     localStorage.removeItem(GDRIVE_LAST_SYNC_KEY);
     gdriveAccessToken = null;
+    if (gdriveTokenExpiryTimer) { clearTimeout(gdriveTokenExpiryTimer); gdriveTokenExpiryTimer = null; }
     gdriveTokenClient = null;
     document.getElementById('gdriveSetup').style.display = 'block';
     document.getElementById('gdriveConnected').style.display = 'none';
@@ -4984,7 +4986,9 @@ function _gdriveRequestToken(clientId, prompt) {
         clearTimeout(timer);
         if (resp.error) { reject(resp.error_description || resp.error); return; }
         gdriveAccessToken = resp.access_token;
-        setTimeout(() => { gdriveAccessToken = null; }, 50 * 60 * 1000);
+        if (gdriveTokenExpiryTimer) clearTimeout(gdriveTokenExpiryTimer);
+        const expirySec = (resp.expires_in || 3600) - 60; // refresh 1 min early
+        gdriveTokenExpiryTimer = setTimeout(() => { gdriveAccessToken = null; gdriveTokenExpiryTimer = null; }, expirySec * 1000);
         resolve(gdriveAccessToken);
       },
       error_callback: (err) => {
@@ -5005,12 +5009,24 @@ function _gdriveRequestToken(clientId, prompt) {
 
 async function gdriveFindFile(token) {
   const query = encodeURIComponent(`name='${GDRIVE_FILE_NAME}' and trashed=false`);
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&spaces=drive`, {
+  const res = await gdriveFetchWithRetry(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&spaces=drive`, {
     headers: { 'Authorization': 'Bearer ' + token }
   });
   if (!res.ok) throw new Error('Drive API error: ' + res.status);
   const data = await res.json();
   return data.files && data.files.length > 0 ? data.files[0] : null;
+}
+
+// Auto-retry on 401 (token expired): clear token, re-auth, retry once
+async function gdriveFetchWithRetry(url, options) {
+  let res = await fetch(url, options);
+  if (res.status === 401) {
+    gdriveAccessToken = null;
+    const newToken = await gdriveGetToken();
+    const newOptions = { ...options, headers: { ...options.headers, 'Authorization': 'Bearer ' + newToken } };
+    res = await fetch(url, newOptions);
+  }
+  return res;
 }
 
 async function gdriveUpload() {
@@ -5048,7 +5064,7 @@ async function gdriveUpload() {
 
     if (existing) {
       // Update existing file
-      const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`, {
+      const res = await gdriveFetchWithRetry(`https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`, {
         method: 'PATCH',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: jsonStr
@@ -5060,7 +5076,7 @@ async function gdriveUpload() {
       const form = new FormData();
       form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
       form.append('file', new Blob([jsonStr], { type: 'application/json' }));
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      const res = await gdriveFetchWithRetry('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
         body: form
@@ -5104,7 +5120,7 @@ async function gdriveDownload() {
     }
 
     // Download file content
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+    const res = await gdriveFetchWithRetry(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     if (!res.ok) throw new Error('Download failed: ' + res.status);
@@ -5139,12 +5155,27 @@ let imgDB = null;
 
 function openImageDB() {
   return new Promise((resolve, reject) => {
-    if (imgDB) { resolve(imgDB); return; }
+    if (imgDB) {
+      // Check if connection is still alive
+      try {
+        imgDB.transaction(IMG_STORE, 'readonly');
+        resolve(imgDB);
+        return;
+      } catch(e) {
+        // Connection was closed — reopen
+        imgDB = null;
+      }
+    }
     const req = indexedDB.open(IMG_DB_NAME, 1);
     req.onupgradeneeded = e => {
       e.target.result.createObjectStore(IMG_STORE, { keyPath: 'id' });
     };
-    req.onsuccess = e => { imgDB = e.target.result; resolve(imgDB); };
+    req.onsuccess = e => {
+      imgDB = e.target.result;
+      imgDB.onclose = () => { imgDB = null; };
+      imgDB.onversionchange = () => { imgDB.close(); imgDB = null; };
+      resolve(imgDB);
+    };
     req.onerror = e => reject(e);
   });
 }
@@ -5832,6 +5863,15 @@ function saveState() {
   }
 }
 
+// Debounced save — batches rapid quiz answers into a single write
+let _saveDebounceTimer = null;
+function saveStateSoon() {
+  if (_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
+  _saveDebounceTimer = setTimeout(() => { _saveDebounceTimer = null; saveState(); }, 1500);
+}
+// Flush any pending debounced save before page unload
+window.addEventListener('beforeunload', () => { if (_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); saveState(); } });
+
 // Per-deck quiz settings persistence
 function saveDeckSettings(deckId) {
   if (!deckId) return;
@@ -5885,8 +5925,10 @@ function loadState() {
     if (saved) {
       decks = JSON.parse(saved);
       // Migrate old 'almost' level → 'mastered'
+      // Migrate: assign _id to words that don't have one
       decks.forEach(d => d.words.forEach(w => {
         if (w.level === 'almost') w.level = 'mastered';
+        if (!w._id) w._id = generateId();
       }));
       activeDeckId = localStorage.getItem('mikan_activeDeck');
       if (decks.length > 0) {
@@ -5912,11 +5954,14 @@ function shuffle(arr) {
 }
 
 function wordKey(w) {
+  if (w._id) return w._id;
   return w.english + '\0' + w.japanese;
 }
 
+let _idCounter = 0;
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  _idCounter = (_idCounter + 1) % 99999;
+  return Date.now().toString(36) + _idCounter.toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
 // ============ CSV IMPORT ============
@@ -6024,7 +6069,7 @@ function addDeckFromCSV(text, deckName) {
       const english = parts[0].trim();
       const japanese = parts[1].trim();
       if (english && japanese && english !== '問題' && english !== '韓国語') {
-        words.push({ english, japanese, level: 'unlearned', correctStreak: 0 });
+        words.push({ _id: generateId(), english, japanese, level: 'unlearned', correctStreak: 0 });
       }
     }
   }
@@ -7910,7 +7955,7 @@ function processQuizAnswer(word, isCorrect) {
       }
       // mastered stays mastered (no change needed)
     }
-    q.results.push({ word, correct: true });
+    q.results.push({ word, correct: true, levelSnapshot: word.level });
     if (quizDrillMode) q.masteredCount++;
   } else {
     q.wrong++;
@@ -7918,7 +7963,7 @@ function processQuizAnswer(word, isCorrect) {
       word.level = 'weak';
       word.correctStreak = 0;
     }
-    q.results.push({ word, correct: false });
+    q.results.push({ word, correct: false, levelSnapshot: word.level });
 
     // Track wrong answers in drill mode
     if (quizDrillMode) {
@@ -7939,7 +7984,7 @@ function processQuizAnswer(word, isCorrect) {
       }
     }
   }
-  saveState();
+  saveStateSoon();
 }
 
 let answerLocked = false;
@@ -8071,6 +8116,8 @@ function nextQuestion() {
 }
 
 function showResult() {
+  // Flush any pending debounced save
+  if (_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); _saveDebounceTimer = null; saveState(); }
   // Aggressively stop all speech (iOS needs multiple cancel calls)
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -8715,8 +8762,12 @@ function bulkMoveTo(targetDeckId) {
       targetDeck.words.push(...moved);
       count += moved.length;
     } else {
-      // Copy: deep clone words, don't remove from source
-      const copied = indices.reverse().map(i => JSON.parse(JSON.stringify(sourceDeck.words[i])));
+      // Copy: deep clone words with new _ids, don't remove from source
+      const copied = indices.reverse().map(i => {
+        const clone = JSON.parse(JSON.stringify(sourceDeck.words[i]));
+        clone._id = generateId();
+        return clone;
+      });
       targetDeck.words.push(...copied);
       count += copied.length;
     }
@@ -8925,7 +8976,7 @@ async function saveWord() {
 
   let word;
   if (editingWordIndex === null) {
-    word = { english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 };
+    word = { _id: generateId(), english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 };
     words.splice(targetPos, 0, word);
     showToast('追加しました！');
   } else {
@@ -9417,6 +9468,9 @@ async function applyImportData(data, mode) {
       await saveImage(id, data.images[id]);
     }
   }
+
+  // Ensure all imported words have _id
+  decks.forEach(d => d.words.forEach(w => { if (!w._id) w._id = generateId(); }));
 
   saveState();
   renderDeckList();
