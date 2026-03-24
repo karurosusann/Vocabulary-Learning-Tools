@@ -274,10 +274,6 @@ body.dark-mode .editor-word-item .ew-inner {
 body.dark-mode .help-toggle {
   background: #2a2535;
 }
-body.dark-mode .count-selector select {
-  background: #2a2535;
-  color: var(--gray-800);
-}
 body.dark-mode .drill-desc {
   color: var(--gray-500);
 }
@@ -1934,6 +1930,23 @@ body.dark-mode .input-answer-field.input-wrong {
 .input-submit-btn:active {
   background: #EA6A0E;
 }
+.input-result {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.input-result.wrong {
+  color: var(--red-500);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  opacity: 0.7;
+}
+.input-result.correct {
+  color: var(--green-500);
+}
 
 /* ===== Swipe feedback ===== */
 .quiz-card.swiping {
@@ -2764,6 +2777,45 @@ body.dark-mode .timer-seconds-select {
   border-color: #3a3545;
   color: var(--gray-900);
 }
+.quiz-count-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gray-200);
+  outline: none;
+}
+.quiz-count-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(249,115,22,0.3);
+}
+.quiz-count-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(249,115,22,0.3);
+}
+.quiz-count-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-500);
+  min-width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+body.dark-mode .quiz-count-slider {
+  background: #3a3545;
+}
 .setup-word-list {
   max-height: 40vh;
   overflow-y: auto;
@@ -2950,26 +3002,6 @@ body.dark-mode .timer-seconds-select {
   margin-top: 1px;
 }
 
-.count-selector {
-  margin-top: 16px;
-  text-align: center;
-}
-.count-selector label {
-  font-size: 13px;
-  color: var(--gray-500);
-  font-weight: 500;
-}
-.count-selector select {
-  margin-left: 8px;
-  padding: 6px 12px;
-  border: 2px solid var(--gray-200);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gray-700);
-  cursor: pointer;
-}
 .start-quiz-btn {
   width: 100%;
   margin-top: 16px;
@@ -3830,30 +3862,8 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="unified-setup">
           <div class="setting-row" style="margin-top:4px;">
             <span class="setting-label">出題数</span>
-            <select id="quizCount" class="timer-seconds-select">
-              <option value="10">10問</option>
-              <option value="20">20問</option>
-              <option value="30">30問</option>
-              <option value="40">40問</option>
-              <option value="50">50問</option>
-              <option value="60">60問</option>
-              <option value="70">70問</option>
-              <option value="80">80問</option>
-              <option value="90">90問</option>
-              <option value="100">100問</option>
-              <option value="150">150問</option>
-              <option value="200">200問</option>
-              <option value="250">250問</option>
-              <option value="300">300問</option>
-              <option value="400">400問</option>
-              <option value="500">500問</option>
-              <option value="600">600問</option>
-              <option value="700">700問</option>
-              <option value="800">800問</option>
-              <option value="900">900問</option>
-              <option value="1000">1000問</option>
-              <option value="all">すべて</option>
-            </select>
+            <input type="range" id="quizCountSlider" class="quiz-count-slider" min="0" max="22" value="1" oninput="updateQuizCountLabel(this.value)">
+            <span class="quiz-count-value" id="quizCountValue">10問</span>
           </div>
 
           <div class="setting-row">
@@ -5556,9 +5566,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Delegated handlers for dynamically created input answer field
 document.addEventListener('keydown', (e) => {
-  if (e.target.id === 'inputAnswerField' && e.key === 'Enter') {
-    e.preventDefault();
-    submitInputAnswer();
+  if (e.key === 'Enter') {
+    // If typing in input field, submit answer
+    if (e.target.id === 'inputAnswerField') {
+      e.preventDefault();
+      submitInputAnswer();
+      return;
+    }
+    // If in input mode and already answered, go to next question
+    if (quizInputMode) {
+      const quizScreen = document.getElementById('screen-quiz');
+      if (quizScreen && quizScreen.classList.contains('active')) {
+        const card = document.getElementById('quizCard');
+        if (card && card.classList.contains('revealed') && currentQuiz) {
+          e.preventDefault();
+          // Find the result button and click it
+          const nextBtn = document.querySelector('#quizBody .know-btn');
+          if (nextBtn) nextBtn.click();
+        }
+      }
+    }
   }
 });
 document.addEventListener('paste', (e) => {
@@ -5853,7 +5880,8 @@ function saveDeckSettings(deckId) {
       timerEnabled: quizTimerEnabled,
       timerSeconds: quizTimerSeconds,
       showImages: quizShowImages,
-      inputMode: quizInputMode
+      inputMode: quizInputMode,
+      quizCount: getQuizCountValue()
     };
     localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
   } catch(e) {
@@ -6841,6 +6869,7 @@ function showLevelSelect() {
     quizTimerSeconds = saved.timerSeconds || 5;
     quizShowImages = saved.showImages !== undefined ? saved.showImages : true;
     quizInputMode = saved.inputMode || false;
+    quizSavedCount = saved.quizCount || 10;
   } else {
     quizDrillMode = false;
     reverseMode = false;
@@ -6850,6 +6879,7 @@ function showLevelSelect() {
     quizTimerSeconds = 5;
     quizShowImages = true;
     quizInputMode = false;
+    quizSavedCount = 10;
   }
 
   // Auto-select first available range if none selected, or if selected range is unavailable
@@ -6894,6 +6924,7 @@ let quizTimerStartTime = 0;
 let quizTimerPausedRemaining = null; // remaining seconds when paused by visibility change
 let quizShowImages = true;
 let quizInputMode = false;
+let quizSavedCount = 10;
 let quizPoolLastKey = (() => { try { return JSON.parse(localStorage.getItem('csvocab_pool_lastkey')) || {}; } catch(e) { return {}; } })();
 
 function savePoolLastKey() {
@@ -7028,6 +7059,8 @@ function startMissedReview() {
 
 
 function applyAdvancedSettingsUI() {
+  // Quiz count slider
+  setQuizCountSlider(quizSavedCount || 10);
   document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', quizDrillMode ? i === 1 : i === 0);
   });
@@ -7169,16 +7202,22 @@ function onTimerExpired() {
   if (quizInputMode) {
     // Input mode: auto-submit as wrong if not yet answered
     if (!card.classList.contains('revealed')) {
+      const word = currentQuiz.words[currentQuiz.index];
+      const answerText = reverseMode ? word.english : word.japanese;
       const field = document.getElementById('inputAnswerField');
-      if (field) field.contentEditable = 'false';
-      const submitBtn = document.getElementById('inputSubmitBtn');
-      if (submitBtn) submitBtn.style.display = 'none';
-      // Reveal answer and process as wrong
+      const userRaw = field ? (field.textContent || '').trim() : '';
+      // Replace input with comparison display
+      const wrap = card.querySelector('.input-answer-wrap');
+      if (wrap) {
+        wrap.innerHTML = `
+          <div class="input-result wrong">✗ ${escapeHtml(userRaw || '（時間切れ）')}</div>
+          <div class="input-result correct">✓ ${escapeHtml(answerText)}</div>
+        `;
+      }
       card.classList.add('revealed');
       sfxWrong();
       const answerArea = card.querySelector('.answer-text-area');
-      if (answerArea) { card.offsetHeight; autoSizeQuizWord(answerArea); }
-      const word = currentQuiz.words[currentQuiz.index];
+      if (answerArea) answerArea.style.display = 'none';
       processQuizAnswer(word, false);
       setTimeout(() => nextQuestion(), 1000);
     }
@@ -7206,12 +7245,38 @@ function getQuizPool() {
   return words.filter(w => w.level === selectedRange);
 }
 
+// ============ QUIZ COUNT SLIDER ============
+const QUIZ_COUNT_STEPS = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 'all'];
+
+function updateQuizCountLabel(idx) {
+  const val = QUIZ_COUNT_STEPS[idx];
+  const label = document.getElementById('quizCountValue');
+  if (label) label.textContent = val === 'all' ? 'すべて' : val + '問';
+  saveDeckSettings(activeDeckId);
+}
+
+function getQuizCountValue() {
+  const slider = document.getElementById('quizCountSlider');
+  if (!slider) return 10;
+  return QUIZ_COUNT_STEPS[parseInt(slider.value)] || 10;
+}
+
+function setQuizCountSlider(val) {
+  const slider = document.getElementById('quizCountSlider');
+  if (!slider) return;
+  let idx = QUIZ_COUNT_STEPS.indexOf(val);
+  if (idx < 0) idx = QUIZ_COUNT_STEPS.indexOf(parseInt(val));
+  if (idx < 0) idx = 0;
+  slider.value = idx;
+  updateQuizCountLabel(idx);
+}
+
 // ============ QUIZ ============
 function startQuiz() {
   const pool = getQuizPool();
   if (pool.length === 0) return;
-  const countSel = document.getElementById('quizCount').value;
-  const count = countSel === 'all' ? pool.length : parseInt(countSel);
+  const countVal = getQuizCountValue();
+  const count = countVal === 'all' ? pool.length : parseInt(countVal);
   _launchQuiz(count);
 }
 
@@ -7397,6 +7462,13 @@ async function showQuizQuestion() {
   startQuizTimer();
   // Pre-render next card behind current one
   preRenderNextCard();
+  // Auto-focus input field in typing mode
+  if (quizInputMode) {
+    setTimeout(() => {
+      const field = document.getElementById('inputAnswerField');
+      if (field) field.focus();
+    }, 100);
+  }
   } finally { quizBusy = false; }
 }
 
@@ -7884,27 +7956,34 @@ function submitInputAnswer() {
   const correctAnswer = normalizeAnswer(answerText);
 
   const isCorrect = userAnswer === correctAnswer;
+  const userRaw = (field.textContent || '').trim();
 
   // Show result
   card.classList.add('revealed');
   sfxReveal();
-  const answerArea = card.querySelector('.answer-text-area');
-  if (answerArea) {
-    card.offsetHeight;
-    autoSizeQuizWord(answerArea);
+
+  // Replace input field with comparison display
+  const wrap = card.querySelector('.input-answer-wrap');
+  if (wrap) {
+    if (isCorrect) {
+      wrap.innerHTML = `<div class="input-result correct">✓ ${escapeHtml(userRaw)}</div>`;
+      sfxCorrect();
+    } else {
+      wrap.innerHTML = `
+        <div class="input-result wrong">✗ ${escapeHtml(userRaw || '（未入力）')}</div>
+        <div class="input-result correct">✓ ${escapeHtml(answerText)}</div>
+      `;
+      sfxWrong();
+    }
   }
 
-  // Style the input field to show correct/incorrect
-  field.contentEditable = 'false';
-  const submitBtn = document.getElementById('inputSubmitBtn');
-  if (submitBtn) submitBtn.style.display = 'none';
-
-  if (isCorrect) {
-    field.classList.add('input-correct');
-    sfxCorrect();
-  } else {
-    field.classList.add('input-wrong');
-    sfxWrong();
+  const answerArea = card.querySelector('.answer-text-area');
+  if (answerArea && !isCorrect) {
+    // Hide the duplicate answer text area when wrong (already shown in comparison)
+    answerArea.style.display = 'none';
+  } else if (answerArea) {
+    card.offsetHeight;
+    autoSizeQuizWord(answerArea);
   }
 
   // Show next button
