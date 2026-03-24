@@ -457,6 +457,33 @@ body.dark-mode .settings-menu-item .menu-badge {
   background: var(--gray-200);
   margin: 4px 16px;
 }
+.answer-color-picker {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.1s;
+  padding: 0;
+  outline: none;
+}
+.color-dot:hover {
+  transform: scale(1.1);
+}
+.color-dot.active {
+  border-color: var(--gray-800);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--gray-400);
+}
+body.dark-mode #colorDotMatch {
+  background: #f5f0ff !important;
+}
 .settings-panel-footer {
   padding: 12px 20px;
   text-align: center;
@@ -1806,7 +1833,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   font-family: 'DM Sans', sans-serif;
   font-size: 32px;
   font-weight: 700;
-  color: var(--orange-500);
+  color: var(--answer-color, #F97316);
   letter-spacing: -0.5px;
   line-height: 1.3;
   animation: revealFade 0.3s ease;
@@ -1816,6 +1843,9 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   text-align: center;
   width: 100%;
   height: 100%;
+}
+body.answer-match-question .answer-text-area {
+  color: var(--gray-900);
 }
 .quiz-card.revealed .answer-tap-hint { display: none; }
 .quiz-card.revealed .answer-text-area {
@@ -3863,6 +3893,22 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-badge" id="settingsDarkBadge">OFF</span>
       </button>
       <div class="settings-menu-divider"></div>
+      <button class="settings-menu-item" onclick="toggleAnswerColorPicker()">
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></span>
+        <span class="menu-label">回答の文字色</span>
+        <span class="menu-badge" id="answerColorBadge" style="width:14px;height:14px;border-radius:50%;display:inline-block;"></span>
+      </button>
+      <div class="answer-color-picker" id="answerColorPicker" style="display:none;">
+        <button class="color-dot" style="background:#F97316;" onclick="setAnswerColor('#F97316')" title="オレンジ"></button>
+        <button class="color-dot" style="background:#EF4444;" onclick="setAnswerColor('#EF4444')" title="レッド"></button>
+        <button class="color-dot" style="background:#EAB308;" onclick="setAnswerColor('#EAB308')" title="イエロー"></button>
+        <button class="color-dot" style="background:#3B82F6;" onclick="setAnswerColor('#3B82F6')" title="ブルー"></button>
+        <button class="color-dot" style="background:#22C55E;" onclick="setAnswerColor('#22C55E')" title="グリーン"></button>
+        <button class="color-dot" style="background:#EC4899;" onclick="setAnswerColor('#EC4899')" title="ピンク"></button>
+        <button class="color-dot" style="background:#14B8A6;" onclick="setAnswerColor('#14B8A6')" title="ティール"></button>
+        <button class="color-dot" style="background:#111827;" onclick="setAnswerColor('match')" title="ブラック" id="colorDotMatch"></button>
+      </div>
+      <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showExportPicker();">
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
         <span class="menu-label">データをエクスポート</span>
@@ -4157,9 +4203,12 @@ function openSettings() {
   const overlay = document.getElementById('settingsOverlay');
   overlay.classList.add('show');
   updateSettingsDarkUI();
+  updateAnswerColorUI(localStorage.getItem(ANSWER_COLOR_KEY) || DEFAULT_ANSWER_COLOR);
 }
 function closeSettings() {
   document.getElementById('settingsOverlay').classList.remove('show');
+  const picker = document.getElementById('answerColorPicker');
+  if (picker) picker.style.display = 'none';
 }
 
 // ============ DARK MODE ============
@@ -4194,6 +4243,55 @@ function updateSettingsDarkUI() {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', '#1a1525');
   }
+})();
+
+// ============ ANSWER TEXT COLOR ============
+const ANSWER_COLOR_KEY = 'csvocab_answer_color';
+const DEFAULT_ANSWER_COLOR = '#F97316';
+
+function setAnswerColor(color) {
+  localStorage.setItem(ANSWER_COLOR_KEY, color);
+  applyAnswerColor(color);
+  updateAnswerColorUI(color);
+}
+
+function applyAnswerColor(color) {
+  if (color === 'match') {
+    document.documentElement.style.removeProperty('--answer-color');
+    document.body.classList.add('answer-match-question');
+  } else {
+    document.body.classList.remove('answer-match-question');
+    document.documentElement.style.setProperty('--answer-color', color);
+  }
+}
+
+function toggleAnswerColorPicker() {
+  const picker = document.getElementById('answerColorPicker');
+  if (picker) picker.style.display = picker.style.display === 'none' ? '' : 'none';
+}
+
+function updateAnswerColorUI(color) {
+  document.querySelectorAll('.color-dot').forEach(dot => {
+    if (dot.id === 'colorDotMatch') {
+      dot.classList.toggle('active', color === 'match');
+    } else {
+      dot.classList.toggle('active', dot.style.backgroundColor === color || rgbToHex(dot.style.backgroundColor) === color.toUpperCase());
+    }
+  });
+  const badge = document.getElementById('answerColorBadge');
+  if (badge) badge.style.background = color === 'match' ? 'var(--gray-900)' : color;
+}
+
+function rgbToHex(rgb) {
+  if (rgb.startsWith('#')) return rgb.toUpperCase();
+  const m = rgb.match(/\d+/g);
+  if (!m) return '';
+  return '#' + m.slice(0,3).map(n => parseInt(n).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+(function initAnswerColor() {
+  const saved = localStorage.getItem(ANSWER_COLOR_KEY) || DEFAULT_ANSWER_COLOR;
+  applyAnswerColor(saved);
 })();
 
 // ============ STUDY LOG & HEATMAP ============
