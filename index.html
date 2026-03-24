@@ -18,10 +18,10 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
-  background: linear-gradient(145deg, #FFF7ED 0%, #FFEDD5 30%, #FEE2C5 100%);
+  background-color: #FFEDD5;
 }
 html.dark-mode {
-  background: linear-gradient(145deg, #121018 0%, #1a1525 30%, #1e1830 100%);
+  background-color: #1a1525;
 }
 
 :root {
@@ -2920,7 +2920,6 @@ body.dark-mode .quiz-img-picker button {
   justify-content: center;
   gap: 10px;
   margin: 20px 0 16px;
-  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .confirm-checkbox {
@@ -2933,6 +2932,7 @@ body.dark-mode .quiz-img-picker button {
   justify-content: center;
   flex-shrink: 0;
   transition: all 0.2s;
+  cursor: pointer;
 }
 .confirm-checkbox.checked {
   background: var(--red-500);
@@ -4100,8 +4100,8 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="confirm-icon">⚠️</div>
     <h3 id="confirmTitle">本当にリセットしますか？</h3>
     <p id="confirmDesc">この操作は取り消せません。</p>
-    <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
-      <div class="confirm-checkbox" id="confirmCheckbox"></div>
+    <div class="confirm-check-row" id="confirmCheckRow">
+      <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
       <span class="confirm-check-label">理解しました</span>
     </div>
     <div class="confirm-buttons">
@@ -8483,8 +8483,8 @@ function confirmAction(title, desc, action, btnLabel) {
         <div class="confirm-icon">⚠️</div>
         <h3 id="confirmTitle">本当にリセットしますか？</h3>
         <p id="confirmDesc">この操作は取り消せません。</p>
-        <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
-          <div class="confirm-checkbox" id="confirmCheckbox"></div>
+        <div class="confirm-check-row" id="confirmCheckRow">
+          <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
           <span class="confirm-check-label">理解しました</span>
         </div>
         <div class="confirm-buttons">
@@ -8534,8 +8534,8 @@ function closeConfirm() {
       <div class="confirm-icon">⚠️</div>
       <h3 id="confirmTitle">本当にリセットしますか？</h3>
       <p id="confirmDesc">この操作は取り消せません。</p>
-      <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
-        <div class="confirm-checkbox" id="confirmCheckbox"></div>
+      <div class="confirm-check-row" id="confirmCheckRow">
+        <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
         <span class="confirm-check-label">理解しました</span>
       </div>
       <div class="confirm-buttons">
@@ -8563,8 +8563,8 @@ function closeAllOverlays() {
       <div class="confirm-icon">⚠️</div>
       <h3 id="confirmTitle">本当にリセットしますか？</h3>
       <p id="confirmDesc">この操作は取り消せません。</p>
-      <div class="confirm-check-row" id="confirmCheckRow" onclick="toggleConfirmCheck()">
-        <div class="confirm-checkbox" id="confirmCheckbox"></div>
+      <div class="confirm-check-row" id="confirmCheckRow">
+        <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
         <span class="confirm-check-label">理解しました</span>
       </div>
       <div class="confirm-buttons">
