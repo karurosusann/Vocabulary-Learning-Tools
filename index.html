@@ -98,7 +98,7 @@ body.dark-mode {
 
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
-  background: linear-gradient(145deg, #FFF7ED 0%, #FFEDD5 30%, #FEE2C5 100%);
+  background: #FFF7ED;
   min-height: 100vh;
   min-height: 100dvh;
   color: var(--gray-800);
@@ -109,7 +109,7 @@ body {
 }
 
 body.dark-mode {
-  background: linear-gradient(145deg, #121018 0%, #1a1525 30%, #1e1830 100%);
+  background: #121018;
   color: var(--gray-800);
 }
 body.dark-mode .quiz-card,
@@ -3455,6 +3455,9 @@ body.dark-mode .bulk-action-btn.select-all {
 .editor-word-item .ew-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 .editor-word-item .ew-eng {
   font-size: 14px;
@@ -3462,12 +3465,16 @@ body.dark-mode .bulk-action-btn.select-all {
   color: var(--gray-800);
   word-break: break-word;
   line-height: 1.4;
+  flex: 1;
+  min-width: 0;
 }
 .editor-word-item .ew-jpn {
-  font-size: 12px;
-  color: var(--gray-400);
-  margin-top: 2px;
+  font-size: 13px;
+  color: var(--gray-500);
   word-break: break-word;
+  flex-shrink: 0;
+  max-width: 45%;
+  text-align: right;
 }
 .edit-word-modal .rename-input { margin-bottom: 10px; }
 #editWordOverlay {
