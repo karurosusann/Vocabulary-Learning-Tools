@@ -4280,8 +4280,8 @@ body.dark-mode .gdrive-setup-hint code {
       </div>
       <div id="gdriveLoggedIn" style="display:none;">
         <div class="gdrive-actions">
-          <button class="gdrive-btn upload" id="gdriveUploadBtn" onclick="gdriveUpload()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> アップロード（保存）</button>
-          <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="confirmGdriveDownload()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg> ダウンロード（復元）</button>
+          <button class="gdrive-btn upload" id="gdriveUploadBtn" onclick="confirmGdriveUpload()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> 進捗を保存する</button>
+          <button class="gdrive-btn download" id="gdriveDownloadBtn" onclick="confirmGdriveDownload()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg> 最新データを取得</button>
         </div>
       </div>
       <button class="gdrive-btn disconnect" style="margin-top:10px;" onclick="gdriveDisconnect()">接続を解除</button>
@@ -5135,7 +5135,7 @@ async function gdriveFetchWithRetry(url, options) {
 async function gdriveUpload() {
   const btn = document.getElementById('gdriveUploadBtn');
   btn.disabled = true;
-  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> アップロード中...';
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> 保存中...';
 
   try {
     const token = await gdriveGetToken();
@@ -5189,30 +5189,40 @@ async function gdriveUpload() {
 
     localStorage.setItem(GDRIVE_LAST_SYNC_KEY, new Date().toISOString());
     updateGdriveLastSync();
-    showToast('Google Driveにアップロードしました');
+    showToast('進捗をGoogle Driveに保存しました');
   } catch (e) {
     console.error('GDrive upload error:', e);
     showToast('エラー: ' + (e.message || e));
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> アップロード（保存）';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> 進捗を保存する';
   }
+}
+
+function confirmGdriveUpload() {
+  closeGdrivePanel();
+  confirmAction(
+    '進捗を保存',
+    '現在の学習データをGoogle Driveに保存します。以前のバックアップは上書きされます。',
+    function() { gdriveUpload(); },
+    '保存する'
+  );
 }
 
 function confirmGdriveDownload() {
   closeGdrivePanel();
   confirmAction(
-    'データを復元',
-    'Google Driveのバックアップで現在のデータを上書きします。この操作は取り消せません。',
+    '最新データを取得',
+    'Google Driveから最新の学習データを取得します。現在のデータは上書きされます。',
     function() { gdriveDownload(); },
-    '復元する'
+    '取得する'
   );
 }
 
 async function gdriveDownload() {
   const btn = document.getElementById('gdriveDownloadBtn');
   btn.disabled = true;
-  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg> ダウンロード中...';
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg> 取得中...';
 
   try {
     const token = await gdriveGetToken();
@@ -5247,7 +5257,7 @@ async function gdriveDownload() {
     showToast('エラー: ' + (e.message || e));
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg> ダウンロード（復元）';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg> 最新データを取得';
   }
 }
 
