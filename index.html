@@ -516,22 +516,6 @@ body.dark-mode #colorDotMatch {
   align-items: stretch;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-}
-/* iOS overscroll bounce gap fix: extend background below safe area */
-.bottom-nav::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(env(safe-area-inset-bottom, 0px) + 50px);
-  background: inherit;
-  z-index: -1;
-  pointer-events: none;
 }
 body.dark-mode .bottom-nav {
   background: #1e1a28;
@@ -577,9 +561,6 @@ body.dark-mode .bottom-nav {
 }
 .bottom-nav-item:active {
   opacity: 0.6;
-}
-body.has-bottom-nav {
-  overscroll-behavior-y: none;
 }
 body.has-bottom-nav .app {
   padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
@@ -6897,6 +6878,7 @@ function showScreen(name) {
   closeCopyMenu();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
     document.body.style.overflow = 'hidden';
@@ -6920,9 +6902,6 @@ function showScreen(name) {
     // Release quiz data when navigating away from quiz/result
     if (name !== 'result') currentQuiz = null;
   }
-  // Force layout recalc before scrolling (fixes iOS gap after quiz exit)
-  void document.body.offsetHeight;
-  window.scrollTo(0, 0);
   if (name === 'advanced-settings') {
     applyAdvancedSettingsUI();
   }
@@ -6950,11 +6929,6 @@ function showScreen(name) {
     if (navScreens.includes(name) && !editorSelectMode && !deckSelectMode) {
       nav.classList.add('show');
       document.body.classList.add('has-bottom-nav');
-      // iOS fix: force repaint after showing bottom nav to eliminate gap
-      requestAnimationFrame(() => {
-        window.scrollTo(0, 0);
-        void nav.offsetHeight;
-      });
     } else {
       nav.classList.remove('show');
       document.body.classList.remove('has-bottom-nav');
