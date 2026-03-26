@@ -8706,11 +8706,23 @@ function showWordList() {
   renderWordList('all');
 }
 
+function scrollToActiveTab(container) {
+  const tab = container.querySelector('.deck-tab.active');
+  if (!tab) return;
+  requestAnimationFrame(() => {
+    const tabLeft = tab.offsetLeft;
+    const tabWidth = tab.offsetWidth;
+    const containerWidth = container.offsetWidth;
+    container.scrollLeft = tabLeft - (containerWidth - tabWidth) / 2;
+  });
+}
+
 function renderDeckTabs() {
   const container = document.getElementById('deckTabs');
   container.innerHTML = decks.map(deck => `
     <button class="deck-tab ${deck.id === wordListDeckId ? 'active' : ''}" onclick="switchWordListDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
   `).join('');
+  scrollToActiveTab(container);
 }
 
 let wordListScrollMap = {}; // { deckId: scrollTop }
@@ -9078,6 +9090,7 @@ function renderEditorDeckTabs() {
   container.innerHTML = decks.map(deck => `
     <button class="deck-tab ${deck.id === editorDeckId ? 'active' : ''}" onclick="switchEditorDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
   `).join('');
+  scrollToActiveTab(container);
 }
 
 let editorScrollMap = {}; // { deckId: scrollTop }
