@@ -2208,9 +2208,11 @@ body.dark-mode .copy-menu-popup button {
   position: relative;
 }
 .result-close-btn {
-  position: fixed;
+  position: sticky;
   top: calc(12px + env(safe-area-inset-top));
-  left: calc(12px + env(safe-area-inset-left));
+  left: 0;
+  margin-left: calc(12px + env(safe-area-inset-left));
+  margin-bottom: -36px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -2260,6 +2262,7 @@ body.dark-mode .copy-menu-popup button {
   font-family: 'DM Sans', sans-serif;
   font-size: 28px;
   font-weight: 700;
+  color: var(--gray-500);
 }
 .result-stat .label {
   font-size: 12px;
@@ -2267,8 +2270,8 @@ body.dark-mode .copy-menu-popup button {
   margin-top: 2px;
 }
 .result-btn {
-  background: var(--orange-500);
-  color: white;
+  background: var(--gray-200);
+  color: var(--gray-700);
   border: none;
   padding: 16px 40px;
   border-radius: 50px;
@@ -2276,17 +2279,16 @@ body.dark-mode .copy-menu-popup button {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(74,158,63,0.3);
+  box-shadow: none;
   transition: all 0.2s;
 }
 .result-btn:hover {
-  background: var(--orange-600);
+  background: var(--gray-300);
   transform: translateY(-1px);
 }
 .result-btn.next-quiz-btn {
-  background: var(--orange-500);
+  background: var(--gray-700);
   color: white;
-  box-shadow: 0 4px 15px rgba(74,158,63,0.3);
   margin-bottom: 10px;
   width: 100%;
   max-width: 320px;
@@ -2294,8 +2296,8 @@ body.dark-mode .copy-menu-popup button {
 }
 .result-btn.review-btn {
   background: white;
-  color: var(--orange-500);
-  border: 2px solid var(--orange-500);
+  color: var(--gray-600);
+  border: 2px solid var(--gray-300);
   box-shadow: none;
   margin-bottom: 10px;
   width: 100%;
@@ -2321,9 +2323,23 @@ body.dark-mode .copy-menu-popup button {
 .missed-section h4 {
   font-size: 14px;
   font-weight: 700;
-  color: var(--red-500);
-  margin-bottom: 10px;
+  color: var(--gray-600);
+  margin-bottom: 0;
   text-align: center;
+}
+.missed-section h4.missed-heading { color: var(--gray-800); }
+.missed-section h4.correct-heading { color: var(--gray-800); }
+.missed-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  position: relative;
+}
+.missed-section-header .answer-toggle-btn {
+  position: absolute;
+  right: 0;
 }
 .missed-list {
   border-radius: var(--radius-sm);
@@ -2342,11 +2358,19 @@ body.dark-mode .copy-menu-popup button {
   font-weight: 600;
   color: var(--gray-800);
   flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 .missed-jpn {
-  color: var(--red-400);
+  color: var(--answer-color, #F97316);
   font-size: 13px;
   text-align: right;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 .result-pin-btn {
   border: none;
@@ -2364,6 +2388,23 @@ body.dark-mode .copy-menu-popup button {
 .result-pin-btn.active svg {
   stroke: var(--orange-500);
   fill: var(--orange-500);
+}
+.missed-jpn.result-hidden-answer {
+  color: transparent;
+  background: var(--gray-200);
+  position: relative;
+  text-align: center;
+}
+.missed-jpn.result-hidden-answer::after {
+  content: 'タップ';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* Level change summary */
@@ -2424,8 +2465,7 @@ body.dark-mode .copy-menu-popup button {
   flex-shrink: 0;
   opacity: 0;
 }
-.lc-diff.plus { color: var(--green-500); }
-.lc-diff.minus { color: var(--red-500); }
+
 @keyframes diffPop {
   0% { opacity: 0; transform: scale(0.5) translateY(8px); }
   60% { opacity: 1; transform: scale(1.2) translateY(-2px); }
@@ -2616,33 +2656,44 @@ body.dark-mode .copy-menu-popup button {
   min-width: 0;
   word-break: break-word;
   line-height: 1.4;
-  transition: all 0.2s;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 .word-item .eng.hidden-question {
   color: transparent;
   background: var(--gray-200);
-  border-radius: 4px;
-  min-height: 20px;
+  position: relative;
+}
+.word-item .eng.hidden-question::after {
+  content: 'タップ';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  font-size: 11px;
+  font-weight: 600;
 }
 .word-item .jpn-container {
   position: relative;
-  flex-shrink: 0;
-  max-width: 45%;
+  flex: 1;
+  min-width: 0;
+  text-align: right;
 }
 .word-item .jpn {
   font-size: 13px;
   color: var(--gray-500);
-  transition: all 0.2s;
   word-break: break-word;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 .word-item .jpn.hidden-answer {
   color: transparent;
   background: var(--gray-200);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 12px;
   position: relative;
-  min-width: 60px;
   text-align: center;
 }
 .word-item .jpn.hidden-answer::after {
@@ -3539,8 +3590,8 @@ body.dark-mode .bulk-action-btn.select-all {
   font-size: 13px;
   color: var(--gray-500);
   word-break: break-word;
-  flex-shrink: 0;
-  max-width: 45%;
+  flex: 1;
+  min-width: 0;
   text-align: right;
 }
 .edit-word-modal .rename-input { margin-bottom: 10px; }
@@ -3843,8 +3894,8 @@ body.dark-mode .gdrive-setup-hint code {
   .know-btn.dont-know:hover { background: #EFF6FF; }
   .know-btn.know:hover { background: #F0FFF4; }
   .result-close-btn:hover { background: var(--gray-100); }
-  .result-btn:hover { background: var(--orange-500); transform: none; }
-  .result-btn.review-btn:hover { background: white; color: var(--orange-500); }
+  .result-btn:hover { background: var(--gray-200); transform: none; }
+  .result-btn.review-btn:hover { background: white; color: var(--gray-600); }
   .start-quiz-btn:hover { background: var(--orange-500); }
   .demo-btn:hover { background: var(--orange-500); transform: none; }
   .demo-item:hover { border-color: var(--gray-200); background: white; }
@@ -4118,6 +4169,7 @@ body.dark-mode .gdrive-setup-hint code {
 
   <!-- Screen: Result -->
   <div id="screen-result" class="screen">
+    <button class="result-close-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">✕</button>
     <div class="quiz-result" id="resultContent"></div>
   </div>
 
@@ -7791,6 +7843,27 @@ function toggleResultBookmark(btn, eng, jpn) {
   requestAnimationFrame(() => saveState());
 }
 
+let resultAnswersHidden = false;
+function toggleResultAnswers() {
+  resultAnswersHidden = !resultAnswersHidden;
+  const btn = document.getElementById('resultAnswerToggleBtn');
+  if (btn) {
+    btn.textContent = resultAnswersHidden ? '答えを表示' : '答えを隠す';
+    btn.classList.toggle('hiding', resultAnswersHidden);
+  }
+  document.querySelectorAll('#resultContent .missed-jpn').forEach(el => {
+    el.classList.toggle('result-hidden-answer', resultAnswersHidden);
+  });
+}
+
+function onTapResultJpn(el, text) {
+  if (resultAnswersHidden && el.classList.contains('result-hidden-answer')) {
+    el.classList.remove('result-hidden-answer');
+    return;
+  }
+  if (text) speakText(text);
+}
+
 function copyQuizText() {
   if (!currentQuiz) return;
 
@@ -8317,6 +8390,7 @@ function showResult() {
   stopAllAudio();
   stopQuizTimer();
   showScreen('result');
+  resultAnswersHidden = false;
   // Cancel again after screen transition in case iOS queued speech
   setTimeout(() => {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -8398,7 +8472,7 @@ function showResult() {
   levelOrder.forEach((level, idx) => {
     const count = afterCumulative[level];
     const diff = diffs[level];
-    const diffStr = diff > 0 ? `<span class="lc-diff plus">+${diff}</span>` : diff < 0 ? `<span class="lc-diff minus">${diff}</span>` : `<span class="lc-diff"></span>`;
+    const diffStr = diff > 0 ? `<span class="lc-diff plus" style="color:${levelColors[level]}">+${diff}</span>` : diff < 0 ? `<span class="lc-diff minus" style="color:${levelColors[level]}">${diff}</span>` : `<span class="lc-diff"></span>`;
     const barWidth = Math.round((count / totalWords) * 100);
     // Before width for animation
     const beforeCount = count - diff;
@@ -8430,7 +8504,10 @@ function showResult() {
   if (uniqueMissed.length > 0) {
     missedHtml = `
       <div class="missed-section">
-        <h4>間違えた問題（${uniqueMissed.length}語）</h4>
+        <div class="missed-section-header">
+          <h4 class="missed-heading">間違えた問題（${uniqueMissed.length}語）</h4>
+          <button class="answer-toggle-btn" id="resultAnswerToggleBtn" onclick="toggleResultAnswers()">答えを隠す</button>
+        </div>
         <div class="missed-list">
           ${uniqueMissed.map(r => {
             const engEsc = escapeForInlineJS(r.word.english);
@@ -8439,7 +8516,7 @@ function showResult() {
             return `
             <div class="missed-item">
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
-              <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.japanese)}</span>
+              <span class="missed-jpn" onclick="onTapResultJpn(this,'${jpnEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.japanese)}</span>
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           `}).join('')}
@@ -8460,8 +8537,11 @@ function showResult() {
   let correctHtml = '';
   if (uniqueCorrect.length > 0) {
     correctHtml = `
-      <div class="missed-section" style="margin-top:16px;">
-        <h4 style="color:var(--green-500);">正解した問題（${uniqueCorrect.length}語）</h4>
+      <div class="missed-section" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-200);">
+        <div class="missed-section-header">
+          <h4 class="correct-heading">正解した問題（${uniqueCorrect.length}語）</h4>
+          ${uniqueMissed.length === 0 ? '<button class="answer-toggle-btn" id="resultAnswerToggleBtn" onclick="toggleResultAnswers()">答えを隠す</button>' : ''}
+        </div>
         <div class="missed-list">
           ${uniqueCorrect.map(r => {
             const engEsc = escapeForInlineJS(r.word.english);
@@ -8470,7 +8550,7 @@ function showResult() {
             return `
             <div class="missed-item">
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
-              <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtmlBr(r.word.japanese)}</span>
+              <span class="missed-jpn" style="cursor:pointer;" onclick="onTapResultJpn(this,'${jpnEsc}')">${escapeHtmlBr(r.word.japanese)}</span>
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           `}).join('')}
@@ -8480,21 +8560,20 @@ function showResult() {
   }
 
   document.getElementById('resultContent').innerHTML = `
-    <button class="result-close-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">✕</button>
     <div class="result-icon">${emoji}</div>
     <h2>${msg}</h2>
     <p>${totalAnswered}問中 ${displayCorrect}問正解</p>
     <div class="result-stats">
       <div class="result-stat">
-        <div class="num" style="color:var(--green-500)">${displayCorrect}</div>
+        <div class="num">${displayCorrect}</div>
         <div class="label">正解</div>
       </div>
       <div class="result-stat">
-        <div class="num" style="color:var(--red-500)">${displayWrong}</div>
+        <div class="num">${displayWrong}</div>
         <div class="label">不正解</div>
       </div>
       <div class="result-stat">
-        <div class="num" style="color:var(--orange-500)">${pct}%</div>
+        <div class="num">${pct}%</div>
         <div class="label">正答率</div>
       </div>
     </div>
