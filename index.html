@@ -10039,5 +10039,36 @@ if ('serviceWorker' in navigator) {
   <button onmousedown="doCopyQuiz('question')">問題文をコピー</button>
   <button id="copyMenuAnswerBtn" onmousedown="doCopyQuiz('answer')">答えをコピー</button>
 </div>
+<div id="debugPanel" style="position:fixed;bottom:60px;right:4px;background:rgba(0,0,0,0.8);color:#0f0;font-size:9px;font-family:monospace;padding:6px 8px;border-radius:6px;z-index:99999;pointer-events:none;line-height:1.4;max-width:200px;white-space:pre-wrap;"></div>
+<script>
+(function(){
+  var dp = document.getElementById('debugPanel');
+  function update(){
+    var b = document.body;
+    var de = document.documentElement;
+    var sh = de.scrollHeight;
+    var ch = de.clientHeight;
+    var sy = window.scrollY;
+    var ih = window.innerHeight;
+    var vh = window.visualViewport ? Math.round(window.visualViewport.height) : '?';
+    var vo = window.visualViewport ? Math.round(window.visualViewport.offsetTop) : '?';
+    var bp = b.style.position || 'static';
+    var bt = b.style.top || '0';
+    var bo = b.style.overflow || 'auto';
+    var bh = b.style.height || 'auto';
+    var gap = sh - ch;
+    dp.textContent = 
+      'scrollH:' + sh + ' clientH:' + ch + '\n' +
+      'scrollY:' + sy + ' innerH:' + ih + '\n' +
+      'vvH:' + vh + ' vvOff:' + vo + '\n' +
+      'body.pos:' + bp + '\n' +
+      'body.top:' + bt + '\n' +
+      'body.overflow:' + bo + '\n' +
+      'body.height:' + bh + '\n' +
+      'gap(sH-cH):' + gap;
+  }
+  setInterval(update, 300);
+})();
+</script>
 </body>
 </html>
