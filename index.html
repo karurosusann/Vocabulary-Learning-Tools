@@ -19,6 +19,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
+  overscroll-behavior: none;
 }
 html.dark-mode {
   background-color: #121018;
@@ -103,6 +104,7 @@ body {
   min-height: 100dvh;
   color: var(--gray-800);
   overflow-x: hidden;
+  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
@@ -3189,7 +3191,12 @@ body.dark-mode .quiz-count-slider {
 /* Confirm modal */
 .confirm-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: rgba(0,0,0,0.5);
   z-index: 2000;
   display: none;
@@ -8707,12 +8714,13 @@ function showWordList() {
 }
 
 function scrollToActiveTab(container) {
-  const tab = container.querySelector('.deck-tab.active');
+  if (!container || !container.offsetParent) return;
+  var tab = container.querySelector('.deck-tab.active');
   if (!tab) return;
-  requestAnimationFrame(() => {
-    const tabLeft = tab.offsetLeft;
-    const tabWidth = tab.offsetWidth;
-    const containerWidth = container.offsetWidth;
+  requestAnimationFrame(function() {
+    var tabLeft = tab.offsetLeft;
+    var tabWidth = tab.offsetWidth;
+    var containerWidth = container.offsetWidth;
     container.scrollLeft = tabLeft - (containerWidth - tabWidth) / 2;
   });
 }
