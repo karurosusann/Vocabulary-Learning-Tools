@@ -340,7 +340,14 @@ body.dark-mode .hamburger-btn {
 /* Settings menu overlay */
 .settings-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: rgba(0,0,0,0.4);
   z-index: 3000;
   display: none;
@@ -1327,7 +1334,14 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 /* Deck edit overlay */
 .deck-edit-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: rgba(0,0,0,0.5);
   z-index: 2000;
   display: none;
@@ -1436,7 +1450,14 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 /* Reorder overlay */
 .reorder-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: rgba(0,0,0,0.5);
   z-index: 2000;
   display: none;
@@ -3189,7 +3210,14 @@ body.dark-mode .quiz-count-slider {
 /* Confirm modal */
 .confirm-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: rgba(0,0,0,0.5);
   z-index: 2000;
   display: none;
@@ -5862,6 +5890,10 @@ if (window.visualViewport) {
     const quizScreen = document.getElementById('screen-quiz');
     if (quizScreen && quizScreen.classList.contains('active')) {
       quizScreen.style.height = window.visualViewport.height + 'px';
+      // Also sync body height so overlays cover full viewport
+      if (document.body.style.position === 'fixed') {
+        document.body.style.height = window.visualViewport.height + 'px';
+      }
     }
     // Adjust edit word overlay when iOS keyboard opens/closes
     const editOverlay = document.getElementById('editWordOverlay');
@@ -6881,19 +6913,31 @@ function showScreen(name) {
   window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
     document.body.style.width = '100%';
-    document.body.style.height = '100%';
+    document.body.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
     // Set quiz screen to actual visible height (handles iOS address bar)
     if (window.visualViewport) {
       document.getElementById('screen-quiz').style.height = window.visualViewport.height + 'px';
     }
   } else {
+    // Restore html/body scroll state
+    document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
     document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
     document.body.style.width = '';
     document.body.style.height = '';
+    // Force iOS to recalculate layout after leaving fixed mode
+    requestAnimationFrame(() => {
+      void document.body.offsetHeight;
+      window.scrollTo(0, 0);
+    });
     // Clear any visualViewport override on quiz screen
     const qScreen = document.getElementById('screen-quiz');
     if (qScreen) qScreen.style.height = '';
@@ -9418,8 +9462,13 @@ function closeAllOverlays() {
   const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.classList.remove('show');
+    if (el) {
+      el.classList.remove('show', 'kb-open');
+      el.style.height = '';
+      el.style.top = '';
+    }
   });
+  document.body.classList.remove('overlay-kb-open');
   pendingConfirmAction = null;
   window._importData = null;
   // Restore confirm modal structure if needed
