@@ -8704,9 +8704,6 @@ function onTapEng(el) {
   if (!eng) return;
   if (questionsHidden && eng.classList.contains('hidden-question')) {
     eng.classList.remove('hidden-question');
-    speakText(el.dataset.eng);
-  } else if (questionsHidden && !eng.classList.contains('hidden-question')) {
-    eng.classList.add('hidden-question');
   } else {
     speakText(el.dataset.eng);
   }
@@ -8717,9 +8714,6 @@ function onTapJpn(el) {
   if (!jpn) return;
   if (answersHidden && jpn.classList.contains('hidden-answer')) {
     jpn.classList.remove('hidden-answer');
-    speakText(el.dataset.jpn);
-  } else if (answersHidden && !jpn.classList.contains('hidden-answer')) {
-    jpn.classList.add('hidden-answer');
   } else {
     speakText(el.dataset.jpn);
   }
