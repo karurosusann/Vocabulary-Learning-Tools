@@ -2208,9 +2208,9 @@ body.dark-mode .copy-menu-popup button {
   position: relative;
 }
 .result-close-btn {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -3844,6 +3844,7 @@ body.dark-mode .gdrive-setup-hint code {
   .know-btn.know:hover { background: #F0FFF4; }
   .result-close-btn:hover { background: var(--gray-100); }
   .result-btn:hover { background: var(--orange-500); transform: none; }
+  .result-btn.review-btn:hover { background: white; color: var(--orange-500); }
   .start-quiz-btn:hover { background: var(--orange-500); }
   .demo-btn:hover { background: var(--orange-500); transform: none; }
   .demo-item:hover { border-color: var(--gray-200); background: white; }
@@ -8429,7 +8430,7 @@ function showResult() {
   if (uniqueMissed.length > 0) {
     missedHtml = `
       <div class="missed-section">
-        <h4>まちがえた問題（${uniqueMissed.length}語）</h4>
+        <h4>間違えた問題（${uniqueMissed.length}語）</h4>
         <div class="missed-list">
           ${uniqueMissed.map(r => {
             const engEsc = escapeForInlineJS(r.word.english);
@@ -8500,7 +8501,7 @@ function showResult() {
     ${levelChangeHtml}
     <div class="result-actions-delayed" id="resultActionsDelayed">
       <button class="result-btn next-quiz-btn" onclick="startNextQuiz()">次の問題へ</button>
-      ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">まちがえた問題を復習する</button>' : ''}
+      ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">間違えた問題を復習する</button>' : ''}
     </div>
     ${missedHtml}
     ${correctHtml}
