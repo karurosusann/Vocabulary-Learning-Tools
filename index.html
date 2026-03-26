@@ -516,6 +516,22 @@ body.dark-mode #colorDotMatch {
   align-items: stretch;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+/* iOS overscroll bounce gap fix: extend background below safe area */
+.bottom-nav::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(env(safe-area-inset-bottom, 0px) + 50px);
+  background: inherit;
+  z-index: -1;
+  pointer-events: none;
 }
 body.dark-mode .bottom-nav {
   background: #1e1a28;
@@ -561,6 +577,9 @@ body.dark-mode .bottom-nav {
 }
 .bottom-nav-item:active {
   opacity: 0.6;
+}
+body.has-bottom-nav {
+  overscroll-behavior-y: none;
 }
 body.has-bottom-nav .app {
   padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
