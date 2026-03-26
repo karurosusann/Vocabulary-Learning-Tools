@@ -6598,7 +6598,12 @@ function renderDeckList() {
   // Auto-scroll active card into view
   const activeCard = grid.querySelector('.deck-card.active');
   if (activeCard) {
-    setTimeout(() => activeCard.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }), 50);
+    setTimeout(() => {
+      const cardLeft = activeCard.offsetLeft;
+      const cardWidth = activeCard.offsetWidth;
+      const gridWidth = grid.offsetWidth;
+      grid.scrollLeft = cardLeft - (gridWidth - cardWidth) / 2;
+    }, 50);
   }
 }
 
@@ -7202,7 +7207,13 @@ function showLevelSelect() {
   // Scroll selected card into view (e.g. うろ覚え/覚えた may be off-screen)
   setTimeout(() => {
     const sel = document.querySelector('.level-select-card.selected');
-    if (sel) sel.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    const row = document.querySelector('.level-select-row');
+    if (sel && row) {
+      const cardLeft = sel.offsetLeft;
+      const cardWidth = sel.offsetWidth;
+      const rowWidth = row.offsetWidth;
+      row.scrollLeft = cardLeft - (rowWidth - cardWidth) / 2;
+    }
   }, 50);
 }
 
