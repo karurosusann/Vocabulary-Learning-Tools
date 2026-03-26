@@ -840,6 +840,7 @@ body.dark-mode .cal-day-popup {
   .action-btn .icon { width: 72px; height: 72px; border-radius: 50%; }
   .action-btn .text h3 { font-size: 20px; }
   .action-btn .text p { font-size: 14px; }
+  .level-select-row { justify-content: center; }
 }
 
 /* Header */
@@ -2566,8 +2567,9 @@ body.dark-mode .copy-menu-popup button {
 #screen-wordlist {
   display: none;
   flex-direction: column;
-  height: calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 70px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow: hidden;
+  margin-bottom: -30px;
 }
 #screen-wordlist.active {
   display: flex;
@@ -3395,8 +3397,9 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 #screen-word-editor {
   display: none;
   flex-direction: column;
-  height: calc(100dvh - 110px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 20px - env(safe-area-inset-top));
   overflow: hidden;
+  margin-bottom: calc(-70px - env(safe-area-inset-bottom));
 }
 #screen-word-editor.active {
   display: flex;
@@ -3426,7 +3429,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-bottom: 40px;
+  padding-bottom: 10px;
 }
 .editor-word-list::-webkit-scrollbar { width: 4px; }
 .editor-word-list::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
@@ -3855,10 +3858,10 @@ body.dark-mode .quiz-copy-btn { background: #2a2535; }
   justify-content: center;
   gap: 6px;
 }
-.gdrive-btn.upload { background: #3B82F6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
-.gdrive-btn.upload:hover:not(:disabled) { background: #2563EB; box-shadow: 0 4px 16px rgba(59,130,246,0.4); }
-.gdrive-btn.download { background: #22C55E; color: white; box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
-.gdrive-btn.download:hover:not(:disabled) { background: #16A34A; box-shadow: 0 4px 16px rgba(34,197,94,0.4); }
+.gdrive-btn.upload { background: var(--orange-500); color: white; box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+.gdrive-btn.upload:hover:not(:disabled) { background: var(--orange-600); box-shadow: 0 4px 16px rgba(249,115,22,0.4); }
+.gdrive-btn.download { background: var(--red-500); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+.gdrive-btn.download:hover:not(:disabled) { background: #991B1B; box-shadow: 0 4px 16px rgba(239,68,68,0.4); }
 .gdrive-btn.disconnect { background: var(--gray-200); color: var(--gray-600); font-size: 12px; padding: 8px; }
 body.dark-mode .gdrive-btn.disconnect { background: #2a2535; color: var(--gray-500); }
 .gdrive-btn:disabled { opacity: 0.5; cursor: default; }
@@ -3945,7 +3948,7 @@ body.dark-mode .gdrive-setup-hint code {
         <input type="file" id="importJsonInitial" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
       </div>
       <div class="import-area import-json-area" onclick="showCreateEmptyDeck()">
-        <div class="import-icon" style="background:var(--gray-100);">✏️</div>
+        <div class="import-icon" style="background:var(--gray-100);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></div>
         <h3>自分でデッキを<br>作成</h3>
         <p>空のデッキを作成して編集</p>
       </div>
@@ -4261,7 +4264,7 @@ body.dark-mode .gdrive-setup-hint code {
   <!-- Modal: Edit Word -->
   <div class="confirm-overlay" id="editWordOverlay" onclick="closeEditWord()">
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
-      <div class="confirm-icon">✏️</div>
+      <div class="confirm-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></div>
       <h3 id="editWordTitle">問題を編集</h3>
       <div class="edit-word-wrap rename-input"><textarea id="editWordEng" class="edit-word-textarea" placeholder="問題文を入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
       <div class="edit-word-wrap rename-input"><textarea id="editWordJpn" class="edit-word-textarea" placeholder="答えを入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
@@ -4533,7 +4536,7 @@ body.dark-mode .gdrive-setup-hint code {
 <!-- Create empty deck modal -->
 <div class="confirm-overlay" id="createDeckOverlay" onclick="closeCreateDeckModal()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
-    <div class="confirm-icon">✏️</div>
+    <div class="confirm-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></div>
     <h3>デッキ名を入力</h3>
     <div id="createDeckName" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="デッキ名を入力" style="margin-top:12px;"></div>
     <div class="confirm-buttons" style="margin-top:16px;">
@@ -4576,7 +4579,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <div class="confirm-overlay" id="renameOverlay" onclick="closeRename()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
-    <div class="confirm-icon">✏️</div>
+    <div class="confirm-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></div>
     <h3>デッキ名を変更</h3>
     <div id="renameInput" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="新しい名前"></div>
     <div class="confirm-buttons">
@@ -7929,7 +7932,7 @@ function doCopyQuiz(target) {
   }
 
   navigator.clipboard.writeText(textToCopy).then(() => {
-    showToast('📋 ' + label + 'をコピーしました');
+    showToast(label + 'をコピーしました');
   }).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = textToCopy;
@@ -7939,7 +7942,7 @@ function doCopyQuiz(target) {
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    showToast('📋 ' + label + 'をコピーしました');
+    showToast(label + 'をコピーしました');
   });
 }
 
@@ -9663,7 +9666,7 @@ function showImportChoiceModal(data) {
   const overlay = document.getElementById('confirmOverlay');
   const modal = overlay.querySelector('.confirm-modal');
   modal.innerHTML = `
-    <div class="confirm-icon">📥</div>
+    <div class="confirm-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
     <h3>インポート方法を選択</h3>
     <p style="font-size:13px;color:var(--gray-500);margin:8px 0 4px;">読み込むデッキ: ${escapeHtml(deckNames)}</p>
     <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px;">${data.decks.length}デッキ・${data.decks.reduce((s,d) => s + d.words.length, 0)}問</p>
@@ -9983,8 +9986,8 @@ if ('serviceWorker' in navigator) {
 <!-- Copy Menu (pre-rendered) -->
 <div id="copyMenuBackdrop" class="copy-menu-backdrop" onclick="closeCopyMenu()"></div>
 <div id="copyMenu" class="copy-menu-popup">
-  <button onmousedown="doCopyQuiz('question')">📋 問題文をコピー</button>
-  <button id="copyMenuAnswerBtn" onmousedown="doCopyQuiz('answer')">📋 答えをコピー</button>
+  <button onmousedown="doCopyQuiz('question')">問題文をコピー</button>
+  <button id="copyMenuAnswerBtn" onmousedown="doCopyQuiz('answer')">答えをコピー</button>
 </div>
 </body>
 </html>
