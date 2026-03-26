@@ -1,0 +1,42 @@
+CSVocab License
+
+Copyright (c) 2025 seiya (karurosusann)
+
+本ソフトウェアは、以下の条件のもとで提供されます。
+
+【許可されること】
+- 個人的な学習目的での使用
+- 公開されたGitHub PagesのURLを通じた利用
+- ソースコードの閲覧（学習・参考目的）
+
+【禁止されること】
+- ソースコードの改変、および改変したものの公開
+- 本ソフトウェアの再配布（そのままの形での再配布を含む）
+- 商用目的での使用（広告掲載、有料サービスへの組み込み等）
+- 本ソフトウェアを利用した収益活動
+
+【免責事項】
+本ソフトウェアは「現状のまま」提供されます。
+作者は、本ソフトウェアの使用によって生じたいかなる損害についても
+責任を負いません。
+
+---
+
+This software is provided under the following terms:
+
+PERMITTED:
+- Personal use for learning purposes
+- Access via the published GitHub Pages URL
+- Viewing the source code for learning and reference
+
+PROHIBITED:
+- Modification of the source code and publishing modified versions
+- Redistribution of this software (including unmodified copies)
+- Commercial use (including but not limited to advertising,
+  integration into paid services)
+- Any revenue-generating activities using this software
+
+DISCLAIMER:
+This software is provided "as is", without warranty of any kind.
+The author shall not be liable for any damages arising from the
+use of this software.
