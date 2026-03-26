@@ -2306,12 +2306,14 @@ body.dark-mode .quiz-img-picker button {
   opacity: 0.3;
   padding: 2px;
   flex-shrink: 0;
+  margin-left: 4px;
 }
 .result-pin-btn.active {
   opacity: 1;
 }
 .result-pin-btn.active svg {
   stroke: var(--orange-500);
+  fill: var(--orange-500);
 }
 
 /* Level change summary */
@@ -3745,8 +3747,10 @@ body.dark-mode .quiz-copy-btn { background: #2a2535; }
   justify-content: center;
   gap: 6px;
 }
-.gdrive-btn.upload { background: var(--gray-500); color: white; }
-.gdrive-btn.download { background: var(--gray-500); color: white; }
+.gdrive-btn.upload { background: #3B82F6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.gdrive-btn.upload:hover:not(:disabled) { background: #2563EB; box-shadow: 0 4px 16px rgba(59,130,246,0.4); }
+.gdrive-btn.download { background: #22C55E; color: white; box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
+.gdrive-btn.download:hover:not(:disabled) { background: #16A34A; box-shadow: 0 4px 16px rgba(34,197,94,0.4); }
 .gdrive-btn.disconnect { background: var(--gray-200); color: var(--gray-600); font-size: 12px; padding: 8px; }
 body.dark-mode .gdrive-btn.disconnect { background: #2a2535; color: var(--gray-500); }
 .gdrive-btn:disabled { opacity: 0.5; cursor: default; }
@@ -8370,9 +8374,9 @@ function showResult() {
             const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
-              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
               <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.japanese)}</span>
+              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           `}).join('')}
         </div>
@@ -8401,9 +8405,9 @@ function showResult() {
             const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
-              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
               <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtmlBr(r.word.japanese)}</span>
+              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           `}).join('')}
         </div>
