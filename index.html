@@ -6897,7 +6897,6 @@ function showScreen(name) {
   closeCopyMenu();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
-  window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
     document.body.style.overflow = 'hidden';
@@ -6921,6 +6920,9 @@ function showScreen(name) {
     // Release quiz data when navigating away from quiz/result
     if (name !== 'result') currentQuiz = null;
   }
+  // Force layout recalc before scrolling (fixes iOS gap after quiz exit)
+  void document.body.offsetHeight;
+  window.scrollTo(0, 0);
   if (name === 'advanced-settings') {
     applyAdvancedSettingsUI();
   }
@@ -6948,6 +6950,11 @@ function showScreen(name) {
     if (navScreens.includes(name) && !editorSelectMode && !deckSelectMode) {
       nav.classList.add('show');
       document.body.classList.add('has-bottom-nav');
+      // iOS fix: force repaint after showing bottom nav to eliminate gap
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        void nav.offsetHeight;
+      });
     } else {
       nav.classList.remove('show');
       document.body.classList.remove('has-bottom-nav');
