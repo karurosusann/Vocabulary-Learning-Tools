@@ -6906,22 +6906,24 @@ function showScreen(name) {
   closeCopyMenu();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
-  window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
-    document.body.style.overflow = 'hidden';
+    // iOS-safe scroll lock: save position, pin body with top offset
+    const scrollY = window.scrollY || window.pageYOffset;
+    document.body.style.top = `-${scrollY}px`;
     document.body.style.position = 'fixed';
+    document.body.style.overflow = 'hidden';
     document.body.style.width = '100%';
-    document.body.style.height = '100%';
     // Set quiz screen to actual visible height (handles iOS address bar)
     if (window.visualViewport) {
       document.getElementById('screen-quiz').style.height = window.visualViewport.height + 'px';
     }
   } else {
-    document.body.style.overflow = '';
     document.body.style.position = '';
+    document.body.style.overflow = '';
     document.body.style.width = '';
-    document.body.style.height = '';
+    document.body.style.top = '';
+    window.scrollTo(0, 0);
     // Clear any visualViewport override on quiz screen
     const qScreen = document.getElementById('screen-quiz');
     if (qScreen) qScreen.style.height = '';
