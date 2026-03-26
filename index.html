@@ -19,9 +19,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
-  height: -webkit-fill-available;
-  height: 100%;
-  overflow: hidden;
 }
 html.dark-mode {
   background-color: #121018;
@@ -102,14 +99,8 @@ body.dark-mode {
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
   background: #FFEDD5;
-  height: -webkit-fill-available;
-  height: 100%;
-  margin: 0;
   color: var(--gray-800);
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
@@ -5858,7 +5849,7 @@ document.addEventListener('visibilitychange', () => {
     // Fix quiz screen position after returning from background
     const quizScreen = document.getElementById('screen-quiz');
     if (quizScreen && quizScreen.classList.contains('active')) {
-      window.scrollTo(0,0);document.body.scrollTop=0;
+      window.scrollTo(0, 0);
     }
   }
 });
@@ -5897,7 +5888,7 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', () => {
     const quizScreen = document.getElementById('screen-quiz');
     if (quizScreen && quizScreen.classList.contains('active')) {
-      window.scrollTo(0,0);document.body.scrollTop=0;
+      window.scrollTo(0, 0);
     }
     // Keep edit overlay pinned to visual viewport on iOS scroll
     const editOverlay = document.getElementById('editWordOverlay');
@@ -6892,22 +6883,20 @@ function showScreen(name) {
   document.getElementById(`screen-${name}`).classList.add('active');
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
-    // iOS-safe scroll lock: save position, pin body with top offset
-    const scrollY = window.scrollY || window.pageYOffset;
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.position = 'fixed';
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
     document.body.style.width = '100%';
+    document.body.style.top = '0';
     // Set quiz screen to actual visible height (handles iOS address bar)
     if (window.visualViewport) {
       document.getElementById('screen-quiz').style.height = window.visualViewport.height + 'px';
     }
   } else {
-    document.body.style.position = '';
     document.body.style.overflow = '';
+    document.body.style.position = '';
     document.body.style.width = '';
     document.body.style.top = '';
-    window.scrollTo(0,0);document.body.scrollTop=0;
+    window.scrollTo(0,0);
     // Clear any visualViewport override on quiz screen
     const qScreen = document.getElementById('screen-quiz');
     if (qScreen) qScreen.style.height = '';
@@ -9339,7 +9328,7 @@ async function saveWord() {
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
-    window.scrollTo(0,0);document.body.scrollTop=0;
+    window.scrollTo(0, 0);
     showQuizQuestion();
     showToast('保存しました！');
     return;
@@ -10009,6 +9998,46 @@ if (localStorage.getItem(GDRIVE_CLIENT_ID_KEY)) {
   const b = document.getElementById('gdriveBadge');
   if (b) b.textContent = '接続済み';
 }
+
+// ============ iOS OVERSCROLL PREVENTION ============
+(function() {
+  var startY = 0;
+  document.addEventListener('touchstart', function(e) {
+    startY = e.touches[0].pageY;
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', function(e) {
+    // Allow scrolling inside scrollable containers
+    var el = e.target;
+    while (el && el !== document.body) {
+      var style = window.getComputedStyle(el);
+      var overflowY = style.overflowY;
+      if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+        var atTop = el.scrollTop <= 0;
+        var atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        var dy = e.touches[0].pageY - startY;
+        // Only block if scrolling past boundaries
+        if ((atTop && dy > 0) || (atBottom && dy < 0)) {
+          // At boundary, but let it bubble to check parent containers
+        } else {
+          return; // Inside scrollable area, allow
+        }
+      }
+      el = el.parentElement;
+    }
+    // Reached body/document — prevent overscroll
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    var dy = e.touches[0].pageY - startY;
+    if (maxScroll <= 0) {
+      e.preventDefault(); // Page doesn't need to scroll at all
+    } else if (scrollTop <= 0 && dy > 0) {
+      e.preventDefault(); // At top, pulling down
+    } else if (scrollTop >= maxScroll && dy < 0) {
+      e.preventDefault(); // At bottom, pulling up
+    }
+  }, { passive: false });
+})();
 
 // ============ PWA SERVICE WORKER ============
 if ('serviceWorker' in navigator) {
