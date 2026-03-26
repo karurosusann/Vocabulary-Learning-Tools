@@ -666,6 +666,12 @@ body.dark-mode .stat-box {
 body.dark-mode .heatmap-cell {
   background: #2a2535;
 }
+.heatmap-cell.studied {
+  background: rgba(249,115,22,0.15);
+}
+body.dark-mode .heatmap-cell.studied {
+  background: rgba(249,115,22,0.2);
+}
 .heatmap-cell .cal-day {
   font-size: 10px;
   font-weight: 600;
@@ -4867,11 +4873,6 @@ function renderHeatmap() {
     const title = val > 0 ? `${key}: ${val}語` : key;
     const cellDate = new Date(year, month, day);
     let mark = '';
-    if (val > 0) {
-      mark = '<span class="cal-check mark-o">○</span>';
-    } else if (cellDate < today) {
-      mark = '<span class="cal-check mark-x">×</span>';
-    }
     html += `<div class="heatmap-cell${studied}${isToday}" title="${title}" onclick="showCalDayPopup('${key}', event)"><span class="cal-day">${day}</span>${mark}</div>`;
   }
 
