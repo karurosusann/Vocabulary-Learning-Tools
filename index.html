@@ -20,6 +20,8 @@
 html {
   background-color: #FFEDD5;
   overscroll-behavior: none;
+  height: 100%;
+  overflow: hidden;
 }
 html.dark-mode {
   background-color: #121018;
@@ -100,8 +102,10 @@ body.dark-mode {
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
   background: #FFEDD5;
+  height: 100%;
   color: var(--gray-800);
   overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
@@ -5872,7 +5876,7 @@ document.addEventListener('visibilitychange', () => {
     // Fix quiz screen position after returning from background
     const quizScreen = document.getElementById('screen-quiz');
     if (quizScreen && quizScreen.classList.contains('active')) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0,0);document.body.scrollTop=0;
     }
   }
 });
@@ -5911,7 +5915,7 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', () => {
     const quizScreen = document.getElementById('screen-quiz');
     if (quizScreen && quizScreen.classList.contains('active')) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0,0);document.body.scrollTop=0;
     }
     // Keep edit overlay pinned to visual viewport on iOS scroll
     const editOverlay = document.getElementById('editWordOverlay');
@@ -6921,7 +6925,7 @@ function showScreen(name) {
     document.body.style.overflow = '';
     document.body.style.width = '';
     document.body.style.top = '';
-    window.scrollTo(0, 0);
+    window.scrollTo(0,0);document.body.scrollTop=0;
     // Clear any visualViewport override on quiz screen
     const qScreen = document.getElementById('screen-quiz');
     if (qScreen) qScreen.style.height = '';
@@ -9353,7 +9357,7 @@ async function saveWord() {
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
-    window.scrollTo(0, 0);
+    window.scrollTo(0,0);document.body.scrollTop=0;
     showQuizQuestion();
     showToast('保存しました！');
     return;
