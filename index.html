@@ -4287,11 +4287,11 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="edit-word-wrap rename-input"><textarea id="editWordEng" class="edit-word-textarea" placeholder="問題文を入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
       <div class="edit-word-wrap rename-input"><textarea id="editWordJpn" class="edit-word-textarea" placeholder="答えを入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
       <div class="img-attach-row">
-        <div class="img-attach-box" id="imgBoxQ" onpointerdown="if(document.activeElement)document.activeElement.blur()">
+        <div class="img-attach-box" id="imgBoxQ">
           <span class="img-label">問題の画像</span>
           <span class="img-add-icon" id="imgAddQ"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></span>
         </div>
-        <div class="img-attach-box" id="imgBoxA" onpointerdown="if(document.activeElement)document.activeElement.blur()">
+        <div class="img-attach-box" id="imgBoxA">
           <span class="img-label">答えの画像</span>
           <span class="img-add-icon" id="imgAddA"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></span>
         </div>
@@ -5657,10 +5657,12 @@ function removeEditImg(target) {
       touchTarget = null;
       return;
     }
-    // Tap (no drag, no movement) on image → open lightbox
-    // Empty boxes are handled by the click event (needed for iOS file picker)
+    // Tap (no drag, no movement) on image → open lightbox or pick image
     if (touchTarget && !touchMoved && !suppressClick) {
-      if (!e.target.closest('.img-remove') && getSourceData(touchTarget)) {
+      if (!e.target.closest('.img-remove')) {
+        if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') {
+          document.activeElement.blur();
+        }
         handleBoxClick(touchTarget);
         suppressClick = true;
         setTimeout(() => { suppressClick = false; }, 300);
