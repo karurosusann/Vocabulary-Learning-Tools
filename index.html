@@ -5915,18 +5915,71 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS: scroll focused edit field into view when keyboard opens
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const editPanel = document.getElementById('editWordOverlay');
-    if (editPanel && editPanel.classList.contains('show')) {
-      const focused = editPanel.querySelector(':focus');
-      if (focused) {
-        setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+// iOS keyboard fix: prevent page from staying pushed up after keyboard dismisses
+(function initIOSKeyboardFix() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Reset scroll position helper
+  function resetScrollPosition() {
+    window.scrollTo(0, 0);
+    // Also reset body transform/position in case iOS shifted it
+    document.body.style.transform = '';
+    document.body.style.position === 'fixed' && (document.body.style.position = '');
+  }
+
+  if (window.visualViewport) {
+    let initialHeight = window.visualViewport.height;
+    let keyboardOpen = false;
+
+    window.visualViewport.addEventListener('resize', () => {
+      const currentHeight = window.visualViewport.height;
+      const heightDiff = initialHeight - currentHeight;
+
+      if (heightDiff > 100) {
+        // Keyboard opened — scroll focused element into view
+        keyboardOpen = true;
+        const editPanel = document.getElementById('editWordOverlay');
+        if (editPanel && editPanel.classList.contains('show')) {
+          const focused = editPanel.querySelector(':focus');
+          if (focused) {
+            setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+          }
+        }
+      } else if (keyboardOpen && heightDiff < 50) {
+        // Keyboard closed — reset scroll position
+        keyboardOpen = false;
+        setTimeout(resetScrollPosition, 50);
+        setTimeout(resetScrollPosition, 150);
       }
+    });
+
+    // Update baseline when orientation changes
+    window.visualViewport.addEventListener('scroll', () => {
+      if (!keyboardOpen) {
+        initialHeight = window.visualViewport.height;
+      }
+    });
+    screen.orientation && screen.orientation.addEventListener('change', () => {
+      setTimeout(() => { initialHeight = window.visualViewport.height; }, 300);
+    });
+  }
+
+  // Blur handler: when any input/textarea loses focus, reset scroll (iOS fix)
+  document.addEventListener('focusout', (e) => {
+    if (!isIOS) return;
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) {
+      // Small delay to allow for field-to-field focus transitions
+      setTimeout(() => {
+        // Only reset if no other editable element gained focus
+        const ae = document.activeElement;
+        if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA' && !ae.isContentEditable)) {
+          resetScrollPosition();
+        }
+      }, 80);
     }
-  });
-}
+  }, true);
+})();
 
 
 function playTone(freq, duration, type, vol) {
@@ -8356,6 +8409,9 @@ function submitInputAnswer() {
     setTimeout(() => speakText(answerText), 200);
   }
 
+  // iOS: reset scroll position after keyboard dismisses
+  setTimeout(() => window.scrollTo(0, 0), 100);
+
   stopQuizTimer();
 }
 
@@ -9275,10 +9331,17 @@ async function showEditWordModal(index) {
 }
 
 function closeEditWord() {
+  // Blur any focused input/textarea first to dismiss iOS keyboard
+  const focused = document.activeElement;
+  if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.isContentEditable)) {
+    focused.blur();
+  }
   const panel = document.getElementById('editWordOverlay');
   panel.classList.remove('show');
   panel.scrollTop = 0;
   window._quizEditReturn = false;
+  // Ensure scroll position is reset (iOS keyboard fix)
+  setTimeout(() => window.scrollTo(0, 0), 100);
 }
 
 async function saveWord() {
