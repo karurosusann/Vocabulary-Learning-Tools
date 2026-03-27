@@ -1715,15 +1715,24 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 
 #screen-quiz {
-  height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: none;
   flex-direction: column;
-  overflow: visible;
   touch-action: none;
   overscroll-behavior: none;
 }
 #screen-quiz.active {
   display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--bg, #FFEDD5);
+  padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(16px + env(safe-area-inset-left));
+  overflow: visible;
+  max-width: 480px;
+  margin: 0 auto;
 }
 .quiz-card-area {
   position: relative;
@@ -3631,6 +3640,13 @@ body.dark-mode .bulk-action-btn.select-all {
   margin: auto;
   max-width: 400px;
   width: 100%;
+}
+#editWordOverlay.kb-open {
+  align-items: flex-start;
+}
+#editWordOverlay.kb-open .confirm-modal {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 .edit-word-panel-header {
   display: flex;
@@ -6933,7 +6949,7 @@ function showScreen(name) {
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
-    // Set quiz screen to actual visible height (handles iOS PWA address bar gap)
+    // Set quiz screen to actual visible height (handles iOS address bar)
     if (window.visualViewport) {
       document.getElementById('screen-quiz').style.height = window.visualViewport.height + 'px';
     }
@@ -9307,7 +9323,9 @@ async function showEditWordModal(index) {
 
 function closeEditWord() {
   const panel = document.getElementById('editWordOverlay');
-  panel.classList.remove('show');
+  panel.classList.remove('show', 'kb-open');
+  panel.style.height = '';
+  panel.style.top = '';
   panel.scrollTop = 0;
   window._quizEditReturn = false;
 }
