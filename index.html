@@ -99,11 +99,10 @@ body.dark-mode {
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
   background: #FFEDD5;
+  min-height: 100vh;
+  min-height: 100dvh;
   color: var(--gray-800);
-  margin: 0;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  overflow: hidden;
+  overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
@@ -795,9 +794,6 @@ body.dark-mode .cal-day-popup {
   padding-right: calc(16px + env(safe-area-inset-right));
   position: relative;
   z-index: 1;
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 @media (min-width: 768px) and (max-width: 1023px) {
   .app {
@@ -5919,18 +5915,82 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS: scroll focused edit field into view when keyboard opens
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const editPanel = document.getElementById('editWordOverlay');
-    if (editPanel && editPanel.classList.contains('show')) {
-      const focused = editPanel.querySelector(':focus');
-      if (focused) {
-        setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+// iOS PWA: fix viewport staying pushed up after keyboard dismisses.
+// Technique: momentarily set body to position:fixed to force viewport snap-back, then remove it.
+// CSS is NOT changed — this is JS-only.
+(function() {
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIOS) return;
+
+  var savedScrollY = 0;
+  var kbOpen = false;
+
+  function snapBack() {
+    // Momentarily fix body to force iOS to reset viewport position
+    var sy = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.bottom = '0';
+    document.body.style.overflow = 'hidden';
+    document.body.offsetHeight; // force reflow
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.bottom = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, savedScrollY);
+    document.documentElement.scrollTop = savedScrollY;
+    document.body.scrollTop = savedScrollY;
+  }
+
+  if (window.visualViewport) {
+    var baseH = window.visualViewport.height;
+
+    window.visualViewport.addEventListener('resize', function() {
+      var h = window.visualViewport.height;
+      var diff = baseH - h;
+      if (!kbOpen && diff > 100) {
+        kbOpen = true;
+        savedScrollY = window.scrollY || 0;
+        // Scroll focused edit field into view
+        var ep = document.getElementById('editWordOverlay');
+        if (ep && ep.classList.contains('show')) {
+          var f = ep.querySelector(':focus');
+          if (f) setTimeout(function() { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
+        }
+      } else if (kbOpen && diff < 50) {
+        kbOpen = false;
+        snapBack();
+        setTimeout(snapBack, 50);
+        setTimeout(snapBack, 200);
       }
+      if (!kbOpen) baseH = h;
+    });
+
+    window.visualViewport.addEventListener('scroll', function() {
+      if (!kbOpen && window.visualViewport.offsetTop > 0) {
+        snapBack();
+      }
+    });
+  }
+
+  document.addEventListener('focusout', function(e) {
+    var tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) {
+      setTimeout(function() {
+        var ae = document.activeElement;
+        if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA' && !ae.isContentEditable)) {
+          snapBack();
+          setTimeout(snapBack, 150);
+        }
+      }, 100);
     }
-  });
-}
+  }, true);
+})();
 
 
 function playTone(freq, duration, type, vol) {
@@ -6911,12 +6971,13 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
   window.scrollTo(0, 0);
-  // Lock .app scroll on fullscreen quiz screen only
-  var appEl = document.querySelector('.app');
+  // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
-    if (appEl) appEl.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
   } else {
-    if (appEl) appEl.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -9351,9 +9412,9 @@ async function saveWord() {
 
   // If editing from quiz, refresh quiz display and return
   if (wasQuizEdit) {
-    // Re-lock .app scroll for quiz mode
-    var appEl = document.querySelector('.app');
-    if (appEl) appEl.style.overflow = 'hidden';
+    // Re-lock body scroll for quiz mode
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
     showQuizQuestion();
     showToast('保存しました！');
     return;
