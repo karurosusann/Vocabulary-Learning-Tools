@@ -1715,15 +1715,24 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 
 #screen-quiz {
-  height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: none;
   flex-direction: column;
-  overflow: visible;
   touch-action: none;
   overscroll-behavior: none;
 }
 #screen-quiz.active {
   display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--bg, #FFEDD5);
+  padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(16px + env(safe-area-inset-left));
+  overflow: visible;
+  max-width: 480px;
+  margin: 0 auto;
 }
 .quiz-card-area {
   position: relative;
@@ -3631,13 +3640,6 @@ body.dark-mode .bulk-action-btn.select-all {
   margin: auto;
   max-width: 400px;
   width: 100%;
-}
-#editWordOverlay.kb-open {
-  align-items: flex-start;
-}
-#editWordOverlay.kb-open .confirm-modal {
-  margin-top: 0;
-  margin-bottom: 0;
 }
 .edit-word-panel-header {
   display: flex;
@@ -5913,44 +5915,15 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS: keep quiz screen correctly sized when visual viewport changes (address bar, keyboard)
+// iOS: scroll focused edit field into view when keyboard opens
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
-    const quizScreen = document.getElementById('screen-quiz');
-    if (quizScreen && quizScreen.classList.contains('active')) {
-      quizScreen.style.height = window.visualViewport.height + 'px';
-    }
-    // Adjust edit word overlay when iOS keyboard opens/closes
-    const editOverlay = document.getElementById('editWordOverlay');
-    if (editOverlay && editOverlay.classList.contains('show')) {
-      const vvh = window.visualViewport.height;
-      const fullH = window.innerHeight;
-      const kbOpen = fullH - vvh > 100;
-      editOverlay.style.height = vvh + 'px';
-      editOverlay.style.top = window.visualViewport.offsetTop + 'px';
-      if (kbOpen) {
-        editOverlay.classList.add('kb-open');
-        // Scroll focused element into view
-        const focused = editOverlay.querySelector(':focus');
-        if (focused) {
-          setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-        }
-      } else {
-        editOverlay.classList.remove('kb-open');
-        editOverlay.style.height = '';
-        editOverlay.style.top = '';
+    const editPanel = document.getElementById('editWordOverlay');
+    if (editPanel && editPanel.classList.contains('show')) {
+      const focused = editPanel.querySelector(':focus');
+      if (focused) {
+        setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       }
-    }
-  });
-  window.visualViewport.addEventListener('scroll', () => {
-    const quizScreen = document.getElementById('screen-quiz');
-    if (quizScreen && quizScreen.classList.contains('active')) {
-      window.scrollTo(0, 0);
-    }
-    // Keep edit overlay pinned to visual viewport on iOS scroll
-    const editOverlay = document.getElementById('editWordOverlay');
-    if (editOverlay && editOverlay.classList.contains('show')) {
-      editOverlay.style.top = window.visualViewport.offsetTop + 'px';
     }
   });
 }
@@ -6936,22 +6909,11 @@ function showScreen(name) {
   window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    // Set quiz screen to actual visible height (handles iOS address bar)
-    if (window.visualViewport) {
-      document.getElementById('screen-quiz').style.height = window.visualViewport.height + 'px';
-    }
   } else {
+    document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
-    // Clear any visualViewport override on quiz screen
-    const qScreen = document.getElementById('screen-quiz');
-    if (qScreen) qScreen.style.height = '';
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -9314,9 +9276,7 @@ async function showEditWordModal(index) {
 
 function closeEditWord() {
   const panel = document.getElementById('editWordOverlay');
-  panel.classList.remove('show', 'kb-open');
-  panel.style.height = '';
-  panel.style.top = '';
+  panel.classList.remove('show');
   panel.scrollTop = 0;
   window._quizEditReturn = false;
 }
@@ -9386,11 +9346,8 @@ async function saveWord() {
   // If editing from quiz, refresh quiz display and return
   if (wasQuizEdit) {
     // Re-lock body scroll for quiz mode
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    window.scrollTo(0, 0);
     showQuizQuestion();
     showToast('保存しました！');
     return;
