@@ -5866,6 +5866,7 @@ document.addEventListener('visibilitychange', () => {
 // iOS: adjust edit overlay alignment when keyboard opens/closes
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
+    // Adjust edit word overlay when iOS keyboard opens/closes
     const editOverlay = document.getElementById('editWordOverlay');
     if (editOverlay && editOverlay.classList.contains('show')) {
       const vvh = window.visualViewport.height;
@@ -5873,14 +5874,23 @@ if (window.visualViewport) {
       const kbOpen = fullH - vvh > 100;
       if (kbOpen) {
         editOverlay.classList.add('kb-open');
-        // Scroll focused element into view within the overlay
+        document.body.classList.add('overlay-kb-open');
+        // Scroll focused element into view
         const focused = editOverlay.querySelector(':focus');
         if (focused) {
           setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
         }
       } else {
         editOverlay.classList.remove('kb-open');
+        document.body.classList.remove('overlay-kb-open');
       }
+    }
+  });
+  // Prevent iOS from scrolling the page when overlay/keyboard is active
+  window.visualViewport.addEventListener('scroll', () => {
+    const anyOverlay = document.querySelector('.confirm-overlay.show, .settings-overlay.show');
+    if (anyOverlay) {
+      window.scrollTo(0, 0);
     }
   });
 }
@@ -6866,15 +6876,11 @@ function showScreen(name) {
   window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
-    // Just prevent background scroll — quiz screen itself is position:fixed via CSS
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
   } else {
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
-    // Clear any visualViewport override on quiz screen
-    const qScreen = document.getElementById('screen-quiz');
-    if (qScreen) qScreen.style.height = '';
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -9208,6 +9214,7 @@ function closeEditWord() {
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.remove('show', 'kb-open');
   overlay.scrollTop = 0;
+  document.body.classList.remove('overlay-kb-open');
   window._quizEditReturn = false;
 }
 
