@@ -5915,35 +5915,36 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS PWA: fix bottom gap
-// In PWA standalone mode, CSS vh/dvh units don't always match the actual screen height.
-// We use window.innerHeight (actual pixel height) to force correct sizing.
+// iOS PWA: fix bottom gap caused by incorrect viewport height calculation.
+// In PWA standalone mode, 100vh can be shorter than the actual screen.
+// "Swipe down to fix" works because it forces iOS to recalculate the viewport.
+// We replicate that by briefly toggling the viewport meta tag.
 (function() {
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (!isIOS) return;
-
   var isPWA = !!window.navigator.standalone;
-  var fullH = window.innerHeight;
 
-  // In PWA mode: set body height to exact screen pixels
-  function applyFullHeight() {
-    if (!isPWA) return;
-    document.documentElement.style.minHeight = fullH + 'px';
-    document.body.style.minHeight = fullH + 'px';
-  }
-  applyFullHeight();
-  window.addEventListener('load', applyFullHeight);
+  var meta = document.querySelector('meta[name="viewport"]');
+  var origContent = meta ? meta.getAttribute('content') : '';
 
-  // Update on orientation change
-  if (screen.orientation) {
-    screen.orientation.addEventListener('change', function() {
-      setTimeout(function() { fullH = window.innerHeight; applyFullHeight(); }, 500);
+  // Force iOS to recalculate viewport by toggling the viewport meta tag
+  function forceViewportRecalc() {
+    if (!meta) return;
+    meta.setAttribute('content', origContent.replace('initial-scale=1.0', 'initial-scale=0.9999'));
+    requestAnimationFrame(function() {
+      meta.setAttribute('content', origContent);
     });
   }
-  window.addEventListener('orientationchange', function() {
-    setTimeout(function() { fullH = window.innerHeight; applyFullHeight(); }, 500);
-  });
+
+  // On PWA launch: force viewport recalc at multiple timings
+  if (isPWA) {
+    forceViewportRecalc();
+    setTimeout(forceViewportRecalc, 100);
+    setTimeout(forceViewportRecalc, 300);
+    setTimeout(forceViewportRecalc, 600);
+    setTimeout(forceViewportRecalc, 1200);
+  }
 
   // Keyboard handling
   if (window.visualViewport) {
@@ -5963,12 +5964,12 @@ document.addEventListener('visibilitychange', () => {
           if (f) setTimeout(function() { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
         }
       } else if (kbOpen && diff < 50) {
-        // Keyboard closed
         kbOpen = false;
-        // Re-apply full height and reset scroll
+        // Keyboard closed: force viewport recalc
         if (isPWA) {
-          fullH = window.innerHeight;
-          applyFullHeight();
+          forceViewportRecalc();
+          setTimeout(forceViewportRecalc, 100);
+          setTimeout(forceViewportRecalc, 300);
         }
         window.scrollTo(0, 0);
       }
@@ -5977,17 +5978,14 @@ document.addEventListener('visibilitychange', () => {
     });
   }
 
-  // After input loses focus (keyboard dismiss)
+  // After input loses focus
   document.addEventListener('focusout', function(e) {
     var tag = e.target && e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) {
       setTimeout(function() {
         var ae = document.activeElement;
         if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA' && !ae.isContentEditable)) {
-          if (isPWA) {
-            fullH = window.innerHeight;
-            applyFullHeight();
-          }
+          if (isPWA) forceViewportRecalc();
           window.scrollTo(0, 0);
         }
       }, 100);
