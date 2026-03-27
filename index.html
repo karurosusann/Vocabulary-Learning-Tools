@@ -19,7 +19,11 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
-  /* Prevent iOS PWA from scrolling the html element when keyboard pushes viewport */
+  /* iOS PWA: prevent the viewport itself from scrolling */
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
   overscroll-behavior: none;
 }
 html.dark-mode {
@@ -101,13 +105,18 @@ body.dark-mode {
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
   background: #FFEDD5;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* iOS PWA: lock body in place, let .app handle scrolling */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   color: var(--gray-800);
-  overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
+  overscroll-behavior: none;
 }
 
 body.dark-mode {
@@ -796,6 +805,11 @@ body.dark-mode .cal-day-popup {
   padding-right: calc(16px + env(safe-area-inset-right));
   position: relative;
   z-index: 1;
+  /* iOS PWA: .app is now the scroll container (not body) */
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
 }
 @media (min-width: 768px) and (max-width: 1023px) {
   .app {
@@ -5918,17 +5932,18 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // iOS PWA scroll reset helper (globally accessible)
-// In standalone (home screen) mode, window.scrollTo alone does NOT work.
+// With body position:fixed, the viewport offset issue is largely solved by CSS,
+// but we still force-reset any residual scroll offsets.
 function _iosForceResetScroll() {
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  // Force layout recalc to snap viewport back
-  document.body.style.minHeight = '100vh';
-  requestAnimationFrame(() => {
-    document.body.style.minHeight = '';
-    document.body.style.minHeight = '100dvh';
-  });
+}
+// Reset both viewport AND content scroll (for screen transitions)
+function _iosForceResetScrollFull() {
+  _iosForceResetScroll();
+  const appEl = document.querySelector('.app');
+  if (appEl) appEl.scrollTop = 0;
 }
 
 // iOS PWA keyboard fix: prevent page from staying pushed up after keyboard dismisses
@@ -6977,14 +6992,13 @@ function showScreen(name) {
   closeCopyMenu();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
-  _iosForceResetScroll();
-  // Lock body scroll on fullscreen quiz screen only
+  _iosForceResetScrollFull();
+  // Lock .app scroll on fullscreen quiz screen only (body is always fixed now)
+  const appEl = document.querySelector('.app');
   if (name === 'quiz') {
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    if (appEl) appEl.style.overflow = 'hidden';
   } else {
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
+    if (appEl) appEl.style.overflow = '';
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -9430,9 +9444,9 @@ async function saveWord() {
 
   // If editing from quiz, refresh quiz display and return
   if (wasQuizEdit) {
-    // Re-lock body scroll for quiz mode
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    // Re-lock .app scroll for quiz mode
+    const appEl = document.querySelector('.app');
+    if (appEl) appEl.style.overflow = 'hidden';
     showQuizQuestion();
     showToast('保存しました！');
     return;
