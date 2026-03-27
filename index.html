@@ -2576,9 +2576,8 @@ body.dark-mode .copy-menu-popup button {
 #screen-wordlist {
   display: none;
   flex-direction: column;
-  height: calc(100dvh - 70px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow: hidden;
-  margin-bottom: -30px;
 }
 #screen-wordlist.active {
   display: flex;
@@ -2634,7 +2633,7 @@ body.dark-mode .copy-menu-popup button {
   overscroll-behavior: contain;
   touch-action: pan-y;
   padding-right: 4px;
-  padding-bottom: 16px;
+  padding-bottom: 4px;
 }
 .word-items::-webkit-scrollbar { width: 4px; }
 .word-items::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
@@ -3406,9 +3405,8 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 #screen-word-editor {
   display: none;
   flex-direction: column;
-  height: calc(100dvh - 20px - env(safe-area-inset-top));
+  height: calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow: hidden;
-  margin-bottom: calc(-70px - env(safe-area-inset-bottom));
 }
 #screen-word-editor.active {
   display: flex;
@@ -3438,7 +3436,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-bottom: 10px;
+  padding-bottom: 4px;
 }
 .editor-word-list::-webkit-scrollbar { width: 4px; }
 .editor-word-list::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
@@ -3957,7 +3955,7 @@ body.dark-mode .gdrive-setup-hint code {
         <input type="file" id="importJsonInitial" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
       </div>
       <div class="import-area import-json-area" onclick="showCreateEmptyDeck()">
-        <div class="import-icon" style="background:var(--gray-100);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></div>
+        <div class="import-icon" style="background:var(--gray-100);font-size:24px;line-height:1;">✏️</div>
         <h3>自分でデッキを<br>作成</h3>
         <p>空のデッキを作成して編集</p>
       </div>
