@@ -112,6 +112,39 @@ body.dark-mode {
   background: #121018;
   color: var(--gray-800);
 }
+
+/* iOS PWA standalone viewport gap fix */
+/* Applies via CSS media query AND JS-applied class for older iOS */
+@media (display-mode: standalone) {
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    height: 100%;
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+  body > .app {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+html.ios-standalone {
+  height: 100%;
+  overflow: hidden;
+}
+html.ios-standalone body {
+  height: 100%;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+html.ios-standalone body > .app {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 body.dark-mode .quiz-card,
 body.dark-mode .quiz-card-next,
 body.dark-mode .quiz-result,
@@ -4646,6 +4679,98 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="toast" id="toast"></div>
 
 <script>
+// ============ iOS PWA VIEWPORT FIX ============
+// In iOS standalone (PWA) mode, the viewport height is incorrectly reduced by
+// the Safari toolbar height (~59px), leaving a gap at the bottom.
+// Swiping down (bounce-back) forces iOS to recalculate, so we simulate it.
+(function() {
+  const isIOSPWA = window.navigator.standalone === true;
+  if (!isIOSPWA) return;
+
+  // Apply CSS class for standalone-specific styles (backup for older iOS
+  // that don't support @media (display-mode: standalone))
+  document.documentElement.classList.add('ios-standalone');
+
+  let _vpFixTimer = null;
+  let _vpFixRunning = false;
+
+  function forceViewportRecalc() {
+    if (_vpFixRunning) return;
+    _vpFixRunning = true;
+
+    // Temporarily lift overflow:hidden so we can scroll
+    document.documentElement.style.setProperty('overflow', 'auto', 'important');
+    document.body.style.setProperty('overflow', 'auto', 'important');
+
+    // Create a temporary spacer that extends beyond the viewport to enable scrolling
+    const spacer = document.createElement('div');
+    spacer.style.cssText = 'width:1px;height:' + (window.screen.height + 100) + 'px;position:absolute;top:0;left:0;pointer-events:none;opacity:0;';
+    document.body.appendChild(spacer);
+
+    requestAnimationFrame(() => {
+      // Scroll down by 1px — triggers iOS viewport recalculation
+      window.scrollTo(0, 1);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // Scroll back to top
+          window.scrollTo(0, 0);
+          // Restore overflow
+          document.documentElement.style.removeProperty('overflow');
+          document.body.style.removeProperty('overflow');
+          // Remove spacer
+          if (spacer.parentNode) spacer.parentNode.removeChild(spacer);
+          _vpFixRunning = false;
+        }, 80);
+      });
+    });
+  }
+
+  function scheduleViewportFix(delay) {
+    if (_vpFixTimer) clearTimeout(_vpFixTimer);
+    _vpFixTimer = setTimeout(forceViewportRecalc, delay || 200);
+  }
+
+  // 1) On initial page load
+  if (document.readyState === 'complete') {
+    scheduleViewportFix(100);
+  } else {
+    window.addEventListener('load', () => scheduleViewportFix(100));
+  }
+
+  // 2) On returning from background (visibilitychange)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) scheduleViewportFix(200);
+  });
+
+  // 3) After keyboard dismiss — visualViewport height increases significantly
+  if (window.visualViewport) {
+    let _prevVVHeight = window.visualViewport.height;
+    window.visualViewport.addEventListener('resize', () => {
+      const h = window.visualViewport.height;
+      if (h > _prevVVHeight + 80) {
+        // Keyboard likely closed — re-fix viewport after a delay
+        scheduleViewportFix(300);
+      }
+      _prevVVHeight = h;
+    });
+  }
+
+  // 4) On orientation change
+  window.addEventListener('orientationchange', () => scheduleViewportFix(500));
+
+  // 5) Safety net: first touch interaction (in case load-time fix didn't stick)
+  let _firstTouchDone = false;
+  document.addEventListener('touchstart', function _vpFirstTouch() {
+    if (_firstTouchDone) return;
+    _firstTouchDone = true;
+    // Check if gap still exists
+    if (window.innerHeight < window.screen.height - 20) {
+      scheduleViewportFix(50);
+    }
+    document.removeEventListener('touchstart', _vpFirstTouch);
+  }, { passive: true });
+})();
+
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
 let decks = [];
