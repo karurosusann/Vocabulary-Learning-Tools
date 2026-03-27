@@ -1715,24 +1715,15 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 
 #screen-quiz {
+  height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: none;
   flex-direction: column;
+  overflow: visible;
   touch-action: none;
   overscroll-behavior: none;
 }
 #screen-quiz.active {
   display: flex;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
-  background: var(--bg, #FFEDD5);
-  padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(16px + env(safe-area-inset-left));
-  overflow: visible;
-  max-width: 480px;
-  margin: 0 auto;
 }
 .quiz-card-area {
   position: relative;
