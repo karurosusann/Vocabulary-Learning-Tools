@@ -99,10 +99,10 @@ body.dark-mode {
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
   background: #FFEDD5;
-  min-height: 100vh;
-  min-height: 100dvh;
   color: var(--gray-800);
-  overflow-x: hidden;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
@@ -794,6 +794,9 @@ body.dark-mode .cal-day-popup {
   padding-right: calc(16px + env(safe-area-inset-right));
   position: relative;
   z-index: 1;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 @media (min-width: 768px) and (max-width: 1023px) {
   .app {
@@ -5915,88 +5918,18 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS PWA keyboard fix: prevent page staying pushed up after keyboard dismisses
-// The fix works by temporarily setting body to position:fixed to snap the viewport back,
-// then immediately removing it. This does NOT cause a permanent gap.
-(function initIOSKeyboardFix() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!isIOS) return;
-
-  function snapViewportBack() {
-    // Temporarily fix body position to force iOS to snap viewport back to 0
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.top = -window.scrollY + 'px';
-    requestAnimationFrame(() => {
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-      window.scrollTo(0, 0);
-    });
-  }
-
-  if (window.visualViewport) {
-    let baseHeight = window.visualViewport.height;
-    let kbOpen = false;
-
-    window.visualViewport.addEventListener('resize', () => {
-      const h = window.visualViewport.height;
-      const diff = baseHeight - h;
-
-      if (!kbOpen && diff > 100) {
-        // Keyboard opened
-        kbOpen = true;
-        // Scroll focused edit field into view
-        const editPanel = document.getElementById('editWordOverlay');
-        if (editPanel && editPanel.classList.contains('show')) {
-          const focused = editPanel.querySelector(':focus');
-          if (focused) {
-            setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-          }
-        }
-      } else if (kbOpen && diff < 50) {
-        // Keyboard closed
-        kbOpen = false;
-        snapViewportBack();
-        setTimeout(snapViewportBack, 100);
-        setTimeout(snapViewportBack, 300);
+// iOS: scroll focused edit field into view when keyboard opens
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const editPanel = document.getElementById('editWordOverlay');
+    if (editPanel && editPanel.classList.contains('show')) {
+      const focused = editPanel.querySelector(':focus');
+      if (focused) {
+        setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       }
-
-      if (!kbOpen) baseHeight = h;
-    });
-
-    // Watch for viewport offset (iOS PWA can offset the viewport itself)
-    window.visualViewport.addEventListener('scroll', () => {
-      if (!kbOpen && window.visualViewport.offsetTop > 0) {
-        snapViewportBack();
-      }
-    });
-
-    if (screen.orientation) {
-      screen.orientation.addEventListener('change', () => {
-        setTimeout(() => { baseHeight = window.visualViewport.height; }, 500);
-      });
     }
-  }
-
-  // focusout: when input loses focus and no other input gains focus, reset viewport
-  document.addEventListener('focusout', (e) => {
-    const tag = e.target && e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) {
-      setTimeout(() => {
-        const ae = document.activeElement;
-        const stillEditing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
-        if (!stillEditing) {
-          snapViewportBack();
-          setTimeout(snapViewportBack, 150);
-        }
-      }, 100);
-    }
-  }, true);
-})();
+  });
+}
 
 
 function playTone(freq, duration, type, vol) {
@@ -6977,13 +6910,12 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
   window.scrollTo(0, 0);
-  // Lock body scroll on fullscreen quiz screen only
+  // Lock .app scroll on fullscreen quiz screen only
+  var appEl = document.querySelector('.app');
   if (name === 'quiz') {
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    if (appEl) appEl.style.overflow = 'hidden';
   } else {
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
+    if (appEl) appEl.style.overflow = '';
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -9345,7 +9277,6 @@ async function showEditWordModal(index) {
 }
 
 function closeEditWord() {
-  // Blur focused input first to dismiss iOS keyboard before closing panel
   if (document.activeElement && document.activeElement !== document.body) {
     document.activeElement.blur();
   }
@@ -9419,9 +9350,9 @@ async function saveWord() {
 
   // If editing from quiz, refresh quiz display and return
   if (wasQuizEdit) {
-    // Re-lock body scroll for quiz mode
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    // Re-lock .app scroll for quiz mode
+    var appEl = document.querySelector('.app');
+    if (appEl) appEl.style.overflow = 'hidden';
     showQuizQuestion();
     showToast('保存しました！');
     return;
