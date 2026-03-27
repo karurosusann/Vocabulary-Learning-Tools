@@ -5841,6 +5841,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Delegated handlers for dynamically created input answer field
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
+    // Ignore when edit word panel is open
+    const editPanel = document.getElementById('editWordOverlay');
+    if (editPanel && editPanel.classList.contains('show')) return;
     // If typing in input field, submit answer
     if (e.target.id === 'inputAnswerField') {
       e.preventDefault();
@@ -8037,7 +8040,7 @@ let swipeState = null;
   function onTouchStart(e) {
     if (!swipeEnabled) return;
     // Block swipe when any modal/overlay is open
-    if (document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show, .settings-overlay.show')) return;
+    if (document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show, .settings-overlay.show, #editWordOverlay.show')) return;
     // Don't intercept touches on topbar buttons (edit, bookmark, copy)
     if (e.target.closest('.quiz-card-topbar')) return;
     const card = document.getElementById('quizCard');
@@ -8155,7 +8158,7 @@ let swipeState = null;
     if (!currentQuiz) return;
 
     // Ignore keyboard when any overlay/modal is open
-    const anyOverlay = document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show');
+    const anyOverlay = document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show, #editWordOverlay.show');
     if (anyOverlay) return;
 
     // In input mode, don't intercept keyboard (user is typing)
