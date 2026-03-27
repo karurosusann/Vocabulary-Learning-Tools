@@ -210,12 +210,6 @@ body.dark-mode .secondary-btn {
 body.dark-mode .confirm-overlay {
   background: rgba(0,0,0,0.7);
 }
-body.overlay-kb-open {
-  background: rgba(0,0,0,0.5);
-}
-body.dark-mode.overlay-kb-open {
-  background: rgba(0,0,0,0.7);
-}
 body.dark-mode .result-close-btn {
   background: #2a2535;
   color: var(--gray-600);
@@ -3624,24 +3618,63 @@ body.dark-mode .bulk-action-btn.select-all {
 }
 .edit-word-modal .rename-input { margin-bottom: 10px; }
 #editWordOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  background: var(--bg, #FFEDD5);
+  display: none;
+  flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  align-items: flex-start;
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+#editWordOverlay.show {
+  display: flex;
 }
 #editWordOverlay .confirm-modal {
   flex-shrink: 0;
-  margin-top: auto;
-  margin-bottom: auto;
+  margin: auto;
+  max-width: 400px;
+  width: 100%;
 }
-#editWordOverlay.kb-open {
-  align-items: flex-start;
+.edit-word-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  max-width: 400px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
-#editWordOverlay.kb-open .confirm-modal {
-  margin-top: 0;
-  margin-bottom: 0;
+.edit-word-panel-header h3 {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gray-800);
+  margin: 0;
+}
+.edit-word-panel-close {
+  background: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+}
+body.dark-mode .edit-word-panel-close {
+  background: #2a2535;
+  color: var(--gray-500);
 }
 /* Image attachment */
 .img-attach-row {
@@ -4279,11 +4312,14 @@ body.dark-mode .gdrive-setup-hint code {
   </button>
 </div>
 
-  <!-- Modal: Edit Word -->
-  <div class="confirm-overlay" id="editWordOverlay" onclick="closeEditWord()">
-    <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
-      <div class="confirm-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></div>
+  <!-- Panel: Edit Word -->
+  <div id="editWordOverlay" onclick="closeEditWord()">
+    <div class="edit-word-panel-header" onclick="event.stopPropagation()">
+      <button class="edit-word-panel-close" onclick="closeEditWord()">←</button>
       <h3 id="editWordTitle">問題を編集</h3>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="edit-word-wrap rename-input"><textarea id="editWordEng" class="edit-word-textarea" placeholder="問題文を入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
       <div class="edit-word-wrap rename-input"><textarea id="editWordJpn" class="edit-word-textarea" placeholder="答えを入力" rows="2" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
       <div class="img-attach-row">
@@ -5876,38 +5912,15 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS: adjust edit overlay when keyboard opens/closes
+// iOS: scroll focused edit field into view when keyboard opens
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
-    // Adjust edit word overlay when iOS keyboard opens/closes
-    const editOverlay = document.getElementById('editWordOverlay');
-    if (editOverlay && editOverlay.classList.contains('show')) {
-      const vvh = window.visualViewport.height;
-      const fullH = window.innerHeight;
-      const kbOpen = fullH - vvh > 100;
-      editOverlay.style.height = vvh + 'px';
-      editOverlay.style.top = window.visualViewport.offsetTop + 'px';
-      if (kbOpen) {
-        editOverlay.classList.add('kb-open');
-        document.body.classList.add('overlay-kb-open');
-        // Scroll focused element into view
-        const focused = editOverlay.querySelector(':focus');
-        if (focused) {
-          setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-        }
-      } else {
-        editOverlay.classList.remove('kb-open');
-        document.body.classList.remove('overlay-kb-open');
-        editOverlay.style.height = '';
-        editOverlay.style.top = '';
+    const editPanel = document.getElementById('editWordOverlay');
+    if (editPanel && editPanel.classList.contains('show')) {
+      const focused = editPanel.querySelector(':focus');
+      if (focused) {
+        setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       }
-    }
-  });
-  window.visualViewport.addEventListener('scroll', () => {
-    // Keep edit overlay pinned to visual viewport on iOS scroll
-    const editOverlay = document.getElementById('editWordOverlay');
-    if (editOverlay && editOverlay.classList.contains('show')) {
-      editOverlay.style.top = window.visualViewport.offsetTop + 'px';
     }
   });
 }
@@ -9259,12 +9272,9 @@ async function showEditWordModal(index) {
 }
 
 function closeEditWord() {
-  const overlay = document.getElementById('editWordOverlay');
-  overlay.classList.remove('show', 'kb-open');
-  overlay.style.height = '';
-  overlay.style.top = '';
-  overlay.scrollTop = 0;
-  document.body.classList.remove('overlay-kb-open');
+  const panel = document.getElementById('editWordOverlay');
+  panel.classList.remove('show');
+  panel.scrollTop = 0;
   window._quizEditReturn = false;
 }
 
