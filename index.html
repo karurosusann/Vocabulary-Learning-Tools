@@ -5863,7 +5863,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS: adjust edit overlay alignment when keyboard opens/closes
+// iOS: adjust edit overlay when keyboard opens/closes
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     // Adjust edit word overlay when iOS keyboard opens/closes
@@ -5872,6 +5872,8 @@ if (window.visualViewport) {
       const vvh = window.visualViewport.height;
       const fullH = window.innerHeight;
       const kbOpen = fullH - vvh > 100;
+      editOverlay.style.height = vvh + 'px';
+      editOverlay.style.top = window.visualViewport.offsetTop + 'px';
       if (kbOpen) {
         editOverlay.classList.add('kb-open');
         document.body.classList.add('overlay-kb-open');
@@ -5883,14 +5885,16 @@ if (window.visualViewport) {
       } else {
         editOverlay.classList.remove('kb-open');
         document.body.classList.remove('overlay-kb-open');
+        editOverlay.style.height = '';
+        editOverlay.style.top = '';
       }
     }
   });
-  // Prevent iOS from scrolling the page when overlay/keyboard is active
   window.visualViewport.addEventListener('scroll', () => {
-    const anyOverlay = document.querySelector('.confirm-overlay.show, .settings-overlay.show');
-    if (anyOverlay) {
-      window.scrollTo(0, 0);
+    // Keep edit overlay pinned to visual viewport on iOS scroll
+    const editOverlay = document.getElementById('editWordOverlay');
+    if (editOverlay && editOverlay.classList.contains('show')) {
+      editOverlay.style.top = window.visualViewport.offsetTop + 'px';
     }
   });
 }
@@ -9213,6 +9217,8 @@ async function showEditWordModal(index) {
 function closeEditWord() {
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.remove('show', 'kb-open');
+  overlay.style.height = '';
+  overlay.style.top = '';
   overlay.scrollTop = 0;
   document.body.classList.remove('overlay-kb-open');
   window._quizEditReturn = false;
