@@ -134,6 +134,7 @@ body.dark-mode::after {
   background: radial-gradient(circle, rgba(107,191,89,0.04) 0%, transparent 70%);
 }
 body.dark-mode .quiz-card,
+body.dark-mode .quiz-card-next,
 body.dark-mode .quiz-result,
 body.dark-mode .confirm-modal,
 body.dark-mode .edit-word-modal {
@@ -280,6 +281,9 @@ body.dark-mode .progress-bar-container {
 body.dark-mode .quiz-back {
   background: #2a2535;
   color: var(--gray-600);
+}
+body.dark-mode .quiz-img-toggle {
+  background: #2a2535;
 }
 body.dark-mode .result-btn.review-btn {
   background: #2a2535;
@@ -448,10 +452,18 @@ body.dark-mode .settings-menu-item:active {
   background: #2a2535;
 }
 .settings-menu-item .menu-icon {
-  font-size: 20px;
-  width: 28px;
-  text-align: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: white;
+}
+.settings-menu-item .menu-icon svg {
+  width: 18px;
+  height: 18px;
 }
 .settings-menu-item .menu-label {
   flex: 1;
@@ -583,6 +595,7 @@ body.dark-mode .stat-box {
   font-weight: 800;
   color: var(--gray-500);
   line-height: 1;
+  white-space: nowrap;
 }
 .stat-box .stat-label {
   font-size: 8px;
@@ -699,6 +712,10 @@ body.dark-mode .heatmap-cell .cal-check.mark-x {
   color: var(--gray-500);
   padding: 2px 6px;
   border-radius: 4px;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .cal-month-nav button:active { background: var(--gray-100); }
 .cal-month-nav span {
@@ -771,6 +788,47 @@ body.dark-mode .cal-day-popup {
   padding-right: calc(16px + env(safe-area-inset-right));
   position: relative;
   z-index: 1;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app {
+    max-width: 600px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+  #screen-dashboard.active {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  #screen-dashboard .deck-carousel-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  #screen-dashboard .deck-carousel-section > div:last-child {
+    margin-top: auto;
+  }
+  #screen-dashboard .action-section {
+    margin-top: 12px;
+  }
+  /* Enlarge calendar */
+  .cal-grid { gap: 5px; }
+  .heatmap-cell { padding: 12px 0; border-radius: 6px; }
+  .heatmap-cell .cal-day { font-size: 13px; }
+  .heatmap-cell .cal-check { font-size: 26px; }
+  .heatmap-cell .cal-check.mark-x { font-size: 20px; }
+  .cal-dow { font-size: 11px; padding-bottom: 5px; }
+  .cal-month-nav span { font-size: 13px; }
+  .cal-month-nav button { font-size: 16px; }
+  .heatmap-header h4 { font-size: 14px; }
+  .heatmap-section { margin-top: 4px; }
+  /* Enlarge stats */
+  .stat-box { padding: 12px 4px; }
+  .stat-box .stat-label { font-size: 10px; }
+  /* Enlarge deck cards */
+  .deck-card { padding: 14px 18px; min-width: 180px; }
+  .deck-card .dc-name { font-size: 14px; }
+  .deck-card .dc-meta { font-size: 11px; }
+  .deck-card .dc-donut { width: 44px; height: 44px; }
 }
 
 /* Header */
@@ -1128,6 +1186,20 @@ body.dark-mode .cal-day-popup {
   flex-shrink: 0;
   position: relative;
 }
+.dc-crown {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 13px;
+  line-height: 1;
+  z-index: 2;
+}
+.dc-crown.silver {
+  filter: grayscale(1) brightness(1.5);
+}
+.dc-crown.gold {
+  filter: none;
+}
 .dc-conic {
   width: 100%;
   height: 100%;
@@ -1175,6 +1247,63 @@ body.dark-mode .cal-day-popup {
   color: var(--gray-400);
 }
 
+/* ===== Deck long-press drag reorder ===== */
+.deck-card.deck-drag-source {
+  opacity: 0.25;
+}
+.deck-card.deck-drag-over-right {
+  margin-right: 12px;
+  border-right: 3px solid var(--orange-400);
+}
+.deck-card.deck-drag-over-left {
+  margin-left: 12px;
+  border-left: 3px solid var(--orange-400);
+}
+.deck-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.9;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  border-radius: var(--radius-sm);
+  transition: none;
+}
+.deck-list-grid.deck-reordering {
+  overflow-x: hidden;
+}
+/* Deck select mode */
+.deck-card .dc-checkbox {
+  display: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  background: white;
+  font-size: 12px;
+  font-weight: 700;
+  color: transparent;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.deck-select-mode .deck-card .dc-checkbox {
+  display: flex;
+}
+.deck-card .dc-checkbox.checked {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  color: white;
+}
+body.dark-mode .deck-card .dc-checkbox {
+  background: #2a2535;
+  border-color: #3a3545;
+}
+body.dark-mode .deck-card .dc-checkbox.checked {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+}
 /* Deck edit overlay */
 .deck-edit-overlay {
   position: fixed;
@@ -1572,12 +1701,36 @@ body.dark-mode .cal-day-popup {
   height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: none;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   touch-action: none;
   overscroll-behavior: none;
 }
 #screen-quiz.active {
   display: flex;
+}
+.quiz-card-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 310px);
+  margin-bottom: 4px;
+  overflow: visible;
+}
+.quiz-card-next {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: white;
+  border-radius: 24px;
+  padding: 14px 16px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.quiz-card-next::before {
+  display: none;
 }
 .quiz-card {
   background: white;
@@ -1585,17 +1738,16 @@ body.dark-mode .cal-day-popup {
   padding: 14px 16px 10px;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  margin-bottom: 4px;
-  position: relative;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
-  max-height: calc(100vh - 310px);
   display: flex;
   flex-direction: column;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  z-index: 2;
+  will-change: transform;
 }
 /* Timer bar */
 .quiz-timer-bar {
@@ -1637,15 +1789,10 @@ body.dark-mode .cal-day-popup {
   50% { opacity: 0.4; }
 }
 .quiz-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--orange-400), var(--orange-500));
+  display: none;
 }
-.quiz-card .level-badge {
+.quiz-card .level-badge,
+.quiz-card-next .level-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
@@ -1654,7 +1801,8 @@ body.dark-mode .cal-day-popup {
   margin-bottom: 12px;
   align-self: center;
 }
-.quiz-card .english-word {
+.quiz-card .english-word,
+.quiz-card-next .english-word {
   font-family: 'DM Sans', sans-serif;
   font-size: 32px;
   font-weight: 700;
@@ -1714,7 +1862,7 @@ body.dark-mode .cal-day-popup {
   will-change: transform;
 }
 .quiz-card.swipe-fly {
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
 }
 .swipe-overlay {
   position: absolute;
@@ -1774,22 +1922,44 @@ body.dark-mode .cal-day-popup {
   border-color: var(--orange-500);
   opacity: 1;
 }
-.card-bookmark {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+.quiz-card-topbar {
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  position: relative;
 }
-.card-camera {
-  position: absolute;
-  bottom: 16px;
-  right: 60px;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+.quiz-card-topbar .card-camera,
+.quiz-card-topbar .card-bookmark {
+  position: static;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
   color: var(--gray-400);
+  flex-shrink: 0;
+}
+.quiz-card-topbar .card-bookmark {
+  margin-right: 4px;
+}
+.quiz-card-topbar .card-bookmark.active {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  opacity: 1;
+}
+.quiz-card-topbar .level-badge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0;
+}
+body.dark-mode .quiz-card-topbar .card-camera,
+body.dark-mode .quiz-card-topbar .card-bookmark {
+  background: #2a2535;
+  border-color: #3a3545;
+}
+body.dark-mode .quiz-card-topbar .card-bookmark.active {
+  background: var(--orange-500);
+  border-color: var(--orange-400);
+  opacity: 1;
 }
 .quiz-img-picker {
   position: fixed;
@@ -1930,9 +2100,9 @@ body.dark-mode .quiz-img-picker button {
   position: relative;
 }
 .result-close-btn {
-  position: fixed;
-  top: 14px;
-  left: 14px;
+  position: absolute;
+  top: 12px;
+  left: 12px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -1944,7 +2114,7 @@ body.dark-mode .quiz-img-picker button {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background 0.2s, transform 0.2s;
   z-index: 100;
 }
 .result-close-btn:hover {
@@ -2053,20 +2223,34 @@ body.dark-mode .quiz-img-picker button {
 }
 .missed-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
   border-bottom: 1px solid var(--gray-100);
   font-size: 14px;
+  gap: 8px;
 }
 .missed-item:last-child { border-bottom: none; }
 .missed-eng {
   font-weight: 600;
   color: var(--gray-800);
+  flex: 1;
 }
 .missed-jpn {
   color: var(--red-400);
   font-size: 13px;
+  text-align: right;
+}
+.result-pin-btn {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.3;
+  padding: 2px;
+  flex-shrink: 0;
+}
+.result-pin-btn.active {
+  opacity: 1;
 }
 
 /* Level change summary */
@@ -2788,6 +2972,16 @@ body.dark-mode .quiz-img-picker button {
   box-shadow: 0 4px 12px rgba(239,68,68,0.3);
 }
 .confirm-danger:hover { background: #DC2626; }
+.new-deck-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
 .rename-input {
   width: 100%;
   padding: 12px 14px;
@@ -3041,6 +3235,9 @@ body.dark-mode .bulk-action-btn.select-all {
   align-items: center;
   justify-content: center;
   transition: border-color 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 .img-attach-box:hover { border-color: var(--orange-300); }
 .img-attach-box .img-label {
@@ -3081,50 +3278,62 @@ body.dark-mode .img-attach-box {
 }
 /* Quiz image display */
 .quiz-question-img, .quiz-answer-img {
-  max-width: 80%;
-  max-height: 120px;
+  max-width: 100%;
+  max-height: 180px;
   border-radius: 8px;
   object-fit: contain;
   margin: 6px auto;
   display: block;
   cursor: zoom-in;
 }
+.quiz-card.dual-img .quiz-question-img,
+.quiz-card.dual-img .quiz-answer-img {
+  max-height: 100px;
+}
 /* Copy button */
 .quiz-copy-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border: none;
   background: var(--gray-100);
   border-radius: 6px;
   cursor: pointer;
   color: var(--gray-400);
-  font-size: 14px;
-  position: absolute;
-  top: 6px;
-  right: 6px;
   z-index: 3;
   opacity: 0.6;
   transition: opacity 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.quiz-copy-btn svg {
+  width: 18px;
+  height: 18px;
 }
 .quiz-copy-btn:active { opacity: 1; }
 body.dark-mode .quiz-copy-btn { background: #2a2535; }
 /* Quiz image toggle */
 .quiz-img-toggle {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  background: none;
+  background: white;
   cursor: pointer;
   color: var(--orange-500);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
   transition: all 0.15s;
   position: relative;
+}
+.quiz-img-toggle:hover { background: var(--gray-100); }
+.quiz-img-toggle svg {
+  width: 22px;
+  height: 22px;
 }
 .quiz-img-toggle.off {
   color: var(--gray-300);
@@ -3243,6 +3452,89 @@ body.dark-mode .gdrive-btn.disconnect { background: #2a2535; color: var(--gray-5
 body.dark-mode .gdrive-setup-hint code {
   background: #2a2535;
 }
+/* ===== Paint tool ===== */
+/* Quiz paint overlay */
+.quiz-paint-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  border-radius: 24px;
+  display: none;
+  touch-action: none;
+  cursor: crosshair;
+}
+.quiz-paint-active .quiz-paint-canvas {
+  display: block;
+}
+.quiz-paint-active .quiz-card {
+  overflow: hidden;
+}
+.quiz-paint-palette {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  display: none;
+  gap: 5px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  align-items: center;
+}
+body.dark-mode .quiz-paint-palette {
+  background: rgba(30,26,40,0.95);
+}
+.quiz-paint-active .quiz-paint-palette {
+  display: flex;
+}
+.qp-color {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.1);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+.qp-color.active {
+  border-color: var(--orange-500);
+  transform: scale(1.2);
+}
+.qp-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--gray-200);
+  margin: 0 2px;
+}
+.qp-tool {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--gray-500);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.qp-tool.active {
+  color: var(--orange-500);
+}
+.qp-size {
+  width: 50px;
+  accent-color: var(--orange-500);
+}
+#quizPaintToggle.paint-on {
+  background: var(--orange-500);
+  color: white;
+}
 </style>
 </head>
 <body>
@@ -3338,7 +3630,10 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="deck-carousel-section">
       <div class="deck-carousel-header">
         <h3>📚 デッキ</h3>
-        <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
+          <button class="editor-select-btn" id="deckSelectBtn" onclick="toggleDeckSelectMode()">選択</button>
+        </div>
       </div>
       <div class="deck-list-grid" id="deckListGrid"></div>
       <div style="margin-top:10px;">
@@ -3387,6 +3682,34 @@ body.dark-mode .gdrive-setup-hint code {
       <div style="width:40px"></div>
     </div>
     <div class="unified-setup">
+          <div class="count-selector">
+            <label>出題数：</label>
+            <select id="quizCount">
+              <option value="10">10問</option>
+              <option value="20">20問</option>
+              <option value="30">30問</option>
+              <option value="40">40問</option>
+              <option value="50">50問</option>
+              <option value="60">60問</option>
+              <option value="70">70問</option>
+              <option value="80">80問</option>
+              <option value="90">90問</option>
+              <option value="100">100問</option>
+              <option value="150">150問</option>
+              <option value="200">200問</option>
+              <option value="250">250問</option>
+              <option value="300">300問</option>
+              <option value="400">400問</option>
+              <option value="500">500問</option>
+              <option value="600">600問</option>
+              <option value="700">700問</option>
+              <option value="800">800問</option>
+              <option value="900">900問</option>
+              <option value="1000">1000問</option>
+              <option value="all">すべて</option>
+            </select>
+          </div>
+
           <h4 class="setup-section-label" style="margin-top:0;">モード</h4>
           <div class="mode-toggle" id="modeToggle">
             <button class="mode-toggle-btn active" onclick="selectMode('normal', this)">ノーマル</button>
@@ -3415,7 +3738,7 @@ body.dark-mode .gdrive-setup-hint code {
             <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
           </div>
 
-          <h4 class="setup-section-label">⏱️ 制限時間</h4>
+          <h4 class="setup-section-label">制限時間</h4>
           <div class="mode-toggle" id="timerToggle">
             <button class="mode-toggle-btn active" onclick="selectTimer(false, this)">なし</button>
             <button class="mode-toggle-btn" onclick="selectTimer(true, this)">あり</button>
@@ -3436,28 +3759,12 @@ body.dark-mode .gdrive-setup-hint code {
             <div class="drill-desc">時間切れで自動的に「知らない」になります</div>
           </div>
 
-          <h4 class="setup-section-label">🖼️ 画像表示</h4>
+          <h4 class="setup-section-label">画像表示</h4>
           <div class="mode-toggle" id="imageToggle">
             <button class="mode-toggle-btn active" onclick="selectShowImages(true, this)">表示する</button>
             <button class="mode-toggle-btn" onclick="selectShowImages(false, this)">非表示</button>
           </div>
 
-          <div class="count-selector">
-            <label>出題数：</label>
-            <select id="quizCount">
-              <option value="10">10問</option>
-              <option value="20">20問</option>
-              <option value="30">30問</option>
-              <option value="40">40問</option>
-              <option value="50">50問</option>
-              <option value="60">60問</option>
-              <option value="70">70問</option>
-              <option value="80">80問</option>
-              <option value="90">90問</option>
-              <option value="100">100問</option>
-              <option value="all">すべて</option>
-            </select>
-          </div>
     </div>
   </div>
 
@@ -3466,24 +3773,34 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="quiz-header">
       <button class="quiz-back" onclick="confirmQuit()">←</button>
       <span class="quiz-progress-text" id="quizProgressText">1 / 10</span>
-      <button class="quiz-img-toggle" id="quizImgToggle" onclick="toggleQuizImages()" title="画像表示切替"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></button>
+      <div style="display:flex;gap:8px;">
+        <button class="quiz-img-toggle" id="quizPaintToggle" onclick="toggleQuizPaint()" title="ペイント"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg></button>
+        <button class="quiz-img-toggle" id="quizImgToggle" onclick="toggleQuizImages()" title="画像表示切替"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></button>
+      </div>
     </div>
     <div class="quiz-progress-bar">
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
-    <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
+    <div class="quiz-card-area">
+      <div class="quiz-card-next" id="quizCardNext"></div>
+      <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
+      <canvas id="quizPaintCanvas" class="quiz-paint-canvas"></canvas>
+      <div class="quiz-paint-palette" id="quizPaintPalette"></div>
       <div class="quiz-timer-bar" id="quizTimerBar" style="display:none;">
         <div class="quiz-timer-fill" id="quizTimerFill"></div>
       </div>
       <span class="quiz-timer-text" id="quizTimerText" style="display:none;"></span>
       <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
-      <div class="level-badge" id="quizBadge">未学習</div>
-      <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+      <div class="quiz-card-topbar">
+        <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
+        <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
+        <div class="level-badge" id="quizBadge">未学習</div>
+        <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+      </div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
-      <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
-      <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
+      </div>
     </div>
     <div id="quizBody"></div>
   </div>
@@ -3517,7 +3834,7 @@ body.dark-mode .gdrive-setup-hint code {
   <div id="screen-word-editor" class="screen">
     <div class="editor-header" id="editorHeader">
       <div class="editor-header-top">
-        <button class="quiz-back" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
+        <button class="quiz-back" id="editorBackBtn" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
         <div style="display:flex;gap:6px;">
           <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
           <button class="editor-select-btn" id="editorSelectBtn" onclick="toggleEditorSelectMode()">選択</button>
@@ -3535,6 +3852,14 @@ body.dark-mode .gdrive-setup-hint code {
   </div>
 
 <!-- Bulk action toolbar -->
+<div class="bulk-toolbar" id="deckBulkToolbar">
+  <span class="bulk-count" id="deckBulkCount">0件選択</span>
+  <div class="bulk-actions">
+    <button class="bulk-action-btn select-all" onclick="deckBulkSelectAll()">全選択</button>
+    <button class="bulk-action-btn delete" onclick="deckBulkDelete()">削除</button>
+  </div>
+</div>
+
 <div class="bulk-toolbar" id="bulkToolbar">
   <span class="bulk-count" id="bulkCount">0件選択</span>
   <div class="bulk-actions">
@@ -3571,11 +3896,11 @@ body.dark-mode .gdrive-setup-hint code {
       <div id="editWordEng" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div>
       <div id="editWordJpn" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
       <div class="img-attach-row">
-        <div class="img-attach-box" id="imgBoxQ" onclick="pickImage('question')">
+        <div class="img-attach-box" id="imgBoxQ" onpointerdown="if(document.activeElement)document.activeElement.blur()" onclick="pickImage('question')">
           <span class="img-label">問題の画像</span>
           <span class="img-add-icon" id="imgAddQ"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></span>
         </div>
-        <div class="img-attach-box" id="imgBoxA" onclick="pickImage('answer')">
+        <div class="img-attach-box" id="imgBoxA" onpointerdown="if(document.activeElement)document.activeElement.blur()" onclick="pickImage('answer')">
           <span class="img-label">答えの画像</span>
           <span class="img-add-icon" id="imgAddA"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2"/><path d="M22 18l-5.5-7L12 16l-3-3L2 20"/></svg></span>
         </div>
@@ -3599,39 +3924,39 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()">
   <div class="settings-panel" onclick="event.stopPropagation()">
     <div class="settings-panel-header">
-      <h3>⚙️ 設定</h3>
+      <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;color:var(--gray-500);"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>設定</h3>
       <button class="settings-panel-close" onclick="closeSettings()">✕</button>
     </div>
     <div class="settings-menu-list">
       <button class="settings-menu-item" onclick="toggleDarkMode()">
-        <span class="menu-icon" id="settingsDarkIcon">🌙</span>
+        <span class="menu-icon" id="settingsDarkIcon" style="background:#6366F1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         <span class="menu-label" id="settingsDarkLabel">ダークモード</span>
         <span class="menu-badge" id="settingsDarkBadge">OFF</span>
       </button>
       <div class="settings-menu-divider"></div>
-      <button class="settings-menu-item" onclick="closeSettings();exportAllData();">
-        <span class="menu-icon">📤</span>
+      <button class="settings-menu-item" onclick="closeSettings();showExportPicker();">
+        <span class="menu-icon" style="background:#10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
         <span class="menu-label">データをエクスポート</span>
       </button>
       <button class="settings-menu-item" onclick="closeSettings();document.getElementById('settingsImportJson').click();">
-        <span class="menu-icon">📥</span>
+        <span class="menu-icon" style="background:#3B82F6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
         <span class="menu-label">データをインポート</span>
       </button>
       <input type="file" id="settingsImportJson" accept=".json" style="display:none;" onchange="importAllData(event)">
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showGdrivePanel();">
-        <span class="menu-icon">☁️</span>
+        <span class="menu-icon" style="background:#F59E0B;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
         <span class="menu-label">Google Drive同期</span>
         <span class="menu-badge" id="gdriveBadge">未接続</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showHelp();">
-        <span class="menu-icon">❓</span>
+        <span class="menu-icon" style="background:#8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="menu-label">使い方ガイド</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
-        <span class="menu-icon">🗑️</span>
+        <span class="menu-icon" style="background:#EF4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
       </button>
     </div>
@@ -3777,6 +4102,29 @@ body.dark-mode .gdrive-setup-hint code {
   </div>
 </div>
 
+<!-- Export format picker overlay -->
+<div class="confirm-overlay" id="exportPickerOverlay" onclick="closeExportPicker()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📤 データをエクスポート</h3>
+    <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポート形式を選択</p>
+    <div class="demo-list">
+      <button class="demo-item" onclick="closeExportPicker();exportAllData();">📋 JSON（バックアップ用）<span>全データ</span></button>
+      <button class="demo-item" onclick="closeExportPicker();showCsvExport();">📄 CSV（表計算ソフト用）<span>デッキ選択</span></button>
+    </div>
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeExportPicker()">閉じる</button>
+  </div>
+</div>
+
+<!-- CSV Export picker overlay -->
+<div class="confirm-overlay" id="csvExportOverlay" onclick="closeCsvExport()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📄 CSVエクスポート</h3>
+    <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
+    <div class="demo-list" id="csvExportDeckList"></div>
+    <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeCsvExport()">閉じる</button>
+  </div>
+</div>
+
 <!-- Bulk move modal -->
 <div class="confirm-overlay" id="bulkMoveOverlay" onclick="closeBulkMoveModal()">
   <div class="confirm-modal" onclick="event.stopPropagation()">
@@ -3792,12 +4140,11 @@ body.dark-mode .gdrive-setup-hint code {
 
 <!-- New Deck modal -->
 <div class="confirm-overlay" id="newDeckOverlay" onclick="closeNewDeckModal()">
-  <div class="confirm-modal" onclick="event.stopPropagation()" id="newDeckModalContent">
-    <div class="confirm-icon">📚</div>
-    <h3>新しいデッキを追加</h3>
-    <div class="confirm-buttons" style="flex-direction:column;gap:10px;margin-top:16px;">
-      <button class="confirm-danger" style="background:var(--orange-500);" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();">📄 CSVファイルから追加</button>
-      <button class="confirm-danger" style="background:var(--blue-500);" onclick="showCreateEmptyDeck()">✏️ 空のデッキを作成</button>
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()" id="newDeckModalContent">
+    <h3 style="text-align:center;margin-bottom:16px;">📚 新しいデッキを追加</h3>
+    <div class="demo-list">
+      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;" onclick="closeNewDeckModal();document.getElementById('fileInputAdd').click();"><span class="new-deck-btn-icon" style="background:#10B981;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>CSVファイルから追加</button>
+      <button class="demo-item" style="justify-content:flex-start;display:flex;gap:8px;" onclick="showCreateEmptyDeck()"><span class="new-deck-btn-icon" style="background:#6366F1;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span>空のデッキを作成</button>
     </div>
     <button class="confirm-cancel" style="width:100%;margin-top:12px;" onclick="closeNewDeckModal()">キャンセル</button>
   </div>
@@ -3895,7 +4242,12 @@ function updateSettingsDarkUI() {
   const isDark = document.body.classList.contains('dark-mode');
   const icon = document.getElementById('settingsDarkIcon');
   const badge = document.getElementById('settingsDarkBadge');
-  if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+  if (icon) {
+    icon.style.background = isDark ? '#F59E0B' : '#6366F1';
+    icon.innerHTML = isDark
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  }
   if (badge) {
     badge.textContent = isDark ? 'ON' : 'OFF';
     badge.style.color = isDark ? 'var(--orange-500)' : '';
@@ -3917,11 +4269,16 @@ let quizStartTime = null;
 function getStudyLog() {
   try {
     return JSON.parse(localStorage.getItem(STUDY_LOG_KEY)) || {};
-  } catch(e) { return {}; }
+  } catch(e) { console.error('getStudyLog failed:', e); return {}; }
 }
 
 function saveStudyLog(log) {
-  localStorage.setItem(STUDY_LOG_KEY, JSON.stringify(log));
+  try {
+    localStorage.setItem(STUDY_LOG_KEY, JSON.stringify(log));
+  } catch(e) {
+    console.error('saveStudyLog failed:', e);
+    showToast('⚠️ 学習ログの保存に失敗しました');
+  }
 }
 
 function getTodayStr() {
@@ -4001,6 +4358,20 @@ function updateStudyStats() {
     totalSec += log[key].timeSec || 0;
   }
   document.getElementById('statTotalTime').textContent = formatStudyTime(totalSec);
+  autoFitStatValues();
+}
+
+function autoFitStatValues() {
+  document.querySelectorAll('.stat-box .stat-value').forEach(el => {
+    el.style.fontSize = '';
+    const parent = el.parentElement;
+    const maxW = parent.clientWidth - 4;
+    const sizes = [16, 14, 12, 10, 9];
+    for (const s of sizes) {
+      el.style.fontSize = s + 'px';
+      if (el.scrollWidth <= maxW) return;
+    }
+  });
 }
 
 function formatStudyTime(sec) {
@@ -4049,11 +4420,11 @@ function renderHeatmap() {
 
   // Header with navigation
   let html = '<div class="cal-month-nav">';
-  html += '<button onmousedown="startCalHold(-1)" ontouchstart="startCalHold(-1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()">◀</button>';
+  html += '<button onmousedown="startCalHold(-1)" ontouchstart="event.preventDefault();startCalHold(-1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()">◀</button>';
   html += `<span onclick="showMonthSummary(${year}, ${month})" style="cursor:pointer;">${year}年${monthNames[month]}</span>`;
   // Only allow forward if not future
   const isCurrentMonth = (year === today.getFullYear() && month === today.getMonth());
-  html += `<button onmousedown="startCalHold(1)" ontouchstart="startCalHold(1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
+  html += `<button onmousedown="startCalHold(1)" ontouchstart="event.preventDefault();startCalHold(1)" onmouseup="stopCalHold()" onmouseleave="stopCalHold()" ontouchend="stopCalHold()" ${isCurrentMonth ? 'style="visibility:hidden"' : ''}>▶</button>`;
   html += '</div>';
 
   // Day of week headers
@@ -4591,7 +4962,7 @@ async function getAllImages() {
 
 function resizeImage(file, maxWidth, quality) {
   maxWidth = maxWidth || 1200;
-  quality = quality || 0.92;
+  quality = quality || 0.97;
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -4618,8 +4989,9 @@ let editImgA = null;
 
 function pickImage(target) {
   imgPickTarget = target;
-  document.getElementById('imgFileInput').value = '';
-  document.getElementById('imgFileInput').click();
+  const input = document.getElementById('imgFileInput');
+  input.value = '';
+  input.click();
 }
 
 async function onImagePicked(event) {
@@ -4656,6 +5028,143 @@ function removeEditImg(target) {
   else { editImgA = null; renderImgBox('imgBoxA', null, 'answer'); }
 }
 
+
+// ============ QUIZ PAINT OVERLAY ============
+let quizPaintOn = false;
+let qpCtx = null;
+let qpDrawing = false;
+let qpColor = '#EF4444';
+let qpTool = 'pen'; // 'pen' or 'eraser'
+let qpSize = 3;
+const QP_COLORS = ['#EF4444','#3B82F6','#000000','#10B981','#F59E0B','#8B5CF6'];
+
+function toggleQuizPaint() {
+  quizPaintOn = !quizPaintOn;
+  const btn = document.getElementById('quizPaintToggle');
+  btn.classList.toggle('paint-on', quizPaintOn);
+  document.getElementById('screen-quiz').classList.toggle('quiz-paint-active', quizPaintOn);
+
+  if (quizPaintOn) {
+    initQuizPaintCanvas();
+    renderQuizPaintPalette();
+  } else {
+    clearQuizPaintCanvas();
+  }
+}
+
+function initQuizPaintCanvas() {
+  const canvas = document.getElementById('quizPaintCanvas');
+  const card = document.getElementById('quizCard');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = card.offsetWidth * dpr;
+  canvas.height = card.offsetHeight * dpr;
+  qpCtx = canvas.getContext('2d');
+  qpCtx.scale(dpr, dpr);
+  qpCtx.lineCap = 'round';
+  qpCtx.lineJoin = 'round';
+
+  canvas.onpointerdown = qpStart;
+  canvas.onpointermove = qpMove;
+  canvas.onpointerup = qpEnd;
+  canvas.onpointerleave = qpEnd;
+  // Prevent card onclick when painting
+  canvas.onclick = function(e) { e.stopPropagation(); };
+}
+
+function clearQuizPaintCanvas() {
+  const canvas = document.getElementById('quizPaintCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  qpCtx = null;
+}
+
+function renderQuizPaintPalette() {
+  const el = document.getElementById('quizPaintPalette');
+  let html = '';
+  QP_COLORS.forEach(c => {
+    html += `<div class="qp-color ${c === qpColor ? 'active' : ''}" style="background:${c};" onclick="event.stopPropagation();setQpColor('${c}',this)"></div>`;
+  });
+  html += '<span class="qp-sep"></span>';
+  html += `<button class="qp-tool ${qpTool==='pen'?'active':''}" id="qpPen" onclick="event.stopPropagation();setQpTool('pen')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>`;
+  html += `<button class="qp-tool ${qpTool==='eraser'?'active':''}" id="qpEraser" onclick="event.stopPropagation();setQpTool('eraser')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 20H7L3 16l9-9 8 8-4 4z"/></svg></button>`;
+  html += `<button class="qp-tool" onclick="event.stopPropagation();qpClearCanvas()" title="クリア"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`;
+  html += `<input type="range" class="qp-size" min="1" max="12" value="${qpSize}" oninput="event.stopPropagation();qpSize=this.value">`;
+  el.innerHTML = html;
+}
+
+function setQpColor(c, el) {
+  qpColor = c;
+  document.querySelectorAll('.qp-color').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (qpTool === 'eraser') setQpTool('pen');
+}
+
+function setQpTool(tool) {
+  qpTool = tool;
+  document.getElementById('qpPen')?.classList.toggle('active', tool === 'pen');
+  document.getElementById('qpEraser')?.classList.toggle('active', tool === 'eraser');
+}
+
+function qpGetPos(e) {
+  const canvas = document.getElementById('quizPaintCanvas');
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function qpStart(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!qpCtx) return;
+  qpDrawing = true;
+  const pos = qpGetPos(e);
+  qpCtx.beginPath();
+  qpCtx.moveTo(pos.x, pos.y);
+  if (qpTool === 'eraser') {
+    qpCtx.globalCompositeOperation = 'destination-out';
+    qpCtx.strokeStyle = 'rgba(0,0,0,1)';
+    qpCtx.lineWidth = qpSize * 3;
+  } else {
+    qpCtx.globalCompositeOperation = 'source-over';
+    qpCtx.strokeStyle = qpColor;
+    qpCtx.lineWidth = qpSize;
+  }
+  qpCtx.lineTo(pos.x + 0.1, pos.y + 0.1);
+  qpCtx.stroke();
+}
+
+function qpMove(e) {
+  if (!qpDrawing || !qpCtx) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const pos = qpGetPos(e);
+  qpCtx.lineTo(pos.x, pos.y);
+  qpCtx.stroke();
+}
+
+function qpEnd(e) {
+  if (!qpDrawing) return;
+  qpDrawing = false;
+  if (qpCtx) qpCtx.globalCompositeOperation = 'source-over';
+}
+
+// Clear paint when moving to next question
+function clearQuizPaintOnNext() {
+  if (quizPaintOn) {
+    // Reinit after DOM update so canvas matches new card size
+    requestAnimationFrame(() => {
+      initQuizPaintCanvas();
+    });
+  }
+}
+
+function qpClearCanvas() {
+  if (!qpCtx) return;
+  const canvas = document.getElementById('quizPaintCanvas');
+  qpCtx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+
 // ============ AUDIO SYSTEM ============
 let audioCtx = null;
 let audioEnabled = false;
@@ -4663,9 +5172,8 @@ let soundMuted = false; // Always on
 
 function initAudio() {
   try {
-    // If context exists but is in a bad state, destroy it
-    if (audioCtx && (audioCtx.state === 'closed' || audioCtx.state === 'suspended')) {
-      try { audioCtx.close(); } catch(e) {}
+    // Only destroy if truly closed (not just suspended)
+    if (audioCtx && audioCtx.state === 'closed') {
       audioCtx = null;
     }
     if (!audioCtx) {
@@ -4703,14 +5211,22 @@ document.addEventListener('click', initAudio);
 // Visibility change: force recreate audio context when coming back
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
-    // Force destroy and recreate on next interaction
-    if (audioCtx) {
-      try { audioCtx.close(); } catch(e) {}
-      audioCtx = null;
-      audioEnabled = false;
+    // Resume audio context instead of destroying (prevents crackling)
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().then(() => {
+        // Silent warmup to avoid crackling on first sound
+        try {
+          const g = audioCtx.createGain();
+          g.gain.value = 0;
+          g.connect(audioCtx.destination);
+          const o = audioCtx.createOscillator();
+          o.connect(g);
+          o.start();
+          o.stop(audioCtx.currentTime + 0.01);
+        } catch(e) {}
+      }).catch(() => {});
     }
-    // iOS Safari fix: when returning from file picker or background,
-    // ensure no phantom focus/touch state is blocking interactions
+    // iOS Safari fix: when returning from file picker or background
     setTimeout(() => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'file') {
         document.activeElement.blur();
@@ -4920,7 +5436,10 @@ function saveState() {
   try {
     localStorage.setItem('mikan_decks', JSON.stringify(decks));
     localStorage.setItem('mikan_activeDeck', activeDeckId);
-  } catch(e) {}
+  } catch(e) {
+    console.error('saveState failed:', e);
+    showToast('⚠️ 保存に失敗しました。端末の容量が不足している可能性があります');
+  }
 }
 
 // Per-deck quiz settings persistence
@@ -4937,7 +5456,9 @@ function saveDeckSettings(deckId) {
       showImages: quizShowImages
     };
     localStorage.setItem('mikan_deckSettings_' + deckId, JSON.stringify(settings));
-  } catch(e) {}
+  } catch(e) {
+    console.error('saveDeckSettings failed:', e);
+  }
 }
 
 function loadDeckSettings(deckId) {
@@ -4945,7 +5466,9 @@ function loadDeckSettings(deckId) {
   try {
     const raw = localStorage.getItem('mikan_deckSettings_' + deckId);
     if (raw) return JSON.parse(raw);
-  } catch(e) {}
+  } catch(e) {
+    console.error('loadDeckSettings failed:', e);
+  }
   return null;
 }
 function loadState() {
@@ -4979,7 +5502,21 @@ function loadState() {
         updateDashboard();
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('loadState failed:', e);
+    showToast('⚠️ データの読み込みに失敗しました');
+  }
+}
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function wordKey(w) {
+  return w.english + '\0' + w.japanese;
 }
 
 function generateId() {
@@ -5082,10 +5619,11 @@ if (fileInputAdd) {
 
 function addDeckFromCSV(text, deckName) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const delimiter = detectDelimiter(lines);
   const words = [];
 
   for (const line of lines) {
-    const parts = parseCSVLine(line);
+    const parts = parseCSVLine(line, delimiter);
     if (parts.length >= 2) {
       const english = parts[0].trim();
       const japanese = parts[1].trim();
@@ -5096,6 +5634,7 @@ function addDeckFromCSV(text, deckName) {
   }
 
   if (words.length > 0) {
+    const delimNames = { '\t': 'タブ', ',': 'カンマ', '|': 'パイプ', ';': 'セミコロン' };
     const deck = { id: generateId(), name: deckName, words };
     decks.push(deck);
     activeDeckId = deck.id;
@@ -5103,14 +5642,38 @@ function addDeckFromCSV(text, deckName) {
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
-    showToast(`「${deckName}」に${words.length}語を追加しました！`);
+    showToast(`「${deckName}」に${words.length}語を追加しました！（${delimNames[delimiter] || delimiter}区切り）`);
   } else {
     showToast('単語が見つかりませんでした');
   }
 }
 
-// Parse a single CSV line respecting quoted fields
-function parseCSVLine(line) {
+// Auto-detect delimiter: try each candidate and pick the one that splits most lines into exactly 2 columns
+function detectDelimiter(lines) {
+  const candidates = ['\t', '|', ';', ','];
+  let bestDelim = ',';
+  let bestScore = -1;
+
+  for (const delim of candidates) {
+    let twoColCount = 0;
+    for (const line of lines) {
+      const parts = parseCSVLine(line, delim);
+      if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+        twoColCount++;
+      }
+    }
+    // Require a majority of lines to be 2 columns
+    if (twoColCount > bestScore) {
+      bestScore = twoColCount;
+      bestDelim = delim;
+    }
+  }
+  return bestDelim;
+}
+
+// Parse a single CSV/TSV line respecting quoted fields
+function parseCSVLine(line, delimiter) {
+  if (delimiter === undefined) delimiter = ',';
   const result = [];
   let current = '';
   let inQuotes = false;
@@ -5127,7 +5690,7 @@ function parseCSVLine(line) {
     } else {
       if (ch === '"') {
         inQuotes = true;
-      } else if (ch === ',' || ch === '\t') {
+      } else if (ch === delimiter) {
         result.push(current);
         current = '';
       } else {
@@ -5282,9 +5845,21 @@ function renderDeckList() {
     deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
     const total = deck.words.length;
     const isActive = deck.id === activeDeckId;
+    const isChecked = deckSelectedSet.has(deck.id);
+    let crownHtml = '';
+    const goldFlag = localStorage.getItem('csvocab_allUnlocked_' + deck.id) === '1';
+    if (total > 0 && counts.mastered === total && !goldFlag) {
+      try { localStorage.setItem('csvocab_allUnlocked_' + deck.id, '1'); } catch(e) {}
+    }
+    if (goldFlag || (total > 0 && counts.mastered === total)) {
+      crownHtml = '<span class="dc-crown gold">👑</span>';
+    } else if (total > 0 && counts.unlearned === 0) {
+      crownHtml = '<span class="dc-crown silver">👑</span>';
+    }
     return `
-      <div class="deck-card ${isActive ? 'active' : ''}" onclick="deckCardTap('${deck.id}')">
-        <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
+      <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
+        <span class="dc-checkbox ${isChecked ? 'checked' : ''}">✓</span>
+        <div class="dc-donut">${buildDonutSVG(counts, total)}${crownHtml}</div>
         <div class="deck-card-info">
           <div class="dc-name">${escapeHtml(deck.name)}</div>
           <div class="dc-meta">${deck.words.length}問</div>
@@ -5305,6 +5880,21 @@ function renderDeckList() {
 }
 
 function deckCardTap(id) {
+  if (deckSelectMode) {
+    if (deckSelectedSet.has(id)) {
+      deckSelectedSet.delete(id);
+    } else {
+      deckSelectedSet.add(id);
+    }
+    // Update checkbox visually without full re-render
+    const card = document.querySelector(`.deck-card[data-deck-id="${id}"]`);
+    if (card) {
+      const cb = card.querySelector('.dc-checkbox');
+      if (cb) cb.classList.toggle('checked', deckSelectedSet.has(id));
+    }
+    updateDeckBulkToolbar();
+    return;
+  }
   if (id === activeDeckId) {
     // Already selected → open edit
     openDeckEdit(id);
@@ -5324,6 +5914,88 @@ function selectDeck(id) {
   saveState();
   renderDeckList();
   updateDashboard();
+}
+
+// ============ DECK BULK SELECT ============
+let deckSelectMode = false;
+let deckSelectedSet = new Set();
+
+function toggleDeckSelectMode() {
+  deckSelectMode = !deckSelectMode;
+  deckSelectedSet.clear();
+  const btn = document.getElementById('deckSelectBtn');
+  btn.classList.toggle('active', deckSelectMode);
+  btn.textContent = deckSelectMode ? '完了' : '選択';
+  document.getElementById('screen-dashboard').classList.toggle('deck-select-mode', deckSelectMode);
+  updateDeckBulkToolbar();
+  renderDeckList();
+}
+
+function updateDeckBulkToolbar() {
+  const toolbar = document.getElementById('deckBulkToolbar');
+  const nav = document.getElementById('bottomNav');
+  if (deckSelectMode) {
+    toolbar.classList.add('show');
+    document.getElementById('deckBulkCount').textContent = deckSelectedSet.size + '件選択';
+    if (nav) nav.classList.remove('show');
+  } else {
+    toolbar.classList.remove('show');
+    if (nav) nav.classList.add('show');
+  }
+}
+
+function deckBulkSelectAll() {
+  if (deckSelectedSet.size === decks.length) {
+    deckSelectedSet.clear();
+  } else {
+    decks.forEach(d => deckSelectedSet.add(d.id));
+  }
+  renderDeckList();
+  updateDeckBulkToolbar();
+}
+
+function deckBulkDelete() {
+  const count = deckSelectedSet.size;
+  if (count === 0) { showToast('デッキを選択してください'); return; }
+  confirmAction(
+    `${count}件のデッキを削除`,
+    `選択した${count}件のデッキを削除しますか？この操作は取り消せません。`,
+    async function() {
+      for (const deckId of deckSelectedSet) {
+        const deck = decks.find(d => d.id === deckId);
+        if (deck) {
+          for (const w of deck.words) {
+            try {
+              if (w.questionImageId) await deleteImage(w.questionImageId);
+              if (w.answerImageId) await deleteImage(w.answerImageId);
+            } catch(e) {}
+          }
+          try { localStorage.removeItem('mikan_deckSettings_' + deckId); } catch(e) {}
+          try { localStorage.removeItem('csvocab_allUnlocked_' + deckId); } catch(e) {}
+        }
+      }
+      decks = decks.filter(d => !deckSelectedSet.has(d.id));
+      if (deckSelectedSet.has(activeDeckId)) {
+        activeDeckId = decks.length > 0 ? decks[0].id : null;
+      }
+      saveState();
+      deckSelectedSet.clear();
+      deckSelectMode = false;
+      const btn = document.getElementById('deckSelectBtn');
+      btn.classList.remove('active');
+      btn.textContent = '選択';
+      document.getElementById('screen-dashboard').classList.remove('deck-select-mode');
+      updateDeckBulkToolbar();
+      if (decks.length === 0) {
+        showScreen('import');
+      } else {
+        renderDeckList();
+        updateDashboard();
+      }
+      showToast(`${count}件のデッキを削除しました`);
+    },
+    '削除する'
+  );
 }
 
 // ============ REORDER DECKS ============
@@ -5428,13 +6100,28 @@ function saveDeckName() {
 function deleteDeck(id) {
   const deck = decks.find(d => d.id === id);
   if (!deck) return;
-  confirmAction('デッキを削除', '「' + deck.name + '」を削除しますか？この操作は取り消せません。', function() {
+  confirmAction('デッキを削除', '「' + deck.name + '」を削除しますか？この操作は取り消せません。', async function() {
+    // Delete all images belonging to this deck
+    for (const w of deck.words) {
+      try {
+        if (w.questionImageId) await deleteImage(w.questionImageId);
+        if (w.answerImageId) await deleteImage(w.answerImageId);
+      } catch(e) { console.error('Image delete failed:', e); }
+    }
+    const deletedIndex = decks.findIndex(d => d.id === id);
     decks = decks.filter(d => d.id !== id);
     if (activeDeckId === id) {
-      activeDeckId = decks.length > 0 ? decks[0].id : null;
+      if (decks.length > 0) {
+        // Select the neighbor: same index if possible, otherwise the one before
+        const newIndex = Math.min(deletedIndex, decks.length - 1);
+        activeDeckId = decks[newIndex].id;
+      } else {
+        activeDeckId = null;
+      }
     }
     saveState();
     try { localStorage.removeItem('mikan_deckSettings_' + id); } catch(e) {}
+    try { localStorage.removeItem('csvocab_allUnlocked_' + id); } catch(e) {}
     if (decks.length === 0) {
       showScreen('import');
     } else {
@@ -5495,6 +6182,10 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+// Escape a string for safe use inside JS string literals in inline HTML attributes (onclick etc.)
+function escapeForInlineJS(str) {
+  return escapeHtml(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 // ============ SCREENS ============
 function showScreen(name) {
@@ -5511,6 +6202,15 @@ function showScreen(name) {
   } else {
     document.body.style.overflow = '';
     document.body.style.height = '';
+    // Ensure quiz timer is stopped when leaving quiz screen
+    stopQuizTimer();
+    // Reset quiz paint mode
+    if (quizPaintOn) {
+      quizPaintOn = false;
+      document.getElementById('quizPaintToggle')?.classList.remove('paint-on');
+      document.getElementById('screen-quiz')?.classList.remove('quiz-paint-active');
+      clearQuizPaintCanvas();
+    }
   }
   if (name === 'advanced-settings') {
     applyAdvancedSettingsUI();
@@ -5526,8 +6226,17 @@ function showScreen(name) {
   if (name !== 'word-editor') {
     exitEditorSelectMode();
   }
+  // Exit deck select mode when leaving dashboard
+  if (name !== 'dashboard' && deckSelectMode) {
+    deckSelectMode = false;
+    deckSelectedSet.clear();
+    const dBtn = document.getElementById('deckSelectBtn');
+    if (dBtn) { dBtn.classList.remove('active'); dBtn.textContent = '選択'; }
+    document.getElementById('screen-dashboard')?.classList.remove('deck-select-mode');
+    document.getElementById('deckBulkToolbar')?.classList.remove('show');
+  }
   if (nav) {
-    if (navScreens.includes(name) && !editorSelectMode) {
+    if (navScreens.includes(name) && !editorSelectMode && !deckSelectMode) {
       nav.classList.add('show');
       document.body.classList.add('has-bottom-nav');
     } else {
@@ -5672,9 +6381,17 @@ function showLevelSelect() {
   });
 
   const allMastered = words.length > 0 && counts.mastered === words.length;
+  const noUnlearned = words.length > 0 && counts.unlearned === 0;
+
+  // Permanently unlock "全て" once all words have been mastered
+  const unlockKey = 'csvocab_allUnlocked_' + activeDeckId;
+  if (allMastered) {
+    try { localStorage.setItem(unlockKey, '1'); } catch(e) {}
+  }
+  const allUnlocked = allMastered || localStorage.getItem(unlockKey) === '1';
 
   const options = [
-    { key: 'all', icon: allMastered ? '👑' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allMastered },
+    { key: 'all', icon: allUnlocked ? '👹' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allUnlocked },
     { key: 'bookmarked', icon: '📌', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
     { key: 'unlearned', icon: '📋', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔵', label: '苦手', count: counts.weak, cls: 'weak' },
@@ -5754,7 +6471,7 @@ function showLevelSelect() {
     if (counts.unlearned > 0) selectedRange = 'unlearned';
     else if (counts.weak > 0) selectedRange = 'weak';
     else if (counts.fuzzy > 0) selectedRange = 'fuzzy';
-    else if (allMastered) selectedRange = 'all';
+    else if (allUnlocked) selectedRange = 'all';
     else selectedRange = 'unlearned';
     // Re-highlight
     document.querySelectorAll('.level-select-card').forEach(c => c.classList.remove('selected'));
@@ -5773,7 +6490,7 @@ function selectRange(key, el) {
 }
 
 function showLockedMessage() {
-  showToast('🔒 全問を「覚えた」にすると解放されます！');
+  showToast('🔒 全問を一度「覚えた」にすると解放されます！');
 }
 
 // ============ QUIZ SETUP ============
@@ -5791,6 +6508,12 @@ let quizShowImages = true;
 
 function startNextQuiz() {
   // Re-start a quiz with the same settings (range, mode, drill, reverse, tts, order, count)
+  const count = lastMainQuizCount;
+  _launchQuiz(count);
+}
+
+// Shared quiz launcher used by startQuiz and startNextQuiz
+function _launchQuiz(count) {
   reviewMode = false;
   let pool = getQuizPool();
   if (pool.length === 0) {
@@ -5800,18 +6523,19 @@ function startNextQuiz() {
 
   // Apply order
   if (quizOrder === 'random') {
-    pool = pool.sort(() => Math.random() - 0.5);
+    shuffle(pool);
   } else if (quizOrder === 'desc') {
     pool = pool.reverse();
   }
+  // 'asc' = keep original list order (default from getQuizPool)
 
-  // Use the saved main quiz count (not the review session count)
-  const count = Math.min(lastMainQuizCount, pool.length);
-  pool = pool.slice(0, count);
+  const actual = Math.min(count, pool.length);
+  pool = pool.slice(0, actual);
+  lastMainQuizCount = actual;
 
   // Save original levels before quiz
   const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+  pool.forEach(w => { beforeLevels[wordKey(w)] = w.level; });
 
   currentQuiz = {
     words: pool,
@@ -5822,7 +6546,8 @@ function startNextQuiz() {
     totalCount: pool.length,
     masteredCount: 0,
     beforeLevels: beforeLevels,
-    drillWrongSet: new Set()
+    drillWrongSet: new Set(),
+    drillRetryCount: new Map()
   };
   quizStartTime = Date.now();
 
@@ -5836,14 +6561,14 @@ function startMissedReview() {
   const missed = currentQuiz.results.filter(r => !r.correct);
   const seen = new Set();
   const pool = missed.filter(r => {
-    if (seen.has(r.word.english)) return false;
-    seen.add(r.word.english);
+    if (seen.has(wordKey(r.word))) return false;
+    seen.add(wordKey(r.word));
     return true;
   }).map(r => r.word);
 
   if (pool.length === 0) return;
 
-  pool.sort(() => Math.random() - 0.5);
+  shuffle(pool);
 
   reviewMode = true;
   quizMode = 'flashcard';
@@ -5851,7 +6576,7 @@ function startMissedReview() {
 
   // Save current levels (won't be changed)
   const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+  pool.forEach(w => { beforeLevels[wordKey(w)] = w.level; });
 
   currentQuiz = {
     words: pool,
@@ -5862,7 +6587,8 @@ function startMissedReview() {
     totalCount: pool.length,
     masteredCount: 0,
     beforeLevels: beforeLevels,
-    drillWrongSet: new Set()
+    drillWrongSet: new Set(),
+    drillRetryCount: new Map()
   };
   quizStartTime = Date.now();
 
@@ -5967,7 +6693,7 @@ function updateQuizImgToggle() {
   if (btn) btn.classList.toggle('off', !quizShowImages);
 }
 
-function startQuizTimer() {
+function startQuizTimer(resumeFrom) {
   stopQuizTimer();
   if (!quizTimerEnabled) {
     document.getElementById('quizTimerBar').style.display = 'none';
@@ -5979,11 +6705,22 @@ function startQuizTimer() {
   const text = document.getElementById('quizTimerText');
   bar.style.display = 'block';
   text.style.display = 'block';
-  fill.classList.remove('urgent');
-  text.classList.remove('urgent');
-  fill.style.transform = 'scaleX(1)';
-  text.textContent = quizTimerSeconds;
-  quizTimerStartTime = Date.now();
+  // If resuming, start partway through; otherwise fresh start
+  if (typeof resumeFrom === 'number' && resumeFrom < quizTimerSeconds) {
+    const alreadyElapsed = quizTimerSeconds - resumeFrom;
+    quizTimerStartTime = Date.now() - alreadyElapsed * 1000;
+    const ratio = resumeFrom / quizTimerSeconds;
+    fill.style.transform = 'scaleX(' + ratio + ')';
+    text.textContent = Math.ceil(resumeFrom);
+    if (resumeFrom <= 3) { fill.classList.add('urgent'); text.classList.add('urgent'); }
+    else { fill.classList.remove('urgent'); text.classList.remove('urgent'); }
+  } else {
+    fill.classList.remove('urgent');
+    text.classList.remove('urgent');
+    fill.style.transform = 'scaleX(1)';
+    text.textContent = quizTimerSeconds;
+    quizTimerStartTime = Date.now();
+  }
   quizTimerInterval = setInterval(tickQuizTimer, 100);
 }
 
@@ -6041,44 +6778,72 @@ function getQuizPool() {
 
 // ============ QUIZ ============
 function startQuiz() {
-  reviewMode = false;
-  let pool = getQuizPool();
+  const pool = getQuizPool();
   if (pool.length === 0) return;
-
-  // Apply order
-  if (quizOrder === 'random') {
-    pool = pool.sort(() => Math.random() - 0.5);
-  } else if (quizOrder === 'desc') {
-    pool = pool.reverse();
-  }
-  // 'asc' = keep original list order (default from getQuizPool)
-
   const countSel = document.getElementById('quizCount').value;
-  const count = countSel === 'all' ? pool.length : Math.min(parseInt(countSel), pool.length);
-  pool = pool.slice(0, count);
-  lastMainQuizCount = count; // remember for "次の問題へ"
+  const count = countSel === 'all' ? pool.length : parseInt(countSel);
+  _launchQuiz(count);
+}
 
-  // Save original levels before quiz
-  const beforeLevels = {};
-  pool.forEach(w => { beforeLevels[w.english] = w.level; });
+let skipNextTTS = false;
 
-  currentQuiz = {
-    words: pool,
-    index: 0,
-    correct: 0,
-    wrong: 0,
-    results: [],
-    totalCount: pool.length,
-    masteredCount: 0,
-    beforeLevels: beforeLevels,
-    drillWrongSet: new Set()
-  };
-  quizStartTime = Date.now();
+async function preRenderNextCard() {
+  const nextEl = document.getElementById('quizCardNext');
+  if (!nextEl) return;
+  const q = currentQuiz;
+  if (!q) { nextEl.innerHTML = ''; return; }
+  const nextIdx = q.index + 1;
+  if (nextIdx >= q.words.length || (quizDrillMode && q.masteredCount >= q.totalCount)) {
+    nextEl.innerHTML = '';
+    return;
+  }
+  const word = q.words[nextIdx];
+  const questionText = reverseMode ? word.japanese : word.english;
+  const lvl = word.level === 'almost' ? 'mastered' : word.level;
+  const levelInfo = LEVELS[lvl] || LEVELS.unlearned;
+  const pinActive = word.bookmarked ? 'active' : '';
 
-  showScreen('quiz');
-  sfxStart();
-  updateQuizImgToggle();
-  showQuizQuestion();
+  // Load question image
+  const qImgId = reverseMode ? word.answerImageId : word.questionImageId;
+  const qImgData = (quizShowImages && qImgId) ? await loadImage(qImgId) : null;
+
+  let wordHtml;
+  if (qImgData) {
+    wordHtml = `<div>${escapeHtml(questionText)}</div><img class="quiz-question-img" src="${qImgData}">`;
+  } else {
+    wordHtml = escapeHtml(questionText);
+  }
+
+  const copySvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+  const editSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg>';
+
+  nextEl.innerHTML = `
+    <div class="quiz-card-topbar">
+      <span class="bookmark-btn card-camera" style="pointer-events:none;">${editSvg}</span>
+      <span class="bookmark-btn card-bookmark ${pinActive}" style="pointer-events:none;">📌</span>
+      <span class="level-badge ${levelInfo.badge}">${levelInfo.label}</span>
+      <span class="quiz-copy-btn" style="pointer-events:none;">${copySvg}</span>
+    </div>
+    <div class="english-word">${wordHtml}</div>
+    <div class="answer-reveal">
+      <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
+    </div>
+  `;
+
+  // Auto-size the word text
+  const wordEl = nextEl.querySelector('.english-word');
+  if (wordEl) autoSizeQuizWord(wordEl);
+}
+
+function speakNextQuestionImmediate() {
+  if (ttsMode !== 'question' && ttsMode !== 'both') return;
+  if (!currentQuiz) return;
+  const nextIdx = currentQuiz.index + 1;
+  if (nextIdx >= currentQuiz.words.length) return;
+  const nextWord = currentQuiz.words[nextIdx];
+  const nextQ = reverseMode ? nextWord.japanese : nextWord.english;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  speakText(nextQ);
 }
 
 async function showQuizQuestion() {
@@ -6119,22 +6884,24 @@ async function showQuizQuestion() {
   // ② Auto-size: shrink font for long text
   autoSizeQuizWord(quizWordEl);
 
-  // Read the question word aloud (respects ttsMode)
-  if (ttsMode === 'question' || ttsMode === 'both') {
+  // Read the question word aloud (respects ttsMode and skipNextTTS)
+  if (!skipNextTTS && (ttsMode === 'question' || ttsMode === 'both')) {
     speakText(questionText);
   }
+  skipNextTTS = false;
 
-  // Reset card state
+  // Reset card state — keep invisible until all content is ready
   const card = document.getElementById('quizCard');
-  card.classList.remove('revealed');
+  card.classList.remove('revealed', 'swiping', 'swipe-fly');
+  card.style.transition = 'none';
   card.style.transform = '';
-  card.style.opacity = '';
-  card.classList.remove('swiping', 'swipe-fly');
-  // Reset swipe overlays
+  card.style.opacity = '0'; // Stay invisible while updating content
+
+  // Reset swipe overlays immediately (bypass transition)
   const swRO = document.getElementById('swipeRightOverlay');
   const swLO = document.getElementById('swipeLeftOverlay');
-  if (swRO) swRO.style.opacity = '0';
-  if (swLO) swLO.style.opacity = '0';
+  if (swRO) { swRO.style.transition = 'none'; swRO.style.opacity = '0'; }
+  if (swLO) { swLO.style.transition = 'none'; swLO.style.opacity = '0'; }
   swipeEnabled = false;
   
   // Update bookmark button in card
@@ -6146,6 +6913,8 @@ async function showQuizQuestion() {
 
   // Answer area inside card (hint + hidden answer)
   const aImgData = (quizShowImages && aImgId) ? await loadImage(aImgId) : null;
+  const hasDualImages = !!(qImgData && aImgData);
+  card.classList.toggle('dual-img', hasDualImages);
   const answerImgHtml = aImgData ? `<img class="quiz-answer-img" src="${aImgData}" onclick="event.stopPropagation();openLightbox(this.src)">` : '';
   answerReveal.innerHTML = `
     <div class="answer-tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
@@ -6163,7 +6932,7 @@ async function showQuizQuestion() {
     `;
   } else {
     const choices = generateChoices(word);
-    const correctAnswer = word.japanese;
+    const correctAnswer = reverseMode ? word.english : word.japanese;
     body.innerHTML = `
       <div class="choices">
         ${choices.map((c, i) => `
@@ -6172,8 +6941,19 @@ async function showQuizQuestion() {
       </div>
     `;
   }
+
+  // All content updated — now reveal card
+  card.offsetHeight; // force reflow to apply all changes
+  card.style.transition = '';
+  card.style.opacity = '';
+  // Restore overlay transitions
+  if (swRO) swRO.style.transition = '';
+  if (swLO) swLO.style.transition = '';
+
   // Start timer for this question
   startQuizTimer();
+  // Pre-render next card behind current one
+  preRenderNextCard();
 }
 
 // ② Auto-size quiz question text to fit within card
@@ -6187,6 +6967,7 @@ function autoSizeQuizWord(el) {
 }
 
 function revealAnswer() {
+  if (quizPaintOn) return;
   const card = document.getElementById('quizCard');
   if (!currentQuiz) return;
   // Don't trigger reveal if a swipe just completed
@@ -6230,6 +7011,16 @@ function toggleBookmark() {
   const btn = document.getElementById('bookmarkBtn');
   btn.classList.toggle('active', word.bookmarked);
   saveState();
+}
+
+function toggleResultBookmark(btn, eng, jpn) {
+  const allWords = getActiveWords();
+  const word = allWords.find(w => w.english === eng && w.japanese === jpn);
+  if (!word) return;
+  word.bookmarked = !word.bookmarked;
+  btn.classList.toggle('active', word.bookmarked);
+  sfxBookmark();
+  requestAnimationFrame(() => saveState());
 }
 
 function copyQuizText() {
@@ -6372,6 +7163,9 @@ let swipeState = null;
 
   function onTouchStart(e) {
     if (!swipeEnabled) return;
+    if (quizPaintOn) return;
+    // Block swipe when any modal/overlay is open
+    if (document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show, .settings-overlay.show')) return;
     const card = document.getElementById('quizCard');
     if (!card.classList.contains('revealed')) return;
     if (quizMode !== 'flashcard') return;
@@ -6401,20 +7195,20 @@ let swipeState = null;
     if (Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dx) < 30) return;
     if (Math.abs(dx) > 10) e.preventDefault();
 
-    const maxDx = swipeState.cardWidth * 0.6;
-    const clampedDx = Math.max(-maxDx, Math.min(maxDx, dx));
-    const progress = clampedDx / maxDx;
-    const rotation = progress * MAX_ROTATION;
+    // Free movement - no clamping, card follows finger across full screen
+    const rotRange = swipeState.cardWidth * 0.5;
+    const rotation = Math.max(-MAX_ROTATION, Math.min(MAX_ROTATION, (dx / rotRange) * MAX_ROTATION));
+    card.style.transform = `translateX(${dx}px) rotate(${rotation}deg)`;
 
-    card.style.transform = `translateX(${clampedDx}px) rotate(${rotation}deg)`;
-
+    // Overlay opacity based on swipe distance
     const rightOverlay = document.getElementById('swipeRightOverlay');
     const leftOverlay = document.getElementById('swipeLeftOverlay');
-    if (progress > 0) {
-      rightOverlay.style.opacity = Math.min(progress * 1.5, 1);
+    const overlayProgress = Math.abs(dx) / (swipeState.cardWidth * 0.3);
+    if (dx > 0) {
+      rightOverlay.style.opacity = Math.min(overlayProgress, 1);
       leftOverlay.style.opacity = '0';
     } else {
-      leftOverlay.style.opacity = Math.min(-progress * 1.5, 1);
+      leftOverlay.style.opacity = Math.min(overlayProgress, 1);
       rightOverlay.style.opacity = '0';
     }
   }
@@ -6431,22 +7225,33 @@ let swipeState = null;
       swipeState.answered = true;
       swipeEnabled = false;
       const known = dx > 0;
-      const flyX = dx > 0 ? swipeState.cardWidth : -swipeState.cardWidth;
 
+      // 1) Immediately play sfx + speak NEXT question
+      if (known) { sfxCorrect(); } else { sfxWrong(); }
+      speakNextQuestionImmediate();
+
+      // 2) Fly-out animation (card exits screen)
+      const flyX = dx > 0 ? window.innerWidth : -window.innerWidth;
       card.classList.add('swipe-fly');
-      card.style.transform = `translateX(${flyX}px) rotate(${dx > 0 ? 20 : -20}deg)`;
+      card.style.transform = `translateX(${flyX}px) rotate(${dx > 0 ? 15 : -15}deg)`;
       card.style.opacity = '0';
 
+      // 3) After animation: process answer + show next (skip TTS)
+      // Don't reset transform/opacity here — showQuizQuestion will do it
+      // AFTER updating content, preventing flash of old content
       setTimeout(() => {
         card.classList.remove('swipe-fly');
-        card.style.transform = '';
-        card.style.opacity = '';
         const rightOverlay = document.getElementById('swipeRightOverlay');
         const leftOverlay = document.getElementById('swipeLeftOverlay');
         if (rightOverlay) rightOverlay.style.opacity = '0';
         if (leftOverlay) leftOverlay.style.opacity = '0';
-        answerKnowledge(known);
-      }, 250);
+        // Process answer without re-playing sfx/TTS
+        skipNextTTS = true;
+        stopQuizTimer();
+        const word = currentQuiz.words[currentQuiz.index];
+        processQuizAnswer(word, known);
+        nextQuestion();
+      }, 200);
     } else {
       card.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
       card.style.transform = '';
@@ -6478,6 +7283,7 @@ let swipeState = null;
     // Ignore keyboard when any overlay/modal is open
     const anyOverlay = document.querySelector('.confirm-overlay.show, .deck-edit-overlay.show');
     if (anyOverlay) return;
+    if (quizPaintOn) return;
 
     const card = document.getElementById('quizCard');
     const isRevealed = card && card.classList.contains('revealed');
@@ -6489,16 +7295,18 @@ let swipeState = null;
       return;
     }
 
-    // → / ← — reveal if not yet revealed, answer if revealed (flashcard mode)
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    // → / ← / D / A — reveal if not yet revealed, answer if revealed (flashcard mode)
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'D' || e.key === 'a' || e.key === 'A') {
       e.preventDefault();
       if (!isRevealed) {
         revealAnswer();
         return;
       }
+      const known = e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D';
       if (quizMode === 'flashcard' && !keyLocked) {
         keyLocked = true;
-        keyAnswerWithAnimation(e.key === 'ArrowRight', card);
+        answerKnowledge(known);
+        setTimeout(() => { keyLocked = false; }, 200);
       }
     }
   });
@@ -6506,7 +7314,6 @@ let swipeState = null;
   function keyAnswerWithAnimation(known, card) {
     swipeEnabled = false;
     const direction = known ? 1 : -1;
-    const cardWidth = card.getBoundingClientRect().width;
 
     // Show overlay briefly
     const rightOverlay = document.getElementById('swipeRightOverlay');
@@ -6517,41 +7324,63 @@ let swipeState = null;
       if (leftOverlay) leftOverlay.style.opacity = '1';
     }
 
-    // Fly-out animation
+    // 1) Immediately play sfx + speak NEXT question
+    if (known) { sfxCorrect(); } else { sfxWrong(); }
+    speakNextQuestionImmediate();
+
+    // 2) Fly-out animation
     card.classList.add('swipe-fly');
-    card.style.transform = `translateX(${direction * cardWidth}px) rotate(${direction * 20}deg)`;
+    card.style.transform = `translateX(${direction * window.innerWidth}px) rotate(${direction * 15}deg)`;
     card.style.opacity = '0';
 
+    // 3) After animation: process answer + show next (skip TTS)
     setTimeout(() => {
       card.classList.remove('swipe-fly');
-      card.style.transform = '';
-      card.style.opacity = '';
       if (rightOverlay) rightOverlay.style.opacity = '0';
       if (leftOverlay) leftOverlay.style.opacity = '0';
       keyLocked = false;
-      answerKnowledge(known);
-    }, 250);
+      skipNextTTS = true;
+      stopQuizTimer();
+      const word = currentQuiz.words[currentQuiz.index];
+      processQuizAnswer(word, known);
+      nextQuestion();
+    }, 200);
   }
 })();
 
 function generateChoices(targetWord) {
-  const correct = targetWord.japanese;
-  // Pull distractors from all decks for better variety
-  const allW = getAllWords().filter(w => w.japanese !== correct);
-  const shuffled = allW.sort(() => Math.random() - 0.5).slice(0, 3);
-  const choices = [correct, ...shuffled.map(w => w.japanese)];
-  return choices.sort(() => Math.random() - 0.5);
+  // In reverse mode: question=japanese, answer=english → choices are english
+  // In normal mode: question=english, answer=japanese → choices are japanese
+  const answerField = reverseMode ? 'english' : 'japanese';
+  const correct = targetWord[answerField];
+  const targetKey = wordKey(targetWord);
+  // Filter by word identity (not value) to avoid excluding words that share the same answer text
+  const allW = getAllWords().filter(w => wordKey(w) !== targetKey);
+  shuffle(allW);
+  // Pick up to 3 unique distractor values (no duplicates, and not equal to correct answer)
+  const usedValues = new Set([correct]);
+  const distractors = [];
+  for (const w of allW) {
+    const val = w[answerField];
+    if (!usedValues.has(val)) {
+      usedValues.add(val);
+      distractors.push(val);
+      if (distractors.length >= 3) break;
+    }
+  }
+  const choices = [correct, ...distractors];
+  return shuffle(choices);
 }
 
-function answerKnowledge(known) {
-  stopQuizTimer();
-  const word = currentQuiz.words[currentQuiz.index];
+const DRILL_MAX_RETRIES = 3; // Maximum times a word can be re-queued in drill mode
 
-  if (known) {
-    sfxCorrect();
-    currentQuiz.correct++;
+// Shared quiz answer processing: updates level, tracks drill state, re-queues if needed
+function processQuizAnswer(word, isCorrect) {
+  const q = currentQuiz;
+  if (isCorrect) {
+    q.correct++;
     if (!reviewMode) {
-      if (quizDrillMode && currentQuiz.drillWrongSet.has(word.english)) {
+      if (quizDrillMode && q.drillWrongSet.has(wordKey(word))) {
         // Drill mode: word was wrong before in this session → stay weak, just count as mastered for progress
         word.level = 'weak';
         word.correctStreak = 0;
@@ -6567,32 +7396,50 @@ function answerKnowledge(known) {
       }
       // mastered stays mastered (no change needed)
     }
-    currentQuiz.results.push({ word, correct: true });
-    if (quizDrillMode) currentQuiz.masteredCount++;
+    q.results.push({ word, correct: true });
+    if (quizDrillMode) q.masteredCount++;
   } else {
-    sfxWrong();
-    currentQuiz.wrong++;
+    q.wrong++;
     if (!reviewMode) {
       word.level = 'weak';
       word.correctStreak = 0;
     }
-    currentQuiz.results.push({ word, correct: false });
+    q.results.push({ word, correct: false });
 
     // Track wrong answers in drill mode
     if (quizDrillMode) {
-      currentQuiz.drillWrongSet.add(word.english);
+      q.drillWrongSet.add(wordKey(word));
     }
 
-    // Drill mode: re-queue the word later
+    // Drill mode: re-queue the word later (with retry limit to prevent infinite growth)
     if (quizDrillMode) {
-      const remaining = currentQuiz.words.slice(currentQuiz.index + 1);
-      const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
-      remaining.splice(insertPos, 0, word);
-      currentQuiz.words = [...currentQuiz.words.slice(0, currentQuiz.index + 1), ...remaining];
+      const key = wordKey(word);
+      const retries = q.drillRetryCount.get(key) || 0;
+      if (retries < DRILL_MAX_RETRIES) {
+        q.drillRetryCount.set(key, retries + 1);
+        const remaining = q.words.slice(q.index + 1);
+        const insertPos = Math.min(2 + Math.floor(Math.random() * 4), remaining.length);
+        remaining.splice(insertPos, 0, word);
+        q.words = [...q.words.slice(0, q.index + 1), ...remaining];
+      } else {
+        // Exceeded retry limit — count as mastered for progress so quiz can finish
+        q.masteredCount++;
+      }
     }
   }
-
   saveState();
+}
+
+function answerKnowledge(known) {
+  stopQuizTimer();
+  const word = currentQuiz.words[currentQuiz.index];
+
+  if (known) {
+    sfxCorrect();
+  } else {
+    sfxWrong();
+  }
+  processQuizAnswer(word, known);
   nextQuestion();
 }
 
@@ -6606,41 +7453,22 @@ function answerChoice(btn, index, isCorrect) {
   if (isCorrect) {
     btn.classList.add('correct');
     sfxCorrect();
-    currentQuiz.correct++;
-    if (quizDrillMode && currentQuiz.drillWrongSet.has(word.english)) {
-      // Drill mode: word was wrong before in this session → stay weak
-      word.level = 'weak';
-      word.correctStreak = 0;
-    } else {
-      word.correctStreak = (word.correctStreak || 0) + 1;
-      if (word.correctStreak >= 2) word.level = 'mastered';
-      else if (word.correctStreak >= 1) word.level = 'fuzzy';
-    }
-    currentQuiz.results.push({ word, correct: true });
   } else {
     btn.classList.add('wrong');
     sfxWrong();
-    currentQuiz.wrong++;
-    word.level = 'weak';
-    word.correctStreak = 0;
+    const correctText = reverseMode ? word.english : word.japanese;
     allBtns.forEach(b => {
-      if (b.textContent === word.japanese) b.classList.add('show-correct');
+      if (b.textContent === correctText) b.classList.add('show-correct');
     });
-    currentQuiz.results.push({ word, correct: false });
-
-    // Track wrong answers in drill mode
-    if (quizDrillMode) {
-      currentQuiz.drillWrongSet.add(word.english);
-    }
   }
-
-  saveState();
+  processQuizAnswer(word, isCorrect);
   setTimeout(() => nextQuestion(), isCorrect ? 600 : 1200);
 }
 
 function nextQuestion() {
-  // Always cancel speech before transitioning
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  clearQuizPaintOnNext();
+  // Cancel speech before transitioning — but not if swipe/key already started speaking next question
+  if (!skipNextTTS && 'speechSynthesis' in window) window.speechSynthesis.cancel();
   currentQuiz.index++;
   if (quizDrillMode) {
     if (currentQuiz.masteredCount >= currentQuiz.totalCount) {
@@ -6684,7 +7512,7 @@ function showResult() {
     totalAnswered = q.totalCount;
     // Words that were never wrong = correct on first try
     const uniqueWordsSet = new Set();
-    q.words.forEach(w => uniqueWordsSet.add(w.english));
+    q.words.forEach(w => uniqueWordsSet.add(wordKey(w)));
     const wrongUniqueCount = q.drillWrongSet.size;
     displayCorrect = totalAnswered - wrongUniqueCount;
     displayWrong = wrongUniqueCount;
@@ -6718,9 +7546,9 @@ function showResult() {
   const seenWords = new Set();
   const diffs = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
   q.words.forEach(w => {
-    if (seenWords.has(w.english)) return;
-    seenWords.add(w.english);
-    const before = q.beforeLevels[w.english] || 'unlearned';
+    if (seenWords.has(wordKey(w))) return;
+    seenWords.add(wordKey(w));
+    const before = q.beforeLevels[wordKey(w)] || 'unlearned';
     const after = w.level;
     if (before !== after) {
       if (diffs[before] !== undefined) diffs[before]--;
@@ -6763,8 +7591,8 @@ function showResult() {
   const missed = q.results.filter(r => !r.correct);
   const seenMissed = new Set();
   const uniqueMissed = missed.filter(r => {
-    if (seenMissed.has(r.word.english)) return false;
-    seenMissed.add(r.word.english);
+    if (seenMissed.has(wordKey(r.word))) return false;
+    seenMissed.add(wordKey(r.word));
     return true;
   });
 
@@ -6775,10 +7603,12 @@ function showResult() {
         <h4>まちがえた問題（${uniqueMissed.length}語）</h4>
         <div class="missed-list">
           ${uniqueMissed.map(r => {
-            const engEsc = escapeHtml(r.word.english).replace(/'/g, "\\'");
-            const jpnEsc = escapeHtml(r.word.japanese).replace(/'/g, "\\'");
+            const engEsc = escapeForInlineJS(r.word.english);
+            const jpnEsc = escapeForInlineJS(r.word.japanese);
+            const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
+              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
               <span class="missed-jpn" onclick="speakText('${jpnEsc}')" style="cursor:pointer;">${escapeHtml(r.word.japanese)}</span>
             </div>
@@ -6792,8 +7622,8 @@ function showResult() {
   const correct = q.results.filter(r => r.correct);
   const seenCorrect = new Set();
   const uniqueCorrect = correct.filter(r => {
-    if (seenCorrect.has(r.word.english)) return false;
-    seenCorrect.add(r.word.english);
+    if (seenCorrect.has(wordKey(r.word))) return false;
+    seenCorrect.add(wordKey(r.word));
     return true;
   });
 
@@ -6804,10 +7634,12 @@ function showResult() {
         <h4 style="color:var(--green-500);">正解した問題（${uniqueCorrect.length}語）</h4>
         <div class="missed-list">
           ${uniqueCorrect.map(r => {
-            const engEsc = escapeHtml(r.word.english).replace(/'/g, "\\'");
-            const jpnEsc = escapeHtml(r.word.japanese).replace(/'/g, "\\'");
+            const engEsc = escapeForInlineJS(r.word.english);
+            const jpnEsc = escapeForInlineJS(r.word.japanese);
+            const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
+              <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')">📌</button>
               <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtml(r.word.english)}</span>
               <span class="missed-jpn" style="color:var(--green-500);cursor:pointer;" onclick="speakText('${jpnEsc}')">${escapeHtml(r.word.japanese)}</span>
             </div>
@@ -6906,12 +7738,36 @@ function showMissedWords() {
 }
 
 function confirmQuit() {
+  // Calculate remaining time before stopping
+  let timerRemaining = null;
+  if (quizTimerEnabled && quizTimerInterval) {
+    const elapsed = (Date.now() - quizTimerStartTime) / 1000;
+    timerRemaining = Math.max(0, quizTimerSeconds - elapsed);
+  }
   stopQuizTimer();
+
   confirmAction('クイズを中断', '中断しますか？ここまでの進捗は保存されます。', function() {
+    // Mark that quit was confirmed — timer should NOT resume
+    timerRemaining = null;
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
   }, '中断する');
+
+  // Temporarily wrap closeConfirm to detect cancel vs confirm
+  if (timerRemaining !== null) {
+    const origCloseConfirm = closeConfirm;
+    closeConfirm = function() {
+      closeConfirm = origCloseConfirm; // restore immediately
+      origCloseConfirm();
+      // Defer check: if quit action ran, timerRemaining is already null
+      setTimeout(() => {
+        if (timerRemaining !== null) {
+          startQuizTimer(timerRemaining);
+        }
+      }, 0);
+    };
+  }
 }
 
 // ============ WORD LIST ============
@@ -6942,12 +7798,24 @@ function renderDeckTabs() {
   `).join('');
 }
 
+let wordListScrollMap = {}; // { deckId: scrollTop }
+
 function switchWordListDeck(deckId, el) {
+  // Save current scroll position
+  const list = document.getElementById('wordItems');
+  if (wordListDeckId && list) {
+    wordListScrollMap[wordListDeckId] = list.scrollTop;
+  }
   wordListDeckId = deckId;
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderFilterTabs();
   renderWordList('all');
+  // Restore scroll position after DOM update
+  const savedScroll = wordListScrollMap[deckId] || 0;
+  requestAnimationFrame(() => {
+    if (list) list.scrollTop = savedScroll;
+  });
 }
 
 function getWordListWords() {
@@ -7138,6 +8006,8 @@ function toggleEditorSelectMode() {
   btn.classList.toggle('active', editorSelectMode);
   btn.textContent = editorSelectMode ? '完了' : '選択';
   document.getElementById('screen-word-editor').classList.toggle('select-mode', editorSelectMode);
+  const backBtn = document.getElementById('editorBackBtn');
+  if (backBtn) { backBtn.disabled = editorSelectMode; backBtn.style.opacity = editorSelectMode ? '0.3' : ''; }
   updateBulkToolbar();
   renderEditorList();
 }
@@ -7149,6 +8019,8 @@ function exitEditorSelectMode() {
   if (btn) { btn.classList.remove('active'); btn.textContent = '選択'; }
   document.getElementById('screen-word-editor')?.classList.remove('select-mode');
   document.getElementById('bulkToolbar').classList.remove('show');
+  const backBtn = document.getElementById('editorBackBtn');
+  if (backBtn) { backBtn.disabled = false; backBtn.style.opacity = ''; }
 }
 
 function toggleEditorCheckbox(index, event) {
@@ -7199,20 +8071,31 @@ function updateBulkToolbar() {
 function bulkDelete() {
   const total = getTotalSelectedCount();
   if (total === 0) { showToast('単語を選択してください'); return; }
-  confirmAction(total + '件を削除', '選択した' + total + '件の単語を削除します。この操作は取り消せません。', function() {
+  confirmAction(total + '件を削除', '選択した' + total + '件の単語を削除します。この操作は取り消せません。', async function() {
+    // Collect image IDs before deleting words
+    const imageIds = [];
     for (const deckId in editorSelectedMap) {
       const sel = editorSelectedMap[deckId];
       if (sel.size === 0) continue;
       const deck = decks.find(d => d.id === deckId);
       if (!deck) continue;
+      for (const i of sel) {
+        const w = deck.words[i];
+        if (w && w.questionImageId) imageIds.push(w.questionImageId);
+        if (w && w.answerImageId) imageIds.push(w.answerImageId);
+      }
       const indices = Array.from(sel).sort((a, b) => b - a);
       indices.forEach(i => deck.words.splice(i, 1));
     }
+    // Delete orphaned images from IndexedDB
+    for (const imgId of imageIds) {
+      try { await deleteImage(imgId); } catch(e) { console.error('Image delete failed:', e); }
+    }
     editorSelectedMap = {};
     saveState();
+    exitEditorSelectMode();
     renderEditorDeckTabs();
     renderEditorList();
-    updateBulkToolbar();
     showToast('🗑️ ' + total + '件を削除しました');
   }, '削除する');
 }
@@ -7284,9 +8167,9 @@ function bulkMoveTo(targetDeckId) {
   editorSelectedMap = {};
   saveState();
   closeBulkMoveModal();
+  exitEditorSelectMode();
   renderEditorDeckTabs();
   renderEditorList();
-  updateBulkToolbar();
   const action = isMove ? '移動' : 'コピー';
   const icon = isMove ? '📦' : '📋';
   showToast(icon + ' ' + count + '件を「' + targetDeck.name + '」に' + action + 'しました');
@@ -7320,12 +8203,24 @@ function renderEditorDeckTabs() {
   `).join('');
 }
 
+let editorScrollMap = {}; // { deckId: scrollTop }
+
 function switchEditorDeck(deckId, el) {
+  // Save current scroll position
+  const list = document.getElementById('editorWordList');
+  if (editorDeckId && list) {
+    editorScrollMap[editorDeckId] = list.scrollTop;
+  }
   editorDeckId = deckId;
   updateBulkToolbar();
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderEditorList();
+  // Restore scroll position after DOM update
+  const savedScroll = editorScrollMap[deckId] || 0;
+  requestAnimationFrame(() => {
+    if (list) list.scrollTop = savedScroll;
+  });
 }
 
 function getEditorWords() {
@@ -7496,21 +8391,26 @@ async function saveWord() {
   }
 
   // Save images to IndexedDB
-  if (editImgQ) {
-    const imgId = word.questionImageId || ('img_' + Date.now() + '_q');
-    await saveImage(imgId, editImgQ);
-    word.questionImageId = imgId;
-  } else if (word.questionImageId) {
-    await deleteImage(word.questionImageId);
-    delete word.questionImageId;
-  }
-  if (editImgA) {
-    const imgId = word.answerImageId || ('img_' + Date.now() + '_a');
-    await saveImage(imgId, editImgA);
-    word.answerImageId = imgId;
-  } else if (word.answerImageId) {
-    await deleteImage(word.answerImageId);
-    delete word.answerImageId;
+  try {
+    if (editImgQ) {
+      const imgId = word.questionImageId || ('img_' + Date.now() + '_q');
+      await saveImage(imgId, editImgQ);
+      word.questionImageId = imgId;
+    } else if (word.questionImageId) {
+      await deleteImage(word.questionImageId);
+      delete word.questionImageId;
+    }
+    if (editImgA) {
+      const imgId = word.answerImageId || ('img_' + Date.now() + '_a');
+      await saveImage(imgId, editImgA);
+      word.answerImageId = imgId;
+    } else if (word.answerImageId) {
+      await deleteImage(word.answerImageId);
+      delete word.answerImageId;
+    }
+  } catch(e) {
+    console.error('Image save failed:', e);
+    showToast('⚠️ 画像の保存に失敗しました');
   }
 
   saveState();
@@ -7519,6 +8419,11 @@ async function saveWord() {
 
   // If editing from quiz, refresh quiz display and return
   if (wasQuizEdit) {
+    // Re-lock body scroll for quiz mode
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.body.style.height = '100dvh';
+    window.scrollTo(0, 0);
     showQuizQuestion();
     showToast('保存しました！');
     return;
@@ -7607,7 +8512,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
@@ -7633,6 +8538,7 @@ function doResetCurrentDeck() {
   const deck = getActiveDeck();
   if (!deck) return;
   deck.words.forEach(w => { w.level = 'unlearned'; w.correctStreak = 0; });
+  try { localStorage.removeItem('csvocab_allUnlocked_' + deck.id); } catch(e) {}
   saveState();
   renderDeckList();
   updateDashboard();
@@ -7643,6 +8549,7 @@ function doResetAll() {
   // Clean up per-deck settings
   decks.forEach(d => {
     try { localStorage.removeItem('mikan_deckSettings_' + d.id); } catch(e) {}
+    try { localStorage.removeItem('csvocab_allUnlocked_' + d.id); } catch(e) {}
   });
   decks = [];
   activeDeckId = null;
@@ -7656,6 +8563,18 @@ function doResetAll() {
 }
 
 // ============ EXPORT / IMPORT ============
+function showExportPicker() {
+  if (decks.length === 0) {
+    showToast('エクスポートするデッキがありません');
+    return;
+  }
+  document.getElementById('exportPickerOverlay').classList.add('show');
+}
+
+function closeExportPicker() {
+  document.getElementById('exportPickerOverlay').classList.remove('show');
+}
+
 async function exportAllData() {
   if (decks.length === 0) {
     showToast('エクスポートするデッキがありません');
@@ -7694,6 +8613,87 @@ async function exportAllData() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('📤 データをエクスポートしました');
+}
+
+// ============ CSV EXPORT ============
+function showCsvExport() {
+  if (decks.length === 0) {
+    showToast('エクスポートするデッキがありません');
+    return;
+  }
+  const list = document.getElementById('csvExportDeckList');
+  let html = '';
+  if (decks.length > 1) {
+    html += '<button class="demo-item" onclick="exportAllDecksAsCSV()">📦 全デッキをまとめて<span>' + decks.length + 'デッキ</span></button>';
+  }
+  decks.forEach(d => {
+    html += '<button class="demo-item" onclick="exportDeckAsCSV(\'' + d.id + '\')">' +
+      escapeHtml(d.name) + '<span>' + d.words.length + '語</span></button>';
+  });
+  list.innerHTML = html;
+  document.getElementById('csvExportOverlay').classList.add('show');
+}
+
+function closeCsvExport() {
+  document.getElementById('csvExportOverlay').classList.remove('show');
+}
+
+function escapeCSVField(value) {
+  const str = String(value);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function exportDeckAsCSV(deckId) {
+  const deck = decks.find(d => d.id === deckId);
+  if (!deck) return;
+  const bom = '\uFEFF';
+  const header = '問題,解答,レベル,正答連続数';
+  const rows = deck.words.map(w =>
+    [w.english, w.japanese, w.level || 'unlearned', w.correctStreak || 0]
+      .map(escapeCSVField).join(',')
+  );
+  const csv = bom + header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = deck.name + '_' + date + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  closeCsvExport();
+  showToast('📄 「' + deck.name + '」をCSVでエクスポートしました');
+}
+
+function exportAllDecksAsCSV() {
+  closeCsvExport();
+  const bom = '\uFEFF';
+  const date = new Date().toISOString().slice(0, 10);
+  decks.forEach((deck, i) => {
+    setTimeout(() => {
+      const header = '問題,解答,レベル,正答連続数';
+      const rows = deck.words.map(w =>
+        [w.english, w.japanese, w.level || 'unlearned', w.correctStreak || 0]
+          .map(escapeCSVField).join(',')
+      );
+      const csv = bom + header + '\n' + rows.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = deck.name + '_' + date + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, i * 300);
+  });
+  showToast('📄 全' + decks.length + 'デッキをCSVでエクスポートしました');
 }
 
 function importAllData(event) {
@@ -7895,6 +8895,160 @@ function setupDragScroll(el) {
     document.querySelectorAll(dragSelector.split(',').map(s => s.trim() + ':not([data-drag])').join(',')).forEach(el => setupDragScroll(el));
   });
   observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+/* ===== Long-press deck reorder ===== */
+(function initDeckReorder() {
+  let longPressTimer = null;
+  let dragState = null;
+  let suppressNextClick = false;
+
+  const LONG_PRESS_MS = 400;
+  const MOVE_CANCEL_PX = 10;
+
+  document.addEventListener('touchstart', function(e) {
+    const card = e.target.closest('.deck-card[data-deck-id]');
+    if (!card) return;
+    const grid = card.closest('.deck-list-grid');
+    if (!grid) return;
+    if (decks.length < 2) return;
+
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    const deckId = card.getAttribute('data-deck-id');
+
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null;
+      startDrag(card, grid, deckId, startX, startY);
+    }, LONG_PRESS_MS);
+
+    function onMoveBeforeLong(ev) {
+      const t = ev.touches[0];
+      if (Math.abs(t.clientX - startX) > MOVE_CANCEL_PX || Math.abs(t.clientY - startY) > MOVE_CANCEL_PX) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        document.removeEventListener('touchmove', onMoveBeforeLong);
+      }
+    }
+    document.addEventListener('touchmove', onMoveBeforeLong, { passive: true });
+
+    function onEndBeforeLong() {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      document.removeEventListener('touchmove', onMoveBeforeLong);
+      document.removeEventListener('touchend', onEndBeforeLong);
+    }
+    document.addEventListener('touchend', onEndBeforeLong, { once: true });
+  }, { passive: true });
+
+  function startDrag(card, grid, deckId, startX, startY) {
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.className = 'deck-card deck-drag-ghost';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    document.body.appendChild(ghost);
+
+    card.classList.add('deck-drag-source');
+    grid.classList.add('deck-reordering');
+
+    dragState = {
+      deckId, ghost, sourceEl: card, grid,
+      offsetX: startX - rect.left,
+      offsetY: startY - rect.top
+    };
+    suppressNextClick = true;
+
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd, { once: true });
+  }
+
+  function onDragMove(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const { ghost, grid, offsetX, offsetY } = dragState;
+
+    ghost.style.left = (touch.clientX - offsetX) + 'px';
+    ghost.style.top = (touch.clientY - offsetY) + 'px';
+
+    const cards = Array.from(grid.querySelectorAll('.deck-card:not(.deck-drag-source)'));
+    clearDropIndicators(grid);
+
+    for (const c of cards) {
+      const r = c.getBoundingClientRect();
+      if (touch.clientX >= r.left && touch.clientX <= r.right) {
+        const midX = r.left + r.width / 2;
+        c.classList.add(touch.clientX < midX ? 'deck-drag-over-left' : 'deck-drag-over-right');
+        break;
+      }
+    }
+  }
+
+  function onDragEnd(e) {
+    if (!dragState) return;
+    const { ghost, sourceEl, grid, deckId } = dragState;
+    const touch = e.changedTouches[0];
+
+    const fromIdx = decks.findIndex(d => d.id === deckId);
+    let toIdx = fromIdx;
+
+    const cards = Array.from(grid.querySelectorAll('.deck-card:not(.deck-drag-source)'));
+    for (const c of cards) {
+      const r = c.getBoundingClientRect();
+      if (touch.clientX >= r.left - 10 && touch.clientX <= r.right + 10) {
+        const cId = c.getAttribute('data-deck-id');
+        const cIdx = decks.findIndex(d => d.id === cId);
+        const midX = r.left + r.width / 2;
+        toIdx = touch.clientX < midX ? cIdx : cIdx + 1;
+        break;
+      }
+    }
+    // Past the last card
+    if (cards.length > 0) {
+      const lastR = cards[cards.length - 1].getBoundingClientRect();
+      if (touch.clientX > lastR.right) toIdx = decks.length;
+      const firstR = cards[0].getBoundingClientRect();
+      if (touch.clientX < firstR.left) toIdx = 0;
+    }
+
+    if (toIdx !== fromIdx && toIdx !== fromIdx + 1) {
+      const [moved] = decks.splice(fromIdx, 1);
+      const insertIdx = toIdx > fromIdx ? toIdx - 1 : toIdx;
+      decks.splice(insertIdx, 0, moved);
+      saveState();
+    }
+
+    ghost.remove();
+    sourceEl.classList.remove('deck-drag-source');
+    grid.classList.remove('deck-reordering');
+    clearDropIndicators(grid);
+    document.removeEventListener('touchmove', onDragMove);
+    dragState = null;
+
+    renderDeckList();
+    updateDashboard();
+    setTimeout(() => { suppressNextClick = false; }, 300);
+  }
+
+  function clearDropIndicators(grid) {
+    grid.querySelectorAll('.deck-drag-over-left, .deck-drag-over-right').forEach(c => {
+      c.classList.remove('deck-drag-over-left', 'deck-drag-over-right');
+    });
+  }
+
+  document.addEventListener('click', function(e) {
+    if (suppressNextClick && e.target.closest('.deck-card')) {
+      e.preventDefault();
+      e.stopPropagation();
+      suppressNextClick = false;
+    }
+  }, true);
 })();
 
 // ============ INIT ============
