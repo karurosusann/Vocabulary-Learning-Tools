@@ -2381,6 +2381,7 @@ body.dark-mode .copy-menu-popup button {
 .missed-jpn {
   color: var(--answer-color, #F97316);
   font-size: 13px;
+  font-weight: 700;
   text-align: right;
   flex: 1;
   min-width: 0;
@@ -2576,8 +2577,9 @@ body.dark-mode .copy-menu-popup button {
 #screen-wordlist {
   display: none;
   flex-direction: column;
-  height: calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 70px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow: hidden;
+  margin-bottom: -30px;
 }
 #screen-wordlist.active {
   display: flex;
@@ -2633,7 +2635,7 @@ body.dark-mode .copy-menu-popup button {
   overscroll-behavior: contain;
   touch-action: pan-y;
   padding-right: 4px;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 .word-items::-webkit-scrollbar { width: 4px; }
 .word-items::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
@@ -3405,8 +3407,9 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 #screen-word-editor {
   display: none;
   flex-direction: column;
-  height: calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 70px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow: hidden;
+  margin-bottom: -30px;
 }
 #screen-word-editor.active {
   display: flex;
@@ -3436,7 +3439,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 .editor-word-list::-webkit-scrollbar { width: 4px; }
 .editor-word-list::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
@@ -6933,6 +6936,9 @@ function updateBottomNavActive(name) {
 }
 
 function navTo(target) {
+  const screenMap = { home: 'dashboard', list: 'wordlist', edit: 'word-editor' };
+  const current = document.querySelector('.screen.active');
+  if (current && current.id === 'screen-' + screenMap[target]) return;
   if (target === 'home') {
     showScreen('dashboard');
     renderDeckList();
@@ -7971,6 +7977,13 @@ function quizEditCurrentWord() {
   document.getElementById('editWordDeleteRow').style.display = 'none';
 
   document.getElementById('editWordOverlay').classList.add('show');
+  // Re-trigger auto-resize after overlay is visible
+  requestAnimationFrame(() => {
+    ['editWordEng', 'editWordJpn'].forEach(id => {
+      const ta = document.getElementById(id);
+      if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+    });
+  });
 }
 
 /* ===== Image lightbox ===== */
@@ -8503,13 +8516,17 @@ function showResult() {
         </div>
         <div class="missed-list">
           ${uniqueMissed.map(r => {
+            const qText = reverseMode ? r.word.japanese : r.word.english;
+            const aText = reverseMode ? r.word.english : r.word.japanese;
+            const qEsc = escapeForInlineJS(qText);
+            const aEsc = escapeForInlineJS(aText);
+            const pinActive = r.word.bookmarked ? 'active' : '';
             const engEsc = escapeForInlineJS(r.word.english);
             const jpnEsc = escapeForInlineJS(r.word.japanese);
-            const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
-              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
-              <span class="missed-jpn" onclick="onTapResultJpn(this,'${jpnEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.japanese)}</span>
+              <span class="missed-eng" onclick="speakText('${qEsc}')" style="cursor:pointer;">${escapeHtmlBr(qText)}</span>
+              <span class="missed-jpn" onclick="onTapResultJpn(this,'${aEsc}')" style="cursor:pointer;">${escapeHtmlBr(aText)}</span>
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           `}).join('')}
@@ -8537,13 +8554,17 @@ function showResult() {
         </div>
         <div class="missed-list">
           ${uniqueCorrect.map(r => {
+            const qText = reverseMode ? r.word.japanese : r.word.english;
+            const aText = reverseMode ? r.word.english : r.word.japanese;
+            const qEsc = escapeForInlineJS(qText);
+            const aEsc = escapeForInlineJS(aText);
+            const pinActive = r.word.bookmarked ? 'active' : '';
             const engEsc = escapeForInlineJS(r.word.english);
             const jpnEsc = escapeForInlineJS(r.word.japanese);
-            const pinActive = r.word.bookmarked ? 'active' : '';
             return `
             <div class="missed-item">
-              <span class="missed-eng" onclick="speakText('${engEsc}')" style="cursor:pointer;">${escapeHtmlBr(r.word.english)}</span>
-              <span class="missed-jpn" style="cursor:pointer;" onclick="onTapResultJpn(this,'${jpnEsc}')">${escapeHtmlBr(r.word.japanese)}</span>
+              <span class="missed-eng" onclick="speakText('${qEsc}')" style="cursor:pointer;">${escapeHtmlBr(qText)}</span>
+              <span class="missed-jpn" style="cursor:pointer;" onclick="onTapResultJpn(this,'${aEsc}')">${escapeHtmlBr(aText)}</span>
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           `}).join('')}
@@ -8699,6 +8720,9 @@ function renderDeckTabs() {
   container.innerHTML = decks.map(deck => `
     <button class="deck-tab ${deck.id === wordListDeckId ? 'active' : ''}" onclick="switchWordListDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
   `).join('');
+  // Auto-scroll to active tab
+  const activeTab = container.querySelector('.deck-tab.active');
+  if (activeTab) requestAnimationFrame(() => activeTab.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }));
 }
 
 let wordListScrollMap = {}; // { deckId: scrollTop }
@@ -9066,6 +9090,9 @@ function renderEditorDeckTabs() {
   container.innerHTML = decks.map(deck => `
     <button class="deck-tab ${deck.id === editorDeckId ? 'active' : ''}" onclick="switchEditorDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
   `).join('');
+  // Auto-scroll to active tab
+  const activeTab = container.querySelector('.deck-tab.active');
+  if (activeTab) requestAnimationFrame(() => activeTab.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }));
 }
 
 let editorScrollMap = {}; // { deckId: scrollTop }
@@ -9211,6 +9238,13 @@ async function showEditWordModal(index) {
 
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.add('show');
+  // Re-trigger auto-resize after overlay is visible (scrollHeight needs display)
+  requestAnimationFrame(() => {
+    ['editWordEng', 'editWordJpn'].forEach(id => {
+      const ta = document.getElementById(id);
+      if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+    });
+  });
   setTimeout(() => document.getElementById('editWordEng').focus(), 300);
 }
 
