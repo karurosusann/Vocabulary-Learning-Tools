@@ -19,11 +19,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
-  /* iOS PWA: prevent the viewport itself from scrolling */
-  position: fixed;
-  overflow: hidden;
-  width: 100%;
+  /* iOS PWA: prevent iOS from scrolling the html element */
   height: 100%;
+  overflow: hidden;
   overscroll-behavior: none;
 }
 html.dark-mode {
@@ -105,11 +103,7 @@ body.dark-mode {
 body {
   font-family: 'Zen Maru Gothic', sans-serif;
   background: #FFEDD5;
-  /* iOS PWA: lock body in place, let .app handle scrolling */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+  /* iOS PWA: prevent iOS from scrolling body, let .app scroll instead */
   height: 100%;
   overflow: hidden;
   color: var(--gray-800);
@@ -5932,22 +5926,22 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // iOS PWA scroll reset helper (globally accessible)
-// With body position:fixed, the viewport offset issue is largely solved by CSS,
-// but we still force-reset any residual scroll offsets.
+// html/body have overflow:hidden so iOS can't scroll them.
+// This function clears any residual scroll offset.
 function _iosForceResetScroll() {
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 }
-// Reset both viewport AND content scroll (for screen transitions)
+// Reset both viewport AND .app content scroll (for screen transitions)
 function _iosForceResetScrollFull() {
   _iosForceResetScroll();
   const appEl = document.querySelector('.app');
   if (appEl) appEl.scrollTop = 0;
 }
 
-// iOS PWA keyboard fix: prevent page from staying pushed up after keyboard dismisses
-// In standalone (home screen) mode, window.scrollTo alone does NOT work reliably.
+// iOS PWA keyboard fix: extra safety for keyboard dismiss
+// Main fix is CSS (html/body overflow:hidden), this handles edge cases.
 (function initIOSKeyboardFix() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (!isIOS) return;
@@ -6993,7 +6987,7 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
   _iosForceResetScrollFull();
-  // Lock .app scroll on fullscreen quiz screen only (body is always fixed now)
+  // Lock .app scroll on fullscreen quiz screen only
   const appEl = document.querySelector('.app');
   if (name === 'quiz') {
     if (appEl) appEl.style.overflow = 'hidden';
