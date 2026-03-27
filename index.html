@@ -19,6 +19,8 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
+  /* Prevent iOS PWA from scrolling the html element when keyboard pushes viewport */
+  overscroll-behavior: none;
 }
 html.dark-mode {
   background-color: #121018;
@@ -5910,34 +5912,42 @@ document.addEventListener('visibilitychange', () => {
     // Fix quiz screen position after returning from background
     const quizScreen = document.getElementById('screen-quiz');
     if (quizScreen && quizScreen.classList.contains('active')) {
-      window.scrollTo(0, 0);
+      _iosForceResetScroll();
     }
   }
 });
 
-// iOS keyboard fix: prevent page from staying pushed up after keyboard dismisses
+// iOS PWA scroll reset helper (globally accessible)
+// In standalone (home screen) mode, window.scrollTo alone does NOT work.
+function _iosForceResetScroll() {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  // Force layout recalc to snap viewport back
+  document.body.style.minHeight = '100vh';
+  requestAnimationFrame(() => {
+    document.body.style.minHeight = '';
+    document.body.style.minHeight = '100dvh';
+  });
+}
+
+// iOS PWA keyboard fix: prevent page from staying pushed up after keyboard dismisses
+// In standalone (home screen) mode, window.scrollTo alone does NOT work reliably.
 (function initIOSKeyboardFix() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-  // Reset scroll position helper
-  function resetScrollPosition() {
-    window.scrollTo(0, 0);
-    // Also reset body transform/position in case iOS shifted it
-    document.body.style.transform = '';
-    document.body.style.position === 'fixed' && (document.body.style.position = '');
-  }
+  if (!isIOS) return;
 
   if (window.visualViewport) {
-    let initialHeight = window.visualViewport.height;
-    let keyboardOpen = false;
+    let lastVVHeight = window.visualViewport.height;
+    let keyboardVisible = false;
 
     window.visualViewport.addEventListener('resize', () => {
-      const currentHeight = window.visualViewport.height;
-      const heightDiff = initialHeight - currentHeight;
+      const h = window.visualViewport.height;
+      const diff = lastVVHeight - h;
 
-      if (heightDiff > 100) {
-        // Keyboard opened — scroll focused element into view
-        keyboardOpen = true;
+      if (!keyboardVisible && diff > 100) {
+        // Keyboard just opened
+        keyboardVisible = true;
         const editPanel = document.getElementById('editWordOverlay');
         if (editPanel && editPanel.classList.contains('show')) {
           const focused = editPanel.querySelector(':focus');
@@ -5945,36 +5955,44 @@ document.addEventListener('visibilitychange', () => {
             setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
           }
         }
-      } else if (keyboardOpen && heightDiff < 50) {
-        // Keyboard closed — reset scroll position
-        keyboardOpen = false;
-        setTimeout(resetScrollPosition, 50);
-        setTimeout(resetScrollPosition, 150);
+      } else if (keyboardVisible && diff < 50) {
+        // Keyboard just closed
+        keyboardVisible = false;
+        _iosForceResetScroll();
+        setTimeout(_iosForceResetScroll, 50);
+        setTimeout(_iosForceResetScroll, 150);
+        setTimeout(_iosForceResetScroll, 300);
+      }
+
+      if (!keyboardVisible) lastVVHeight = h;
+    });
+
+    // Also watch visualViewport scroll (iOS sometimes scrolls the viewport itself)
+    window.visualViewport.addEventListener('scroll', () => {
+      if (!keyboardVisible && window.visualViewport.offsetTop > 0) {
+        _iosForceResetScroll();
       }
     });
 
-    // Update baseline when orientation changes
-    window.visualViewport.addEventListener('scroll', () => {
-      if (!keyboardOpen) {
-        initialHeight = window.visualViewport.height;
-      }
-    });
-    screen.orientation && screen.orientation.addEventListener('change', () => {
-      setTimeout(() => { initialHeight = window.visualViewport.height; }, 300);
-    });
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', () => {
+        setTimeout(() => { lastVVHeight = window.visualViewport.height; }, 500);
+      });
+    }
   }
 
-  // Blur handler: when any input/textarea loses focus, reset scroll (iOS fix)
+  // focusout handler: when input/textarea loses focus and keyboard dismisses
   document.addEventListener('focusout', (e) => {
-    if (!isIOS) return;
-    const tag = e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) {
-      // Small delay to allow for field-to-field focus transitions
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) {
+      // Wait a moment to see if focus moves to another input (field-to-field navigation)
       setTimeout(() => {
-        // Only reset if no other editable element gained focus
         const ae = document.activeElement;
-        if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA' && !ae.isContentEditable)) {
-          resetScrollPosition();
+        const isStillEditing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        if (!isStillEditing) {
+          _iosForceResetScroll();
+          setTimeout(_iosForceResetScroll, 100);
+          setTimeout(_iosForceResetScroll, 300);
         }
       }, 80);
     }
@@ -6959,7 +6977,7 @@ function showScreen(name) {
   closeCopyMenu();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
-  window.scrollTo(0, 0);
+  _iosForceResetScroll();
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
     document.documentElement.style.overflow = 'hidden';
@@ -8410,7 +8428,9 @@ function submitInputAnswer() {
   }
 
   // iOS: reset scroll position after keyboard dismisses
-  setTimeout(() => window.scrollTo(0, 0), 100);
+  _iosForceResetScroll();
+  setTimeout(_iosForceResetScroll, 100);
+  setTimeout(_iosForceResetScroll, 300);
 
   stopQuizTimer();
 }
@@ -9340,8 +9360,10 @@ function closeEditWord() {
   panel.classList.remove('show');
   panel.scrollTop = 0;
   window._quizEditReturn = false;
-  // Ensure scroll position is reset (iOS keyboard fix)
-  setTimeout(() => window.scrollTo(0, 0), 100);
+  // Aggressive scroll reset for iOS PWA
+  _iosForceResetScroll();
+  setTimeout(_iosForceResetScroll, 100);
+  setTimeout(_iosForceResetScroll, 300);
 }
 
 async function saveWord() {
