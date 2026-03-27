@@ -3395,7 +3395,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   resize: none;
   padding: 0;
   margin: 0;
-  text-align: left;
+  text-align: center;
   min-height: 2.8em;
   color: inherit;
   -webkit-user-select: text;
@@ -3432,6 +3432,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 }
 .editor-word-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -3439,6 +3440,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding-right: 4px;
   padding-bottom: 2px;
 }
 .editor-word-list::-webkit-scrollbar { width: 4px; }
