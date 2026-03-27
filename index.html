@@ -19,6 +19,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 html.dark-mode {
   background-color: #121018;
@@ -101,6 +104,7 @@ body {
   background: #FFEDD5;
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: -webkit-fill-available;
   color: var(--gray-800);
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -5915,47 +5919,43 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS PWA: fix viewport staying pushed up after keyboard dismisses.
-// Technique: momentarily set body to position:fixed to force viewport snap-back, then remove it.
-// CSS is NOT changed — this is JS-only.
+// iOS PWA: fix viewport gap at bottom
+// Problem: PWA inherits Safari's viewport size (which includes toolbar area).
+// In PWA standalone mode there's no toolbar, so that area becomes a visible gap.
 (function() {
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (!isIOS) return;
 
-  var savedScrollY = 0;
-  var kbOpen = false;
-
-  function snapBack() {
-    // Momentarily fix body to force iOS to reset viewport position
-    var sy = window.scrollY || document.documentElement.scrollTop || 0;
-    document.body.style.position = 'fixed';
-    document.body.style.top = '0';
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.bottom = '0';
-    document.body.style.overflow = 'hidden';
-    document.body.offsetHeight; // force reflow
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.bottom = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, savedScrollY);
-    document.documentElement.scrollTop = savedScrollY;
-    document.body.scrollTop = savedScrollY;
+  // Force iOS to recalculate viewport by scrolling to 1px then back to 0
+  function forceViewportRecalc() {
+    window.scrollTo(0, 1);
+    requestAnimationFrame(function() {
+      window.scrollTo(0, 0);
+    });
   }
 
+  // On PWA launch: reset viewport position
+  // navigator.standalone is true only in PWA mode
+  if (window.navigator.standalone) {
+    // Multiple attempts to catch iOS's async viewport setup
+    forceViewportRecalc();
+    setTimeout(forceViewportRecalc, 50);
+    setTimeout(forceViewportRecalc, 200);
+    setTimeout(forceViewportRecalc, 500);
+    setTimeout(forceViewportRecalc, 1000);
+  }
+
+  // Keyboard handling
   if (window.visualViewport) {
     var baseH = window.visualViewport.height;
+    var kbOpen = false;
 
     window.visualViewport.addEventListener('resize', function() {
       var h = window.visualViewport.height;
       var diff = baseH - h;
       if (!kbOpen && diff > 100) {
         kbOpen = true;
-        savedScrollY = window.scrollY || 0;
         // Scroll focused edit field into view
         var ep = document.getElementById('editWordOverlay');
         if (ep && ep.classList.contains('show')) {
@@ -5964,28 +5964,30 @@ document.addEventListener('visibilitychange', () => {
         }
       } else if (kbOpen && diff < 50) {
         kbOpen = false;
-        snapBack();
-        setTimeout(snapBack, 50);
-        setTimeout(snapBack, 200);
+        forceViewportRecalc();
+        setTimeout(forceViewportRecalc, 50);
+        setTimeout(forceViewportRecalc, 200);
       }
       if (!kbOpen) baseH = h;
     });
 
+    // Watch for viewport offset
     window.visualViewport.addEventListener('scroll', function() {
       if (!kbOpen && window.visualViewport.offsetTop > 0) {
-        snapBack();
+        forceViewportRecalc();
       }
     });
   }
 
+  // After any input loses focus (keyboard dismiss)
   document.addEventListener('focusout', function(e) {
     var tag = e.target && e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) {
       setTimeout(function() {
         var ae = document.activeElement;
         if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA' && !ae.isContentEditable)) {
-          snapBack();
-          setTimeout(snapBack, 150);
+          forceViewportRecalc();
+          setTimeout(forceViewportRecalc, 150);
         }
       }, 100);
     }
