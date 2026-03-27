@@ -1748,6 +1748,11 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   margin-bottom: 4px;
   overflow: visible;
 }
+@media (max-width: 767px) {
+  .quiz-card-area {
+    max-height: calc(100dvh - 360px);
+  }
+}
 .quiz-card-next {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -2399,6 +2404,7 @@ body.dark-mode .copy-menu-popup button {
   padding: 2px;
   flex-shrink: 0;
   margin-left: 4px;
+  color: var(--gray-500);
 }
 .result-pin-btn.active {
   opacity: 1;
