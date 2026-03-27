@@ -19,9 +19,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html {
   background-color: #FFEDD5;
-  min-height: 100vh;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
 }
 html.dark-mode {
   background-color: #121018;
@@ -104,7 +101,6 @@ body {
   background: #FFEDD5;
   min-height: 100vh;
   min-height: 100dvh;
-  min-height: -webkit-fill-available;
   color: var(--gray-800);
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -5919,32 +5915,35 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// iOS PWA: fix viewport gap at bottom
-// Problem: PWA inherits Safari's viewport size (which includes toolbar area).
-// In PWA standalone mode there's no toolbar, so that area becomes a visible gap.
+// iOS PWA: fix bottom gap
+// In PWA standalone mode, CSS vh/dvh units don't always match the actual screen height.
+// We use window.innerHeight (actual pixel height) to force correct sizing.
 (function() {
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (!isIOS) return;
 
-  // Force iOS to recalculate viewport by scrolling to 1px then back to 0
-  function forceViewportRecalc() {
-    window.scrollTo(0, 1);
-    requestAnimationFrame(function() {
-      window.scrollTo(0, 0);
+  var isPWA = !!window.navigator.standalone;
+  var fullH = window.innerHeight;
+
+  // In PWA mode: set body height to exact screen pixels
+  function applyFullHeight() {
+    if (!isPWA) return;
+    document.documentElement.style.minHeight = fullH + 'px';
+    document.body.style.minHeight = fullH + 'px';
+  }
+  applyFullHeight();
+  window.addEventListener('load', applyFullHeight);
+
+  // Update on orientation change
+  if (screen.orientation) {
+    screen.orientation.addEventListener('change', function() {
+      setTimeout(function() { fullH = window.innerHeight; applyFullHeight(); }, 500);
     });
   }
-
-  // On PWA launch: reset viewport position
-  // navigator.standalone is true only in PWA mode
-  if (window.navigator.standalone) {
-    // Multiple attempts to catch iOS's async viewport setup
-    forceViewportRecalc();
-    setTimeout(forceViewportRecalc, 50);
-    setTimeout(forceViewportRecalc, 200);
-    setTimeout(forceViewportRecalc, 500);
-    setTimeout(forceViewportRecalc, 1000);
-  }
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() { fullH = window.innerHeight; applyFullHeight(); }, 500);
+  });
 
   // Keyboard handling
   if (window.visualViewport) {
@@ -5954,6 +5953,7 @@ document.addEventListener('visibilitychange', () => {
     window.visualViewport.addEventListener('resize', function() {
       var h = window.visualViewport.height;
       var diff = baseH - h;
+
       if (!kbOpen && diff > 100) {
         kbOpen = true;
         // Scroll focused edit field into view
@@ -5963,31 +5963,32 @@ document.addEventListener('visibilitychange', () => {
           if (f) setTimeout(function() { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
         }
       } else if (kbOpen && diff < 50) {
+        // Keyboard closed
         kbOpen = false;
-        forceViewportRecalc();
-        setTimeout(forceViewportRecalc, 50);
-        setTimeout(forceViewportRecalc, 200);
+        // Re-apply full height and reset scroll
+        if (isPWA) {
+          fullH = window.innerHeight;
+          applyFullHeight();
+        }
+        window.scrollTo(0, 0);
       }
-      if (!kbOpen) baseH = h;
-    });
 
-    // Watch for viewport offset
-    window.visualViewport.addEventListener('scroll', function() {
-      if (!kbOpen && window.visualViewport.offsetTop > 0) {
-        forceViewportRecalc();
-      }
+      if (!kbOpen) baseH = h;
     });
   }
 
-  // After any input loses focus (keyboard dismiss)
+  // After input loses focus (keyboard dismiss)
   document.addEventListener('focusout', function(e) {
     var tag = e.target && e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) {
       setTimeout(function() {
         var ae = document.activeElement;
         if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA' && !ae.isContentEditable)) {
-          forceViewportRecalc();
-          setTimeout(forceViewportRecalc, 150);
+          if (isPWA) {
+            fullH = window.innerHeight;
+            applyFullHeight();
+          }
+          window.scrollTo(0, 0);
         }
       }, 100);
     }
