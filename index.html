@@ -3976,31 +3976,6 @@ body.dark-mode .gdrive-setup-hint code {
 </style>
 </head>
 <body>
-<!-- DEBUG: viewport info (remove after debugging) -->
-<div id="dbgInfo" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;font-size:11px;padding:4px 8px;pointer-events:none;display:none;padding-top:calc(4px + env(safe-area-inset-top))"></div>
-<script>
-(function(){
-  var d = document.getElementById('dbgInfo');
-  var pwa = !!window.navigator.standalone;
-  if (!pwa) return; // Only show in PWA mode
-  d.style.display = 'block';
-  function upd(){
-    var vvh = window.visualViewport ? window.visualViewport.height : '?';
-    var vvo = window.visualViewport ? window.visualViewport.offsetTop : '?';
-    d.textContent =
-      'iH:' + window.innerHeight +
-      ' clH:' + document.documentElement.clientHeight +
-      ' scrH:' + screen.height +
-      ' vvH:' + Math.round(vvh) +
-      ' vvOff:' + vvo +
-      ' scrollY:' + window.scrollY +
-      ' bodyH:' + document.body.scrollHeight +
-      ' pwa:' + pwa;
-  }
-  upd();
-  setInterval(upd, 500);
-})();
-</script>
 <div class="app">
 
   <!-- Screen: Import -->
