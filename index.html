@@ -511,6 +511,28 @@ body.dark-mode #colorDotMatch {
   align-items: center;
   margin-bottom: 8px;
 }
+.app-version-label {
+  margin-left: auto;
+  font-size: 11px;
+  color: #aaa;
+  font-family: monospace;
+  user-select: none;
+}
+body.dark-mode .app-version-label {
+  color: #666;
+}
+.app-version-footer {
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+  font-family: monospace;
+  margin-top: 16px;
+  padding-bottom: 12px;
+  user-select: none;
+}
+body.dark-mode .app-version-footer {
+  color: #555;
+}
 
 /* Bottom navigation bar */
 .bottom-nav {
@@ -4042,12 +4064,14 @@ body.dark-mode .gdrive-setup-hint code {
     <div style="text-align:center;margin-top:20px;">
       <button class="demo-btn" onclick="loadDemo()">デモ問題で試す</button>
     </div>
+    <div class="app-version-footer" id="importVersionLabel"></div>
   </div>
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
     <div class="dashboard-top-bar">
       <button class="hamburger-btn" onclick="openSettings()" title="設定">☰</button>
+      <span class="app-version-label" id="appVersionLabel"></span>
     </div>
 
     <!-- Study stats & heatmap -->
@@ -4421,8 +4445,8 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
       </button>
     </div>
-    <div class="settings-panel-footer">
-      CSVocab v1.0
+    <div class="settings-panel-footer" id="settingsFooterVersion">
+      CSVocab
     </div>
   </div>
 </div>
@@ -4664,6 +4688,9 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="toast" id="toast"></div>
 
 <script>
+// ============ VERSION ============
+const APP_VERSION = 'v1.0.2';
+
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
 let decks = [];
@@ -5824,6 +5851,14 @@ function initAudio() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Display app version
+  const vLabel = document.getElementById('appVersionLabel');
+  if (vLabel) vLabel.textContent = APP_VERSION;
+  const vFooter = document.getElementById('settingsFooterVersion');
+  if (vFooter) vFooter.textContent = 'CSVocab ' + APP_VERSION;
+  const vImport = document.getElementById('importVersionLabel');
+  if (vImport) vImport.textContent = 'CSVocab ' + APP_VERSION;
+
   // Prevent rich-text paste in all contenteditable elements
   document.querySelectorAll('[contenteditable="true"]').forEach(el => {
     el.addEventListener('paste', (e) => {
