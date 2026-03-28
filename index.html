@@ -251,6 +251,10 @@ body.dark-mode .reorder-modal {
   background: #1e1a28;
   color: var(--gray-800);
 }
+body.dark-mode .reorder-item {
+  background: #2a2535;
+  border-color: #332e40;
+}
 body.dark-mode .progress-bar-container {
   background: #2a2535;
 }
@@ -265,11 +269,22 @@ body.dark-mode .result-btn.review-btn {
   background: #2a2535;
   color: var(--gray-700);
 }
+body.dark-mode .result-btn.next-quiz-btn {
+  background: #2a2535;
+}
 body.dark-mode .unified-setup {
   background: #1e1a28;
 }
 body.dark-mode .level-select-card {
   background: #1e1a28;
+}
+body.dark-mode .mode-option {
+  background: #2a2535;
+  border-color: #332e40;
+}
+body.dark-mode .mode-option.selected {
+  border-color: var(--orange-500);
+  background: rgba(249, 115, 22, 0.1);
 }
 body.dark-mode .editor-word-item .ew-inner {
   background: #1e1a28;
@@ -1960,9 +1975,6 @@ body.dark-mode .input-answer-field::placeholder {
   opacity: 0.7;
 }
 .input-result.correct {
-  color: var(--gray-900);
-}
-body.answer-match-question .input-result.correct {
   color: var(--gray-900);
 }
 
@@ -4683,7 +4695,7 @@ function closeSettings() {
 function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
   document.documentElement.classList.toggle('dark-mode', isDark);
-  localStorage.setItem('csvocab_dark_mode', isDark ? '1' : '0');
+  lsSet('csvocab_dark_mode', isDark ? '1' : '0');
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', isDark ? '#121018' : '#FFEDD5');
   updateSettingsDarkUI();
@@ -4719,7 +4731,7 @@ const ANSWER_COLOR_KEY = 'csvocab_answer_color';
 const DEFAULT_ANSWER_COLOR = '#F97316';
 
 function setAnswerColor(color) {
-  localStorage.setItem(ANSWER_COLOR_KEY, color);
+  lsSet(ANSWER_COLOR_KEY, color);
   applyAnswerColor(color);
   updateAnswerColorUI(color);
 }
@@ -5166,7 +5178,7 @@ function saveGdriveClientId() {
     showToast('有効なクライアントIDを入力してください');
     return;
   }
-  localStorage.setItem(GDRIVE_CLIENT_ID_KEY, clientId);
+  lsSet(GDRIVE_CLIENT_ID_KEY, clientId);
   showToast('✓ クライアントIDを保存しました');
   document.getElementById('gdriveSetup').style.display = 'none';
   document.getElementById('gdriveConnected').style.display = 'block';
@@ -5177,8 +5189,8 @@ function saveGdriveClientId() {
 function gdriveDisconnect() {
   closeGdrivePanel();
   confirmAction('Google Drive接続を解除', 'クライアントIDが削除されます。データ自体は端末とGoogle Driveに残ります。', function() {
-    localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
-    localStorage.removeItem(GDRIVE_LAST_SYNC_KEY);
+    lsRemove(GDRIVE_CLIENT_ID_KEY);
+    lsRemove(GDRIVE_LAST_SYNC_KEY);
     gdriveAccessToken = null;
     if (gdriveTokenExpiryTimer) { clearTimeout(gdriveTokenExpiryTimer); gdriveTokenExpiryTimer = null; }
     gdriveTokenClient = null;
@@ -5884,7 +5896,7 @@ document.addEventListener('visibilitychange', () => {
     // Track when user leaves (for study time accuracy)
     if (quizStartTime) quizHiddenAt = Date.now();
     // Pause quiz timer: save remaining time and stop interval
-    if (quizTimerInterval) {
+    if (quizTimerTimeout) {
       const elapsed = (Date.now() - quizTimerStartTime) / 1000;
       quizTimerPausedRemaining = Math.max(0, quizTimerSeconds - elapsed);
       stopQuizTimer();
@@ -5997,7 +6009,6 @@ function sfxComplete() {
     });
   }, 500);
 }
-function sfxBack() { playTone(500, 0.06, 'sine', 0.06); }
 
 // ============ TTS (Text-to-Speech) ============
 let ttsVoicesLoaded = false;
@@ -6118,6 +6129,13 @@ function getActiveWords() {
 }
 
 // ============ PERSISTENCE ============
+// Safe localStorage wrapper — silently catches quota/access errors
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value); } catch(e) { console.warn('localStorage.setItem failed:', key, e); }
+}
+function lsRemove(key) {
+  try { localStorage.removeItem(key); } catch(e) { console.warn('localStorage.removeItem failed:', key, e); }
+}
 function saveState() {
   try {
     localStorage.setItem('mikan_decks', JSON.stringify(decks));
@@ -6135,7 +6153,9 @@ function saveStateSoon() {
   _saveDebounceTimer = setTimeout(() => { _saveDebounceTimer = null; saveState(); }, 1500);
 }
 // Flush any pending debounced save before page unload
-window.addEventListener('beforeunload', () => { if (_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); saveState(); } });
+function flushPendingSave() { if (_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); _saveDebounceTimer = null; saveState(); } }
+window.addEventListener('beforeunload', flushPendingSave);
+window.addEventListener('pagehide', flushPendingSave);
 
 // Per-deck quiz settings persistence
 function saveDeckSettings(deckId) {
@@ -6333,7 +6353,8 @@ function addDeckFromCSV(text, deckName) {
     if (parts.length >= 2) {
       const english = parts[0].trim();
       const japanese = parts[1].trim();
-      if (english && japanese && english !== '問題' && english !== '韓国語') {
+      const HEADER_WORDS = ['問題','解答','答え','英語','日本語','韓国語','中国語','question','answer','word','meaning'];
+      if (english && japanese && !HEADER_WORDS.includes(english.toLowerCase())) {
         words.push({ _id: generateId(), english, japanese, level: 'unlearned', correctStreak: 0 });
       }
     }
@@ -6467,13 +6488,6 @@ function loadSelectedDemo() {
   }
 }
 
-function loadDemoData(key) {
-  closeDemoPicker();
-  const data = DEMO_DECKS[key];
-  if (data) {
-    addDeckFromCSV(data.csv, data.name);
-  }
-}
 
 const DEMO_DECKS = {
   english: {
@@ -6583,7 +6597,7 @@ function renderDeckList() {
     let crownHtml = '';
     const goldFlag = localStorage.getItem('csvocab_allUnlocked_' + deck.id) === '1';
     if (total > 0 && counts.mastered === total && !goldFlag) {
-      try { localStorage.setItem('csvocab_allUnlocked_' + deck.id, '1'); } catch(e) {}
+      lsSet('csvocab_allUnlocked_' + deck.id, '1');
     }
     if (goldFlag || (total > 0 && counts.mastered === total)) {
       crownHtml = '<span class="dc-crown gold">👑</span>';
@@ -6696,8 +6710,8 @@ function deckBulkDelete() {
               if (w.answerImageId) await deleteImage(w.answerImageId);
             } catch(e) {}
           }
-          try { localStorage.removeItem('mikan_deckSettings_' + deckId); } catch(e) {}
-          try { localStorage.removeItem('csvocab_allUnlocked_' + deckId); } catch(e) {}
+          lsRemove('mikan_deckSettings_' + deckId);
+          lsRemove('csvocab_allUnlocked_' + deckId);
         }
       }
       decks = decks.filter(d => !deckSelectedSet.has(d.id));
@@ -6846,8 +6860,8 @@ function deleteDeck(id) {
       }
     }
     saveState();
-    try { localStorage.removeItem('mikan_deckSettings_' + id); } catch(e) {}
-    try { localStorage.removeItem('csvocab_allUnlocked_' + id); } catch(e) {}
+    lsRemove('mikan_deckSettings_' + id);
+    lsRemove('csvocab_allUnlocked_' + id);
     // Clear rotation positions for this deck
     Object.keys(quizPoolLastKey).forEach(k => {
       if (k.startsWith(id + '_')) delete quizPoolLastKey[k];
@@ -6888,7 +6902,6 @@ function setCEText(el, text) {
   } else {
     el.innerHTML = escapeHtmlBr(cleaned);
   }
-  updateEditAlign(el);
 }
 // Get text from contenteditable or textarea preserving line breaks
 function getCEText(el) {
@@ -6897,8 +6910,6 @@ function getCEText(el) {
   }
   return el.innerText.replace(/\u200B/g, '').replace(/^\n+|\n+$/g, '').trim();
 }
-// Switch to left-align when content has line breaks, center otherwise
-function updateEditAlign() {}
 // Escape a string for safe use inside JS string literals in inline HTML attributes (onclick etc.)
 function escapeForInlineJS(str) {
   return escapeHtml(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
@@ -6911,7 +6922,9 @@ function showScreen(name) {
   closeLightbox();
   closeCopyMenu();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(`screen-${name}`).classList.add('active');
+  const screenEl = document.getElementById(`screen-${name}`);
+  if (!screenEl) { console.error('Screen not found:', name); return; }
+  screenEl.classList.add('active');
   window.scrollTo(0, 0);
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
@@ -6987,7 +7000,6 @@ function updateDashboard() {
   const words = getActiveWords();
   const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0, bookmarked: 0 };
   words.forEach(w => {
-    if (w.level === 'almost') w.level = 'mastered';
     if (counts[w.level] !== undefined) counts[w.level]++;
     if (w.bookmarked) counts.bookmarked++;
   });
@@ -7021,7 +7033,7 @@ function showCelebration() {
   if (!deck) return;
   const key = 'celebrated_' + deck.id;
   if (localStorage.getItem(key) === String(deck.words.length)) return;
-  localStorage.setItem(key, String(deck.words.length));
+  lsSet(key, String(deck.words.length));
 
   const overlay = document.getElementById('celebrationOverlay');
   if (!overlay) return;
@@ -7091,7 +7103,6 @@ function showLevelSelect() {
   const bookmarkedCount = words.filter(w => w.bookmarked).length;
   const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
   words.forEach(w => {
-    if (w.level === 'almost') w.level = 'mastered';
     if (counts[w.level] !== undefined) counts[w.level]++;
   });
 
@@ -7101,7 +7112,7 @@ function showLevelSelect() {
   // Permanently unlock "全て" once all words have been mastered
   const unlockKey = 'csvocab_allUnlocked_' + activeDeckId;
   if (allMastered) {
-    try { localStorage.setItem(unlockKey, '1'); } catch(e) {}
+    lsSet(unlockKey, '1');
   }
   const allUnlocked = allMastered || localStorage.getItem(unlockKey) === '1';
 
@@ -7229,7 +7240,7 @@ let ttsMode = 'question'; // 'question', 'answer', 'none'
 let quizOrder = 'asc'; // 'asc', 'desc', 'random'
 let quizTimerEnabled = false;
 let quizTimerSeconds = 5;
-let quizTimerInterval = null;
+let quizTimerTimeout = null;
 let quizTimerStartTime = 0;
 let quizTimerPausedRemaining = null; // remaining seconds when paused by visibility change
 let quizShowImages = true;
@@ -7238,7 +7249,7 @@ let quizSavedCount = 10;
 let quizPoolLastKey = (() => { try { return JSON.parse(localStorage.getItem('csvocab_pool_lastkey')) || {}; } catch(e) { return {}; } })();
 
 function savePoolLastKey() {
-  try { localStorage.setItem('csvocab_pool_lastkey', JSON.stringify(quizPoolLastKey)); } catch(e) {}
+  lsSet('csvocab_pool_lastkey', JSON.stringify(quizPoolLastKey));
 }
 
 function startNextQuiz() {
@@ -7492,20 +7503,17 @@ function startQuizTimer(resumeFrom) {
   fill.style.transition = 'transform ' + duration + 's linear';
   fill.style.transform = 'scaleX(0)';
   // Set timeout for expiry
-  quizTimerInterval = setTimeout(() => {
-    quizTimerInterval = null;
+  quizTimerTimeout = setTimeout(() => {
+    quizTimerTimeout = null;
     onTimerExpired();
   }, duration * 1000);
 }
 
-function tickQuizTimer() {
-  // No longer used — CSS transition handles animation
-}
 
 function stopQuizTimer() {
-  if (quizTimerInterval) {
-    clearTimeout(quizTimerInterval);
-    quizTimerInterval = null;
+  if (quizTimerTimeout) {
+    clearTimeout(quizTimerTimeout);
+    quizTimerTimeout = null;
   }
   // Freeze the bar at current position
   const fill = document.getElementById('quizTimerFill');
@@ -7617,7 +7625,7 @@ async function preRenderNextCard() {
   }
   const word = q.words[nextIdx];
   const questionText = reverseMode ? word.japanese : word.english;
-  const lvl = word.level === 'almost' ? 'mastered' : word.level;
+  const lvl = word.level;
   const levelInfo = LEVELS[lvl] || LEVELS.unlearned;
   const pinActive = word.bookmarked ? 'active' : '';
 
@@ -7683,9 +7691,6 @@ async function showQuizQuestion() {
     document.getElementById('quizProgressText').textContent = `${q.index + 1} / ${q.totalCount}`;
     document.getElementById('quizProgressFill').style.width = `${(q.index / q.totalCount) * 100}%`;
   }
-
-  // Migrate old 'almost' level
-  if (word.level === 'almost') word.level = 'mastered';
 
   const badge = document.getElementById('quizBadge');
   const levelInfo = LEVELS[word.level] || LEVELS.unlearned;
@@ -8195,43 +8200,6 @@ let swipeState = null;
       }
     }
   });
-
-  function keyAnswerWithAnimation(known, card) {
-    swipeEnabled = false;
-    const direction = known ? 1 : -1;
-
-    // Show overlay briefly
-    const rightOverlay = document.getElementById('swipeRightOverlay');
-    const leftOverlay = document.getElementById('swipeLeftOverlay');
-    if (known) {
-      if (rightOverlay) rightOverlay.style.opacity = '1';
-    } else {
-      if (leftOverlay) leftOverlay.style.opacity = '1';
-    }
-
-    // 1) Immediately play sfx + speak NEXT question
-    if (known) { sfxCorrect(); } else { sfxWrong(); }
-    speakNextQuestionImmediate();
-
-    // 2) Fly-out animation
-    card.classList.add('swipe-fly');
-    card.style.transform = `translateX(${direction * window.innerWidth}px) rotate(${direction * 15}deg)`;
-    card.style.opacity = '0';
-
-    // 3) After animation: process answer + show next (skip TTS)
-    setTimeout(() => {
-      card.classList.remove('swipe-fly');
-      if (rightOverlay) rightOverlay.style.opacity = '0';
-      if (leftOverlay) leftOverlay.style.opacity = '0';
-      keyLocked = false;
-      skipNextTTS = true;
-      stopQuizTimer();
-      if (!currentQuiz) return;
-      const word = currentQuiz.words[currentQuiz.index];
-      processQuizAnswer(word, known);
-      nextQuestion();
-    }, 200);
-  }
 })();
 
 const DRILL_MAX_RETRIES = 50; // Safety cap — effectively unlimited for normal use
@@ -8480,7 +8448,6 @@ function showResult() {
   const allWords = getActiveWords();
   const afterCumulative = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
   allWords.forEach(w => {
-    if (w.level === 'almost') w.level = 'mastered';
     if (afterCumulative[w.level] !== undefined) afterCumulative[w.level]++;
   });
 
@@ -8678,7 +8645,7 @@ function animateLevelBars() {
 function confirmQuit() {
   // Calculate remaining time before stopping
   let timerRemaining = null;
-  if (quizTimerEnabled && quizTimerInterval) {
+  if (quizTimerEnabled && quizTimerTimeout) {
     const elapsed = (Date.now() - quizTimerStartTime) / 1000;
     timerRemaining = Math.max(0, quizTimerSeconds - elapsed);
   }
@@ -9387,37 +9354,37 @@ function deleteEditingWord() {
 // ============ RESET ============
 // ============ CONFIRM MODAL ============
 let pendingConfirmAction = null;
-
-function confirmAction(title, desc, action, btnLabel) {
-  // Ensure the confirm modal structure is intact before using it
+const CONFIRM_MODAL_HTML = `
+  <div class="confirm-icon">⚠️</div>
+  <h3 id="confirmTitle">本当にリセットしますか？</h3>
+  <p id="confirmDesc">この操作は取り消せません。</p>
+  <div class="confirm-check-row" id="confirmCheckRow">
+    <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
+    <span class="confirm-check-label">理解しました</span>
+  </div>
+  <div class="confirm-buttons">
+    <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
+    <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
+  </div>
+`;
+function restoreConfirmModal() {
   if (!document.getElementById('confirmTitle')) {
     const modal = document.querySelector('#confirmOverlay .confirm-modal');
-    if (modal) {
-      modal.innerHTML = `
-        <div class="confirm-icon">⚠️</div>
-        <h3 id="confirmTitle">本当にリセットしますか？</h3>
-        <p id="confirmDesc">この操作は取り消せません。</p>
-        <div class="confirm-check-row" id="confirmCheckRow">
-          <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
-          <span class="confirm-check-label">理解しました</span>
-        </div>
-        <div class="confirm-buttons">
-          <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-          <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
-        </div>
-      `;
-    }
+    if (modal) modal.innerHTML = CONFIRM_MODAL_HTML;
   }
+}
+
+function confirmAction(title, desc, action, btnLabel) {
+  restoreConfirmModal();
   const titleEl = document.getElementById('confirmTitle');
   const descEl = document.getElementById('confirmDesc');
   const btn = document.getElementById('confirmDangerBtn');
-  if (!titleEl || !descEl || !btn) return; // Safety check
+  if (!titleEl || !descEl || !btn) return;
   
   titleEl.textContent = title;
   descEl.textContent = desc;
   btn.textContent = btnLabel || 'リセットする';
   btn.disabled = true;
-  // Reset checkbox
   const cb = document.getElementById('confirmCheckbox');
   if (cb) cb.classList.remove('checked');
   
@@ -9441,23 +9408,7 @@ function toggleConfirmCheck() {
 function closeConfirm() {
   document.getElementById('confirmOverlay').classList.remove('show');
   pendingConfirmAction = null;
-  // Restore original confirm modal structure (may have been replaced by import modal)
-  const modal = document.querySelector('#confirmOverlay .confirm-modal');
-  if (!document.getElementById('confirmTitle')) {
-    modal.innerHTML = `
-      <div class="confirm-icon">⚠️</div>
-      <h3 id="confirmTitle">本当にリセットしますか？</h3>
-      <p id="confirmDesc">この操作は取り消せません。</p>
-      <div class="confirm-check-row" id="confirmCheckRow">
-        <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
-        <span class="confirm-check-label">理解しました</span>
-      </div>
-      <div class="confirm-buttons">
-        <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-        <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
-      </div>
-    `;
-  }
+  restoreConfirmModal();
   window._importData = null;
 }
 
@@ -9470,30 +9421,14 @@ function closeAllOverlays() {
   });
   pendingConfirmAction = null;
   window._importData = null;
-  // Restore confirm modal structure if needed
-  const modal = document.querySelector('#confirmOverlay .confirm-modal');
-  if (modal && !document.getElementById('confirmTitle')) {
-    modal.innerHTML = `
-      <div class="confirm-icon">⚠️</div>
-      <h3 id="confirmTitle">本当にリセットしますか？</h3>
-      <p id="confirmDesc">この操作は取り消せません。</p>
-      <div class="confirm-check-row" id="confirmCheckRow">
-        <div class="confirm-checkbox" id="confirmCheckbox" onclick="toggleConfirmCheck()"></div>
-        <span class="confirm-check-label">理解しました</span>
-      </div>
-      <div class="confirm-buttons">
-        <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
-        <button class="confirm-danger" id="confirmDangerBtn" disabled>リセットする</button>
-      </div>
-    `;
-  }
+  restoreConfirmModal();
 }
 
 function doResetCurrentDeck() {
   const deck = getActiveDeck();
   if (!deck) return;
   deck.words.forEach(w => { w.level = 'unlearned'; w.correctStreak = 0; });
-  try { localStorage.removeItem('csvocab_allUnlocked_' + deck.id); } catch(e) {}
+  lsRemove('csvocab_allUnlocked_' + deck.id);
   // Clear rotation positions for this deck
   Object.keys(quizPoolLastKey).forEach(k => {
     if (k.startsWith(deck.id + '_')) delete quizPoolLastKey[k];
@@ -9508,16 +9443,16 @@ function doResetCurrentDeck() {
 function doResetAll() {
   // Clean up per-deck settings
   decks.forEach(d => {
-    try { localStorage.removeItem('mikan_deckSettings_' + d.id); } catch(e) {}
-    try { localStorage.removeItem('csvocab_allUnlocked_' + d.id); } catch(e) {}
+    lsRemove('mikan_deckSettings_' + d.id);
+    lsRemove('csvocab_allUnlocked_' + d.id);
   });
   decks = [];
   activeDeckId = null;
   quizPoolLastKey = {};
   savePoolLastKey();
-  localStorage.removeItem('mikan_decks');
-  localStorage.removeItem('mikan_activeDeck');
-  localStorage.removeItem(STUDY_LOG_KEY);
+  lsRemove('mikan_decks');
+  lsRemove('mikan_activeDeck');
+  lsRemove(STUDY_LOG_KEY);
   // Clear image DB
   try { indexedDB.deleteDatabase(IMG_DB_NAME); imgDB = null; } catch(e) {}
   showScreen('import');
@@ -9789,8 +9724,11 @@ async function applyImportData(data, mode) {
     }
   }
 
-  // Ensure all imported words have _id
-  decks.forEach(d => d.words.forEach(w => { if (!w._id) w._id = generateId(); }));
+  // Ensure all imported words have _id and migrate old 'almost' level
+  decks.forEach(d => d.words.forEach(w => {
+    if (!w._id) w._id = generateId();
+    if (w.level === 'almost') w.level = 'mastered';
+  }));
 
   saveState();
   renderDeckList();
@@ -9854,12 +9792,8 @@ function setupDragScroll(el) {
 }
 
 (function initDragScroll() {
-  const dragSelector = '.deck-tabs, .deck-list-grid';
+  const dragSelector = '.deck-tabs, .deck-list-grid, .filter-tabs';
   document.querySelectorAll(dragSelector).forEach(el => setupDragScroll(el));
-  const observer = new MutationObserver(() => {
-    document.querySelectorAll(dragSelector.split(',').map(s => s.trim() + ':not([data-drag])').join(',')).forEach(el => setupDragScroll(el));
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
 })();
 
 /* ===== Long-press deck reorder ===== */
