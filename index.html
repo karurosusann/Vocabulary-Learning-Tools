@@ -4064,7 +4064,8 @@ body.dark-mode .gdrive-setup-hint code {
     <div style="text-align:center;margin-top:20px;">
       <button class="demo-btn" onclick="loadDemo()">デモ問題で試す</button>
     </div>
-    <div class="app-version-footer" id="importVersionLabel"></div>
+    <div class="app-version-footer" id="importVersionLabel" style="padding-bottom:2px;"></div>
+    <div class="app-version-footer" style="margin-top:0;padding-top:0;">Created by SEIYA TANAKA</div>
   </div>
 
   <!-- Screen: Dashboard -->
@@ -4445,8 +4446,9 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
       </button>
     </div>
-    <div class="settings-panel-footer" id="settingsFooterVersion">
-      CSVocab
+    <div class="settings-panel-footer">
+      <div id="settingsFooterVersion">CSVocab</div>
+      <div style="margin-top:2px;">Created by SEIYA TANAKA</div>
     </div>
   </div>
 </div>
@@ -4689,7 +4691,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.0.3';
+const APP_VERSION = 'v1.0.4';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
