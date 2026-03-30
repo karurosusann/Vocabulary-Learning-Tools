@@ -4270,6 +4270,7 @@ body.dark-mode .gdrive-setup-hint code {
               <button class="mode-toggle-btn" onclick="selectInputMode(true, this)">タイピング</button>
             </div>
           </div>
+          <div class="drill-desc" id="inputModeDesc" style="display:none;">スマホではテキストが多い問題や画像付きの問題で表示が崩れることがあります</div>
 
           <div class="setting-row">
             <span class="setting-label">読み上げ</span>
@@ -4362,7 +4363,7 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="sort-btn active" onclick="setWordSort('asc', this)">リスト順</button>
       <button class="sort-btn" onclick="setWordSort('desc', this)">逆順</button>
       <button class="sort-btn" onclick="setWordSort('random', this)">ランダム</button>
-      <button class="sort-btn" onclick="setWordSort('alpha', this)">アルファベット順</button>
+      <button class="sort-btn" onclick="setWordSort('alpha', this)">五十音順</button>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;flex-shrink:0;">
       <button class="answer-toggle-btn" id="questionToggleBtn" onclick="toggleAllQuestions()">問題を隠す</button>
@@ -4765,7 +4766,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.1.8';
+const APP_VERSION = 'v1.2.1';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6084,6 +6085,11 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     const editPanel = document.getElementById('editWordOverlay');
     if (editPanel && editPanel.classList.contains('show')) {
+      const vv = window.visualViewport;
+      // Adjust overlay to fit within visual viewport (above keyboard)
+      editPanel.style.height = vv.height + 'px';
+      editPanel.style.top = vv.offsetTop + 'px';
+      editPanel.style.bottom = 'auto';
       const focused = editPanel.querySelector(':focus');
       if (focused) {
         setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
@@ -6091,7 +6097,14 @@ if (window.visualViewport) {
     }
     adjustQuizForKeyboard();
   });
-  window.visualViewport.addEventListener('scroll', adjustQuizForKeyboard);
+  window.visualViewport.addEventListener('scroll', () => {
+    const editPanel = document.getElementById('editWordOverlay');
+    if (editPanel && editPanel.classList.contains('show')) {
+      const vv = window.visualViewport;
+      editPanel.style.top = vv.offsetTop + 'px';
+    }
+    adjustQuizForKeyboard();
+  });
 }
 
 
@@ -7564,6 +7577,7 @@ function applyAdvancedSettingsUI() {
   document.querySelectorAll('#inputModeToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', quizInputMode ? i === 1 : i === 0);
   });
+  document.getElementById('inputModeDesc').style.display = quizInputMode ? 'block' : 'none';
 }
 
 function selectMode(mode, el) {
@@ -7615,6 +7629,7 @@ function selectInputMode(mode, el) {
   quizInputMode = mode;
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  document.getElementById('inputModeDesc').style.display = quizInputMode ? 'block' : 'none';
   saveDeckSettings(activeDeckId);
 }
 
@@ -9456,6 +9471,9 @@ function closeEditWord() {
   const panel = document.getElementById('editWordOverlay');
   panel.classList.remove('show');
   panel.scrollTop = 0;
+  panel.style.height = '';
+  panel.style.top = '';
+  panel.style.bottom = '';
   window._quizEditReturn = false;
 }
 
