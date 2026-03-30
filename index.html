@@ -4230,14 +4230,6 @@ body.dark-mode .gdrive-setup-hint code {
         </div>
       </div>
 
-      <div class="setting-row">
-        <span class="setting-label">回答方式</span>
-        <div class="mode-toggle" id="inputModeToggle">
-          <button class="mode-toggle-btn active" onclick="selectInputMode(false, this)">カード</button>
-          <button class="mode-toggle-btn" onclick="selectInputMode(true, this)">タイピング</button>
-        </div>
-      </div>
-
       <div style="text-align:center;margin-top:12px;">
         <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>詳細設定</button>
       </div>
@@ -4268,6 +4260,14 @@ body.dark-mode .gdrive-setup-hint code {
             <div class="mode-toggle" id="reverseToggle">
               <button class="mode-toggle-btn active" onclick="selectReverse(false, this)">問→答</button>
               <button class="mode-toggle-btn" onclick="selectReverse(true, this)">答→問</button>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <span class="setting-label">回答方式</span>
+            <div class="mode-toggle" id="inputModeToggle">
+              <button class="mode-toggle-btn active" onclick="selectInputMode(false, this)">カード</button>
+              <button class="mode-toggle-btn" onclick="selectInputMode(true, this)">タイピング</button>
             </div>
           </div>
 
@@ -4765,7 +4765,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.1.6';
+const APP_VERSION = 'v1.1.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
