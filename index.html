@@ -4749,7 +4749,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.0.8';
+const APP_VERSION = 'v1.1.0';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -5957,14 +5957,15 @@ document.addEventListener('keydown', (e) => {
     // Ignore when edit word panel is open
     const editPanel = document.getElementById('editWordOverlay');
     if (editPanel && editPanel.classList.contains('show')) return;
-    // If typing in input field, submit answer
+    // If typing in input field, submit answer (ignore IME composition)
     if (e.target.id === 'inputAnswerField') {
+      if (e.isComposing) return; // Don't submit during IME composition
       e.preventDefault();
       submitInputAnswer();
       return;
     }
-    // If in input mode and already answered, go to next question
-    if (quizInputMode) {
+    // If on hidden keyboard-keep input or in input mode and already answered, go to next
+    if (e.target.id === 'inputKeepKeyboard' || quizInputMode) {
       const quizScreen = document.getElementById('screen-quiz');
       if (quizScreen && quizScreen.classList.contains('active')) {
         const card = document.getElementById('quizCard');
@@ -6029,18 +6030,29 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // iOS: scroll focused edit field into view when keyboard opens
+let _quizKbTimer = null;
 function adjustQuizForKeyboard() {
   const quizScreen = document.getElementById('screen-quiz');
   if (!quizScreen || !quizScreen.classList.contains('active')) return;
   const vv = window.visualViewport;
   if (vv.height < window.innerHeight * 0.85) {
-    // Keyboard is open: shrink to visible area and counteract iOS scroll push
+    // Keyboard is open: immediately fit to visible area
+    clearTimeout(_quizKbTimer);
+    _quizKbTimer = null;
     quizScreen.style.height = vv.height + 'px';
     quizScreen.style.transform = 'translateY(' + vv.offsetTop + 'px)';
   } else {
-    // Keyboard closed: reset
-    quizScreen.style.height = '';
-    quizScreen.style.transform = '';
+    // Keyboard might be closing OR just switching — delay reset
+    if (!_quizKbTimer) {
+      _quizKbTimer = setTimeout(() => {
+        _quizKbTimer = null;
+        const vv2 = window.visualViewport;
+        if (!vv2 || vv2.height >= window.innerHeight * 0.85) {
+          quizScreen.style.height = '';
+          quizScreen.style.transform = '';
+        }
+      }, 300);
+    }
   }
 }
 
@@ -7048,6 +7060,7 @@ function showScreen(name) {
     // Reset keyboard adjustment styles on quiz screen
     const quizEl = document.getElementById('screen-quiz');
     if (quizEl) { quizEl.style.height = ''; quizEl.style.transform = ''; }
+    clearTimeout(_quizKbTimer); _quizKbTimer = null;
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -7875,7 +7888,6 @@ async function showQuizQuestion() {
     answerReveal.innerHTML = `
       <div class="input-answer-wrap">
         <input type="text" class="input-answer-field" id="inputAnswerField" placeholder="答えを入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-        <button class="input-submit-btn" id="inputSubmitBtn" onclick="submitInputAnswer()">回答する</button>
       </div>
       <div class="answer-text-area">${answerContentHtml}</div>
     `;
@@ -8429,7 +8441,7 @@ function submitInputAnswer() {
     if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
   }
 
-  // Show next button
+  // Show next button + hidden input to keep keyboard alive on iOS
   const body = document.getElementById('quizBody');
   body.innerHTML = `
     <div class="know-buttons-wrap">
@@ -8439,7 +8451,11 @@ function submitInputAnswer() {
         </button>
       </div>
     </div>
+    <input type="text" id="inputKeepKeyboard" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;" autocomplete="off" autocorrect="off">
   `;
+  // Focus hidden input to keep iOS keyboard open
+  const keepKb = document.getElementById('inputKeepKeyboard');
+  if (keepKb) keepKb.focus();
 
   // Read answer aloud
   if (ttsMode === 'answer') {
