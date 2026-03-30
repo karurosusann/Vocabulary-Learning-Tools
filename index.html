@@ -2016,47 +2016,6 @@ body.dark-mode .input-answer-field::placeholder {
   color: var(--gray-900);
 }
 
-.input-bar-fixed {
-  display: none;
-  padding: 6px 0;
-  flex-shrink: 0;
-}
-.input-bar-fixed.active {
-  display: block;
-}
-.input-bar-fixed .input-answer-field {
-  width: 100%;
-  box-sizing: border-box;
-}
-.input-bar-fixed .input-bar-user {
-  text-align: center;
-  padding: 10px 14px;
-  font-size: 16px;
-  font-weight: 600;
-  font-family: 'DM Sans', sans-serif;
-  border-radius: 12px;
-  background: white;
-  box-shadow: var(--shadow-sm);
-  word-break: break-word;
-}
-.input-bar-fixed .input-bar-user.correct {
-  color: var(--green-600);
-}
-.input-bar-fixed .input-bar-user.wrong {
-  color: #9CA3AF;
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-}
-body.dark-mode .input-bar-fixed .input-bar-user {
-  background: #1e1a28;
-}
-.quiz-card .input-toggle-hint {
-  font-size: 11px;
-  color: var(--gray-400);
-  margin-top: 4px;
-  font-weight: 600;
-}
-
 /* ===== Swipe feedback ===== */
 .quiz-card.swiping {
   transition: none !important;
@@ -4377,7 +4336,6 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="answer-reveal" id="answerReveal"></div>
       </div>
     </div>
-    <div id="inputBarFixed" class="input-bar-fixed" onclick="onInputBarTap()"></div>
     <div id="quizBody" onclick="onQuizBodyTap()"></div>
   </div>
 
@@ -4807,7 +4765,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.1.7';
+const APP_VERSION = 'v1.1.6';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -7446,11 +7404,6 @@ let quizTimerPausedRemaining = null; // remaining seconds when paused by visibil
 let quizShowImages = true;
 let quizInputMode = false;
 let inputLastCorrect = null; // stores last input answer result for Enter-to-next
-let inputToggleData = null; // { questionHtml, answerHtml, showingAnswer: bool } for mobile input toggle
-
-function isMobileInput() {
-  return window.innerWidth < 768 && quizInputMode;
-}
 let quizSavedCount = 10;
 let quizPoolLastKey = (() => { try { return JSON.parse(localStorage.getItem('csvocab_pool_lastkey')) || {}; } catch(e) { return {}; } })();
 
@@ -7742,35 +7695,22 @@ function onTimerExpired() {
       const answerText = reverseMode ? word.english : word.japanese;
       const field = document.getElementById('inputAnswerField');
       const userRaw = field ? (field.value || '').trim() : '';
-
+      // Replace input with comparison display
+      const wrap = card.querySelector('.input-answer-wrap');
+      if (wrap) {
+        wrap.innerHTML = `
+          <div class="input-result wrong">${escapeHtml(userRaw || '（時間切れ）')}</div>
+          <div class="input-result correct">${escapeHtml(answerText)}</div>
+        `;
+      }
       card.classList.add('revealed');
       card.classList.add('input-wrong');
       sfxWrong();
-
-      if (isMobileInput()) {
-        // Mobile: show answer in card, user input in bar
-        const quizWordEl = document.getElementById('quizWord');
-        const questionHtml = quizWordEl.innerHTML;
-        quizWordEl.innerHTML = `<div style="font-size:20px;line-height:1.4;">${escapeHtmlBr(answerText)}</div>`;
-        autoSizeQuizWord(quizWordEl);
-        const inputBar = document.getElementById('inputBarFixed');
-        inputBar.innerHTML = `<div class="input-bar-user wrong">${escapeHtml(userRaw || '（時間切れ）')}</div>`;
-      } else {
-        // Desktop: existing behavior
-        const wrap = card.querySelector('.input-answer-wrap');
-        if (wrap) {
-          wrap.innerHTML = `
-            <div class="input-result wrong">${escapeHtml(userRaw || '（時間切れ）')}</div>
-            <div class="input-result correct">${escapeHtml(answerText)}</div>
-          `;
-        }
-        const answerArea = card.querySelector('.answer-text-area');
-        if (answerArea) {
-          answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none');
-          if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
-        }
+      const answerArea = card.querySelector('.answer-text-area');
+      if (answerArea) {
+        answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none');
+        if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
       }
-
       processQuizAnswer(word, false);
       setTimeout(() => nextQuestion(), 1000);
     }
@@ -7948,10 +7888,6 @@ async function showQuizQuestion() {
   const card = document.getElementById('quizCard');
   card.classList.remove('revealed', 'swiping', 'swipe-fly', 'input-correct', 'input-wrong');
   inputLastCorrect = null;
-  inputToggleData = null;
-  // Hide mobile input bar (will be shown if needed)
-  const inputBarReset = document.getElementById('inputBarFixed');
-  if (inputBarReset) { inputBarReset.className = 'input-bar-fixed'; inputBarReset.innerHTML = ''; }
   card.style.transition = 'none';
   card.style.transform = '';
   card.style.opacity = '0'; // Stay invisible while updating content
@@ -7981,23 +7917,14 @@ async function showQuizQuestion() {
     answerContentHtml = escapeHtmlBr(answerText);
   }
   if (quizInputMode) {
-    if (isMobileInput()) {
-      // Mobile input: input field goes outside card in fixed bar
-      answerReveal.innerHTML = `<div class="answer-text-area" style="display:none;">${answerContentHtml}</div>`;
-      body.innerHTML = '';
-      const inputBar = document.getElementById('inputBarFixed');
-      inputBar.className = 'input-bar-fixed active';
-      inputBar.innerHTML = `<input type="text" class="input-answer-field" id="inputAnswerField" placeholder="答えを入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">`;
-    } else {
-      // Desktop input: input field inside card
-      answerReveal.innerHTML = `
-        <div class="input-answer-wrap">
-          <input type="text" class="input-answer-field" id="inputAnswerField" placeholder="答えを入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-        </div>
-        <div class="answer-text-area">${answerContentHtml}</div>
-      `;
-      body.innerHTML = '';
-    }
+    // Input mode: show text input + submit button, answer hidden until submit
+    answerReveal.innerHTML = `
+      <div class="input-answer-wrap">
+        <input type="text" class="input-answer-field" id="inputAnswerField" placeholder="答えを入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="answer-text-area">${answerContentHtml}</div>
+    `;
+    body.innerHTML = '';
   } else {
     // Flashcard mode: tap hint + hidden answer + know buttons
     answerReveal.innerHTML = `
@@ -8067,21 +7994,7 @@ function revealAnswer() {
     if (field) field.focus({ preventScroll: true });
     return;
   }
-  // Mobile input after answering: toggle between question and answer
-  if (isMobileInput() && card.classList.contains('revealed') && inputToggleData) {
-    const quizWordEl = document.getElementById('quizWord');
-    if (inputToggleData.showingAnswer) {
-      quizWordEl.innerHTML = inputToggleData.questionHtml;
-      autoSizeQuizWord(quizWordEl);
-      inputToggleData.showingAnswer = false;
-    } else {
-      quizWordEl.innerHTML = inputToggleData.answerHtml;
-      autoSizeQuizWord(quizWordEl);
-      inputToggleData.showingAnswer = true;
-    }
-    return;
-  }
-  // Desktop input after answering: tap goes to next question
+  // In input mode after answering, tap goes to next question
   if (quizInputMode && card.classList.contains('revealed') && inputLastCorrect !== null) {
     inputLastCorrect = null;
     nextQuestion();
@@ -8554,53 +8467,26 @@ function submitInputAnswer() {
   card.classList.add(isCorrect ? 'input-correct' : 'input-wrong');
   sfxReveal();
 
-  if (isMobileInput()) {
-    // Mobile: show answer in card, user input in fixed bar
-    const questionText = reverseMode ? word.japanese : word.english;
-    const quizWordEl = document.getElementById('quizWord');
-    const questionHtml = quizWordEl.innerHTML;
-
-    // Show answer in card
-    quizWordEl.innerHTML = `<div style="font-size:20px;line-height:1.4;">${escapeHtmlBr(answerText)}</div><div class="input-toggle-hint">タップで問題を表示</div>`;
-    autoSizeQuizWord(quizWordEl);
-
-    // Show answer image if present
-    const answerArea = card.querySelector('.answer-text-area');
-    if (answerArea) {
-      const img = answerArea.querySelector('img');
-      if (img) { answerArea.style.display = ''; answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none'); }
+  // Replace input field with comparison display
+  const wrap = card.querySelector('.input-answer-wrap');
+  if (wrap) {
+    if (isCorrect) {
+      wrap.innerHTML = `<div class="input-result correct">${escapeHtml(answerText)}</div>`;
+      sfxCorrect();
+    } else {
+      wrap.innerHTML = `
+        <div class="input-result wrong">${escapeHtml(userRaw || '（未入力）')}</div>
+        <div class="input-result correct">${escapeHtml(answerText)}</div>
+      `;
+      sfxWrong();
     }
+  }
 
-    // Store toggle data
-    inputToggleData = { questionHtml, answerHtml: quizWordEl.innerHTML, showingAnswer: true };
-
-    // Show user input in fixed bar
-    const inputBar = document.getElementById('inputBarFixed');
-    inputBar.innerHTML = `<div class="input-bar-user ${isCorrect ? 'correct' : 'wrong'}">${escapeHtml(userRaw || '（未入力）')}</div>`;
-
-    if (isCorrect) sfxCorrect(); else sfxWrong();
-
-  } else {
-    // Desktop: existing behavior — show result inside card
-    const wrap = card.querySelector('.input-answer-wrap');
-    if (wrap) {
-      if (isCorrect) {
-        wrap.innerHTML = `<div class="input-result correct">${escapeHtml(answerText)}</div>`;
-        sfxCorrect();
-      } else {
-        wrap.innerHTML = `
-          <div class="input-result wrong">${escapeHtml(userRaw || '（未入力）')}</div>
-          <div class="input-result correct">${escapeHtml(answerText)}</div>
-        `;
-        sfxWrong();
-      }
-    }
-
-    const answerArea = card.querySelector('.answer-text-area');
-    if (answerArea) {
-      answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none');
-      if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
-    }
+  const answerArea = card.querySelector('.answer-text-area');
+  if (answerArea) {
+    // Hide text (already shown in input-result) but keep answer image visible
+    answerArea.querySelectorAll('div').forEach(d => d.style.display = 'none');
+    if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
   }
 
   // Process answer immediately (update level)
@@ -8625,17 +8511,6 @@ function submitInputAnswer() {
 
 function onQuizBodyTap() {
   // In input mode after answering, tap anywhere goes to next question
-  if (quizInputMode && currentQuiz && inputLastCorrect !== null) {
-    const card = document.getElementById('quizCard');
-    if (card && card.classList.contains('revealed')) {
-      inputLastCorrect = null;
-      nextQuestion();
-    }
-  }
-}
-
-function onInputBarTap() {
-  // After answering, tap input bar area to go to next question
   if (quizInputMode && currentQuiz && inputLastCorrect !== null) {
     const card = document.getElementById('quizCard');
     if (card && card.classList.contains('revealed')) {
