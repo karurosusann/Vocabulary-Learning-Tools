@@ -4749,7 +4749,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.0.6';
+const APP_VERSION = 'v1.0.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6037,6 +6037,15 @@ if (window.visualViewport) {
       if (focused) {
         setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       }
+    }
+
+    // Quiz typing mode: adjust quiz screen height to visual viewport
+    const quizScreen = document.getElementById('screen-quiz');
+    if (quizScreen && quizScreen.classList.contains('active')) {
+      const vv = window.visualViewport;
+      quizScreen.style.height = vv.height + 'px';
+      quizScreen.style.top = vv.offsetTop + 'px';
+      quizScreen.style.bottom = 'auto';
     }
   });
 }
@@ -7892,11 +7901,16 @@ async function showQuizQuestion() {
   if (quizInputMode) {
     const field = document.getElementById('inputAnswerField');
     if (field) {
+      // Prevent iOS from scrolling the page when focusing input
+      field.addEventListener('focus', () => {
+        setTimeout(() => window.scrollTo(0, 0), 50);
+      }, { once: true });
       field.focus(); // Synchronous focus (keeps keyboard on iOS)
       // Fallback for cases where sync focus doesn't work
       requestAnimationFrame(() => {
         const f = document.getElementById('inputAnswerField');
         if (f && document.activeElement !== f) f.focus();
+        setTimeout(() => window.scrollTo(0, 0), 100);
       });
     }
   }
