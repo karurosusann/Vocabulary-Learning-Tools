@@ -4765,7 +4765,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.1.4';
+const APP_VERSION = 'v1.1.5';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6049,22 +6049,31 @@ let _quizKbTimer = null;
 function adjustQuizForKeyboard() {
   const quizScreen = document.getElementById('screen-quiz');
   if (!quizScreen || !quizScreen.classList.contains('active')) return;
+  if (!window.visualViewport) return;
+
   const vv = window.visualViewport;
-  if (vv.height < window.innerHeight * 0.85) {
-    // Keyboard is open: immediately fit to visible area
+  const keyboardOpen = vv.height < window.innerHeight * 0.8;
+
+  if (keyboardOpen) {
     clearTimeout(_quizKbTimer);
     _quizKbTimer = null;
+    // Fight iOS scroll that pushes fixed elements up
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    // Shrink quiz screen to fit above keyboard
     quizScreen.style.height = vv.height + 'px';
     quizScreen.style.transform = 'translateY(' + vv.offsetTop + 'px)';
   } else {
-    // Keyboard might be closing OR just switching — delay reset
+    // Keyboard might be closing OR switching — delay reset
     if (!_quizKbTimer) {
       _quizKbTimer = setTimeout(() => {
         _quizKbTimer = null;
         const vv2 = window.visualViewport;
-        if (!vv2 || vv2.height >= window.innerHeight * 0.85) {
+        if (!vv2 || vv2.height >= window.innerHeight * 0.8) {
           quizScreen.style.height = '';
           quizScreen.style.transform = '';
+          window.scrollTo(0, 0);
         }
       }, 300);
     }
@@ -7069,9 +7078,15 @@ function showScreen(name) {
   if (name === 'quiz') {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
   } else {
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
     // Reset keyboard adjustment styles on quiz screen
     const quizEl = document.getElementById('screen-quiz');
     if (quizEl) { quizEl.style.height = ''; quizEl.style.transform = ''; }
@@ -7942,10 +7957,18 @@ async function showQuizQuestion() {
   if (quizInputMode) {
     const field = document.getElementById('inputAnswerField');
     if (field) {
-      field.focus();
+      field.focus({ preventScroll: true });
+      // Aggressively fight iOS scroll push during keyboard animation
+      let scrollFightCount = 0;
+      const scrollFight = setInterval(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        if (++scrollFightCount > 15) clearInterval(scrollFight);
+      }, 50);
       requestAnimationFrame(() => {
         const f = document.getElementById('inputAnswerField');
-        if (f && document.activeElement !== f) f.focus();
+        if (f && document.activeElement !== f) f.focus({ preventScroll: true });
       });
     }
   }
@@ -8470,7 +8493,7 @@ function submitInputAnswer() {
     <input type="text" id="inputKeepKeyboard" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;" autocomplete="off" autocorrect="off">
   `;
   const keepKb = document.getElementById('inputKeepKeyboard');
-  if (keepKb) keepKb.focus();
+  if (keepKb) keepKb.focus({ preventScroll: true });
 
   // Read answer aloud
   if (ttsMode === 'answer') {
