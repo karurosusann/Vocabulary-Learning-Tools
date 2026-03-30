@@ -2677,6 +2677,45 @@ body.dark-mode .copy-menu-popup button {
   padding-right: 4px;
   padding-bottom: 8px;
 }
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: white;
+  color: var(--gray-500);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sort-btn.active {
+  background: var(--gray-700);
+  color: white;
+}
+body.dark-mode .sort-btn {
+  background: #2a2535;
+  color: var(--gray-400);
+}
+body.dark-mode .sort-btn.active {
+  background: var(--gray-500);
+  color: white;
+}
 .word-items::-webkit-scrollbar { width: 4px; }
 .word-items::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
 
@@ -2706,6 +2745,18 @@ body.dark-mode .copy-menu-popup button {
 .word-item .level-dot.fuzzy { background: var(--yellow-500); }
 .word-item .level-dot.bookmarked { background: var(--orange-500); }
 .word-item .level-dot.mastered { background: var(--green-500); }
+.word-num {
+  font-size: 11px;
+  color: var(--gray-400);
+  min-width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: 'DM Sans', monospace;
+  line-height: 1.4;
+  margin-top: 3px;
+  user-select: none;
+  -webkit-user-select: none;
+}
 .word-item .eng {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
@@ -4064,7 +4115,8 @@ body.dark-mode .gdrive-setup-hint code {
     <div style="text-align:center;margin-top:20px;">
       <button class="demo-btn" onclick="loadDemo()">デモ問題で試す</button>
     </div>
-    <div class="app-version-footer" id="importVersionLabel"></div>
+    <div class="app-version-footer" id="importVersionLabel" style="padding-bottom:2px;"></div>
+    <div class="app-version-footer" style="margin-top:0;padding-top:0;">Created by SEIYA TANAKA</div>
   </div>
 
   <!-- Screen: Dashboard -->
@@ -4146,6 +4198,30 @@ body.dark-mode .gdrive-setup-hint code {
       <h4 class="setup-section-label" style="margin-top:0;">出題範囲</h4>
       <div class="level-select-grid" id="levelSelectGrid"></div>
 
+      <div class="setting-row" style="margin-top:12px;">
+        <span class="setting-label">出題数</span>
+        <input type="range" id="quizCountSlider" class="quiz-count-slider" min="0" max="22" value="1" oninput="updateQuizCountLabel(this.value)">
+        <span class="quiz-count-value" id="quizCountValue">10問</span>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">出題順</span>
+        <div class="mode-toggle" id="orderToggle">
+          <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
+          <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
+          <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
+          <button class="mode-toggle-btn" onclick="selectOrder('alpha', this)">ABC順</button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">回答方式</span>
+        <div class="mode-toggle" id="inputModeToggle">
+          <button class="mode-toggle-btn active" onclick="selectInputMode(false, this)">カード</button>
+          <button class="mode-toggle-btn" onclick="selectInputMode(true, this)">タイピング</button>
+        </div>
+      </div>
+
       <div style="text-align:center;margin-top:12px;">
         <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>詳細設定</button>
       </div>
@@ -4163,42 +4239,19 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
     <div class="unified-setup">
           <div class="setting-row" style="margin-top:4px;">
-            <span class="setting-label">出題数</span>
-            <input type="range" id="quizCountSlider" class="quiz-count-slider" min="0" max="22" value="1" oninput="updateQuizCountLabel(this.value)">
-            <span class="quiz-count-value" id="quizCountValue">10問</span>
-          </div>
-
-          <div class="setting-row">
             <span class="setting-label">モード</span>
             <div class="mode-toggle" id="modeToggle">
-              <button class="mode-toggle-btn active" onclick="selectMode('normal', this)">ノーマル</button>
-              <button class="mode-toggle-btn" onclick="selectMode('drill', this)">特訓</button>
+              <button class="mode-toggle-btn active" onclick="selectMode('drill', this)">特訓</button>
+              <button class="mode-toggle-btn" onclick="selectMode('normal', this)">ノーマル</button>
             </div>
           </div>
-          <div class="drill-desc" id="drillDesc" style="display:none;">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
-
-          <div class="setting-row">
-            <span class="setting-label">出題順</span>
-            <div class="mode-toggle" id="orderToggle">
-              <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
-              <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
-              <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
-            </div>
-          </div>
+          <div class="drill-desc" id="drillDesc">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
 
           <div class="setting-row">
             <span class="setting-label">出題形式</span>
             <div class="mode-toggle" id="reverseToggle">
               <button class="mode-toggle-btn active" onclick="selectReverse(false, this)">問→答</button>
               <button class="mode-toggle-btn" onclick="selectReverse(true, this)">答→問</button>
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <span class="setting-label">回答方式</span>
-            <div class="mode-toggle" id="inputModeToggle">
-              <button class="mode-toggle-btn active" onclick="selectInputMode(false, this)">カード</button>
-              <button class="mode-toggle-btn" onclick="selectInputMode(true, this)">タイピング</button>
             </div>
           </div>
 
@@ -4289,6 +4342,12 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
     <div class="deck-tabs" id="deckTabs"></div>
     <div class="filter-tabs" id="filterTabs"></div>
+    <div class="sort-row" id="sortRow">
+      <button class="sort-btn active" onclick="setWordSort('asc', this)">リスト順</button>
+      <button class="sort-btn" onclick="setWordSort('desc', this)">逆順</button>
+      <button class="sort-btn" onclick="setWordSort('random', this)">ランダム</button>
+      <button class="sort-btn" onclick="setWordSort('alpha', this)">アルファベット順</button>
+    </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;flex-shrink:0;">
       <button class="answer-toggle-btn" id="questionToggleBtn" onclick="toggleAllQuestions()">問題を隠す</button>
       <button class="answer-toggle-btn" id="answerToggleBtn" onclick="toggleAllAnswers()">答えを隠す</button>
@@ -4445,8 +4504,9 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
       </button>
     </div>
-    <div class="settings-panel-footer" id="settingsFooterVersion">
-      CSVocab
+    <div class="settings-panel-footer">
+      <div id="settingsFooterVersion">CSVocab</div>
+      <div style="margin-top:2px;">Created by SEIYA TANAKA</div>
     </div>
   </div>
 </div>
@@ -4689,7 +4749,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.0.3';
+const APP_VERSION = 'v1.0.8';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -5969,6 +6029,21 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // iOS: scroll focused edit field into view when keyboard opens
+function adjustQuizForKeyboard() {
+  const quizScreen = document.getElementById('screen-quiz');
+  if (!quizScreen || !quizScreen.classList.contains('active')) return;
+  const vv = window.visualViewport;
+  if (vv.height < window.innerHeight * 0.85) {
+    // Keyboard is open: shrink to visible area and counteract iOS scroll push
+    quizScreen.style.height = vv.height + 'px';
+    quizScreen.style.transform = 'translateY(' + vv.offsetTop + 'px)';
+  } else {
+    // Keyboard closed: reset
+    quizScreen.style.height = '';
+    quizScreen.style.transform = '';
+  }
+}
+
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     const editPanel = document.getElementById('editWordOverlay');
@@ -5978,7 +6053,9 @@ if (window.visualViewport) {
         setTimeout(() => focused.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       }
     }
+    adjustQuizForKeyboard();
   });
+  window.visualViewport.addEventListener('scroll', adjustQuizForKeyboard);
 }
 
 
@@ -6968,6 +7045,9 @@ function showScreen(name) {
   } else {
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
+    // Reset keyboard adjustment styles on quiz screen
+    const quizEl = document.getElementById('screen-quiz');
+    if (quizEl) { quizEl.style.height = ''; quizEl.style.transform = ''; }
     // Ensure quiz timer is stopped when leaving quiz screen
     stopQuizTimer();
     // Release quiz data when navigating away from quiz/result
@@ -7210,7 +7290,7 @@ function showLevelSelect() {
   // Load saved settings for this deck
   const saved = loadDeckSettings(activeDeckId);
   if (saved) {
-    quizDrillMode = saved.drillMode || false;
+    quizDrillMode = saved.drillMode !== undefined ? saved.drillMode : true;
     reverseMode = saved.reverse || false;
     ttsMode = saved.tts || 'question';
     if (ttsMode === 'both') ttsMode = 'question'; // legacy fallback
@@ -7221,7 +7301,7 @@ function showLevelSelect() {
     quizInputMode = saved.inputMode || false;
     quizSavedCount = saved.quizCount || 10;
   } else {
-    quizDrillMode = false;
+    quizDrillMode = true;
     reverseMode = false;
     ttsMode = 'question';
     quizOrder = 'asc';
@@ -7267,12 +7347,12 @@ function showLockedMessage() {
 }
 
 // ============ QUIZ SETUP ============
-let quizDrillMode = false;
+let quizDrillMode = true;
 let reviewMode = false;
 let lastMainQuizCount = 10; // remembers the count from non-review quizzes
 let reverseMode = false;
 let ttsMode = 'question'; // 'question', 'answer', 'none'
-let quizOrder = 'asc'; // 'asc', 'desc', 'random'
+let quizOrder = 'asc'; // 'asc', 'desc', 'random', 'alpha'
 let quizTimerEnabled = false;
 let quizTimerSeconds = 5;
 let quizTimerTimeout = null;
@@ -7307,6 +7387,8 @@ function _launchQuiz(count) {
     shuffle(pool);
   } else if (quizOrder === 'desc') {
     pool = pool.reverse();
+  } else if (quizOrder === 'alpha') {
+    pool.sort((a, b) => a.english.localeCompare(b.english, 'ja', { sensitivity: 'base' }));
   }
   // 'asc' = keep original list order (default from getQuizPool)
 
@@ -7418,7 +7500,7 @@ function applyAdvancedSettingsUI() {
   // Quiz count slider
   setQuizCountSlider(quizSavedCount || 10);
   document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', quizDrillMode ? i === 1 : i === 0);
+    b.classList.toggle('active', quizDrillMode ? i === 0 : i === 1);
   });
   document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
   document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
@@ -7428,7 +7510,7 @@ function applyAdvancedSettingsUI() {
   document.querySelectorAll('#ttsToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', i === ttsIdx);
   });
-  const orderIdx = { asc: 0, desc: 1, random: 2 }[quizOrder] ?? 0;
+  const orderIdx = { asc: 0, desc: 1, random: 2, alpha: 3 }[quizOrder] ?? 0;
   document.querySelectorAll('#orderToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', i === orderIdx);
   });
@@ -7830,8 +7912,7 @@ async function showQuizQuestion() {
   if (quizInputMode) {
     const field = document.getElementById('inputAnswerField');
     if (field) {
-      field.focus(); // Synchronous focus (keeps keyboard on iOS)
-      // Fallback for cases where sync focus doesn't work
+      field.focus();
       requestAnimationFrame(() => {
         const f = document.getElementById('inputAnswerField');
         if (f && document.activeElement !== f) f.focus();
@@ -8730,9 +8811,25 @@ function confirmQuit() {
 
 // ============ WORD LIST ============
 let wordListDeckId = null; // track which deck is shown in word list
+let wordListSort = 'asc'; // 'asc' | 'desc' | 'random' | 'alpha'
+
+function setWordSort(mode, btn) {
+  wordListSort = mode;
+  // Update active button
+  document.querySelectorAll('#sortRow .sort-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderWordList(currentWordFilter || 'all');
+}
 
 function showWordList() {
   wordListDeckId = activeDeckId;
+  wordListSort = 'asc'; // reset sort on open
+  // Reset sort button UI
+  setTimeout(() => {
+    document.querySelectorAll('#sortRow .sort-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === 0);
+    });
+  }, 0);
   showScreen('wordlist');
   answersHidden = false;
   questionsHidden = false;
@@ -8854,28 +8951,42 @@ function toggleAllQuestions() {
 function renderWordList(level) {
   currentWordFilter = level;
   const words = getWordListWords();
-  let filtered;
-  if (level === 'all') filtered = words;
-  else if (level === 'bookmarked') filtered = words.filter(w => w.bookmarked);
-  else filtered = words.filter(w => w.level === level);
+  let indexed = words.map((w, i) => ({ w, idx: i }));
+  if (level === 'all') { /* keep all */ }
+  else if (level === 'bookmarked') indexed = indexed.filter(({w}) => w.bookmarked);
+  else indexed = indexed.filter(({w}) => w.level === level);
 
   // Apply search filter
   const query = (document.getElementById('wordSearchInput')?.value || '').trim().toLowerCase();
   if (query) {
-    filtered = filtered.filter(w =>
+    indexed = indexed.filter(({w}) =>
       w.english.toLowerCase().includes(query) || w.japanese.includes(query)
     );
   }
 
+  // Apply sort
+  if (wordListSort === 'desc') {
+    indexed = indexed.slice().reverse();
+  } else if (wordListSort === 'random') {
+    indexed = indexed.slice();
+    for (let i = indexed.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+    }
+  } else if (wordListSort === 'alpha') {
+    indexed = indexed.slice().sort((a, b) => a.w.english.localeCompare(b.w.english, 'ja', { sensitivity: 'base' }));
+  }
+
   const items = document.getElementById('wordItems');
 
-  if (filtered.length === 0) {
+  if (indexed.length === 0) {
     items.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">単語がありません</div>';
     return;
   }
 
-  items.innerHTML = filtered.map(w => `
+  items.innerHTML = indexed.map(({w, idx}) => `
     <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
+      <span class="word-num">${idx + 1}</span>
       <div class="level-dot ${w.level}"></div>
       <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtmlBr(w.english)}</div>
       <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtmlBr(w.japanese)}</div></div>
@@ -9194,6 +9305,7 @@ function renderEditorList() {
   el.innerHTML = items.map(({ w, i }) => `
     <div class="editor-word-item" data-index="${i}" onclick="${editorSelectMode ? 'toggleEditorCheckbox('+i+', event)' : 'showEditWordModal('+i+')'}">
       <div class="ew-inner">
+        <span class="word-num">${i + 1}</span>
         <div class="ew-checkbox ${getEditorSelected().has(i) ? 'checked' : ''}"></div>
         <div class="ew-content">
           <div class="ew-eng">${escapeHtmlBr(w.english)}</div>
