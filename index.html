@@ -4765,7 +4765,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.1.7';
+const APP_VERSION = 'v1.1.8';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -7078,15 +7078,9 @@ function showScreen(name) {
   if (name === 'quiz') {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
   } else {
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
     // Reset keyboard adjustment styles on quiz screen
     const quizEl = document.getElementById('screen-quiz');
     if (quizEl) { quizEl.style.height = ''; quizEl.style.transform = ''; }
