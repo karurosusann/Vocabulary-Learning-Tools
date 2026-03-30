@@ -1929,6 +1929,22 @@ body.answer-match-question .answer-text-area {
   flex: 1;
   padding: 8px 0;
 }
+.quiz-card.input-correct {
+  background: #F0FDF4;
+  border: 2px solid var(--green-400);
+}
+.quiz-card.input-wrong {
+  background: #EFF6FF;
+  border: 2px solid var(--blue-400);
+}
+body.dark-mode .quiz-card.input-correct {
+  background: #1a2818;
+  border-color: var(--green-400);
+}
+body.dark-mode .quiz-card.input-wrong {
+  background: #1a1e35;
+  border-color: var(--blue-400);
+}
 .input-answer-field {
   width: 85%;
   padding: 12px 14px;
@@ -2881,12 +2897,12 @@ body.dark-mode .sort-btn.active {
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
+  justify-content: center;
 }
 #screen-advanced-settings .unified-setup {
-  flex: 1;
+  flex: none;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 .advanced-settings-toggle {
   display: flex;
@@ -4749,7 +4765,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.1.0';
+const APP_VERSION = 'v1.1.4';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -5969,11 +5985,10 @@ document.addEventListener('keydown', (e) => {
       const quizScreen = document.getElementById('screen-quiz');
       if (quizScreen && quizScreen.classList.contains('active')) {
         const card = document.getElementById('quizCard');
-        if (card && card.classList.contains('revealed') && currentQuiz) {
+        if (card && card.classList.contains('revealed') && currentQuiz && inputLastCorrect !== null) {
           e.preventDefault();
-          // Find the result button and click it
-          const nextBtn = document.querySelector('#quizBody .know-btn');
-          if (nextBtn) nextBtn.click();
+          inputLastCorrect = null;
+          nextQuestion();
         }
       }
     }
@@ -7373,6 +7388,7 @@ let quizTimerStartTime = 0;
 let quizTimerPausedRemaining = null; // remaining seconds when paused by visibility change
 let quizShowImages = true;
 let quizInputMode = false;
+let inputLastCorrect = null; // stores last input answer result for Enter-to-next
 let quizSavedCount = 10;
 let quizPoolLastKey = (() => { try { return JSON.parse(localStorage.getItem('csvocab_pool_lastkey')) || {}; } catch(e) { return {}; } })();
 
@@ -7673,6 +7689,7 @@ function onTimerExpired() {
         `;
       }
       card.classList.add('revealed');
+      card.classList.add('input-wrong');
       sfxWrong();
       const answerArea = card.querySelector('.answer-text-area');
       if (answerArea) {
@@ -7854,7 +7871,8 @@ async function showQuizQuestion() {
 
   // Reset card state — keep invisible until all content is ready
   const card = document.getElementById('quizCard');
-  card.classList.remove('revealed', 'swiping', 'swipe-fly');
+  card.classList.remove('revealed', 'swiping', 'swipe-fly', 'input-correct', 'input-wrong');
+  inputLastCorrect = null;
   card.style.transition = 'none';
   card.style.transform = '';
   card.style.opacity = '0'; // Stay invisible while updating content
@@ -8417,6 +8435,7 @@ function submitInputAnswer() {
 
   // Show result
   card.classList.add('revealed');
+  card.classList.add(isCorrect ? 'input-correct' : 'input-wrong');
   sfxReveal();
 
   // Replace input field with comparison display
@@ -8441,19 +8460,15 @@ function submitInputAnswer() {
     if (!answerArea.querySelector('img')) answerArea.style.display = 'none';
   }
 
-  // Show next button + hidden input to keep keyboard alive on iOS
+  // Process answer immediately (update level)
+  inputLastCorrect = isCorrect;
+  processQuizAnswer(word, isCorrect);
+
+  // Hidden input to keep keyboard alive on iOS
   const body = document.getElementById('quizBody');
   body.innerHTML = `
-    <div class="know-buttons-wrap">
-      <div class="know-buttons">
-        <button class="know-btn ${isCorrect ? 'know' : 'dont-know'}" onclick="processInputResult(${isCorrect})" style="flex:1;">
-          ${isCorrect ? '正解　次へ' : '不正解　次へ'}
-        </button>
-      </div>
-    </div>
     <input type="text" id="inputKeepKeyboard" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;" autocomplete="off" autocorrect="off">
   `;
-  // Focus hidden input to keep iOS keyboard open
   const keepKb = document.getElementById('inputKeepKeyboard');
   if (keepKb) keepKb.focus();
 
@@ -8463,13 +8478,6 @@ function submitInputAnswer() {
   }
 
   stopQuizTimer();
-}
-
-function processInputResult(isCorrect) {
-  if (!currentQuiz) return;
-  const word = currentQuiz.words[currentQuiz.index];
-  processQuizAnswer(word, isCorrect);
-  nextQuestion();
 }
 
 function answerKnowledge(known) {
