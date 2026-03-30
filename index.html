@@ -4515,6 +4515,10 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="menu-label">使い方ガイド</span>
       </button>
+      <button class="settings-menu-item" onclick="closeSettings();forceUpdate();">
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+        <span class="menu-label">アプリを更新</span>
+      </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
@@ -4766,7 +4770,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.2.1';
+const APP_VERSION = 'v1.2.2';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -10179,6 +10183,33 @@ loadState();
 if (localStorage.getItem(GDRIVE_CLIENT_ID_KEY)) {
   const b = document.getElementById('gdriveBadge');
   if (b) b.textContent = '接続済み';
+}
+
+// ============ FORCE UPDATE ============
+async function forceUpdate() {
+  showToast('更新を確認中...');
+  try {
+    // 1. Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const reg of registrations) {
+        await reg.unregister();
+      }
+    }
+    // 2. Delete all caches
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (const key of keys) {
+        await caches.delete(key);
+      }
+    }
+    // 3. Reload from server
+    showToast('更新します...');
+    setTimeout(() => location.reload(true), 500);
+  } catch (e) {
+    console.error('Update failed:', e);
+    showToast('更新に失敗しました。手動でキャッシュを削除してください。');
+  }
 }
 
 // ============ PWA SERVICE WORKER ============
