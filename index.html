@@ -4351,7 +4351,6 @@ body.dark-mode .gdrive-setup-hint code {
   <!-- Screen: Word List -->
   <div id="screen-wordlist" class="screen">
     <div class="word-list-header">
-      <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
       <h2>問題一覧</h2>
     </div>
     <div class="search-bar">
@@ -4379,13 +4378,12 @@ body.dark-mode .gdrive-setup-hint code {
   <div id="screen-word-editor" class="screen">
     <div class="editor-header" id="editorHeader">
       <div class="editor-header-top">
-        <button class="quiz-back" id="editorBackBtn" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
-        <div style="display:flex;gap:6px;">
+        <h2 class="editor-title" style="margin:0;">問題を編集</h2>
+        <div style="display:flex;gap:6px;margin-left:auto;">
           <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
           <button class="editor-select-btn" id="editorSelectBtn" onclick="toggleEditorSelectMode()">選択</button>
         </div>
       </div>
-      <h2 class="editor-title">問題を編集</h2>
       <div class="search-bar" style="margin-top:10px;">
         <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <input type="text" id="editorSearchInput" placeholder="問題を検索..." oninput="onEditorSearch()" autocomplete="off">
@@ -4774,7 +4772,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.2.8';
+const APP_VERSION = 'v1.3.1';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -9094,7 +9092,6 @@ function renderWordList(level) {
   items.innerHTML = indexed.map(({w, idx}) => `
     <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
       <span class="word-num">${idx + 1}</span>
-      <div class="level-dot ${w.level}"></div>
       <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtmlBr(w.english)}</div>
       <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtmlBr(w.japanese)}</div></div>
     </div>
