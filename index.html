@@ -4217,6 +4217,14 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="level-select-grid" id="levelSelectGrid"></div>
 
       <div class="setting-row" style="margin-top:12px;">
+        <span class="setting-label">習熟度固定</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="lockLevelSwitch" onchange="selectLockLevel(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
         <span class="setting-label">出題数</span>
         <input type="range" id="quizCountSlider" class="quiz-count-slider" min="0" max="22" value="1" oninput="updateQuizCountLabel(this.value)">
         <span class="quiz-count-value" id="quizCountValue">10問</span>
@@ -4772,7 +4780,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.3.3';
+const APP_VERSION = 'v1.4.1';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6330,6 +6338,7 @@ function saveDeckSettings(deckId) {
   try {
     const settings = {
       drillMode: quizDrillMode,
+      lockLevel: quizLockLevel,
       reverse: reverseMode,
       tts: ttsMode,
       order: quizOrder,
@@ -7347,6 +7356,7 @@ function showLevelSelect() {
   const saved = loadDeckSettings(activeDeckId);
   if (saved) {
     quizDrillMode = saved.drillMode !== undefined ? saved.drillMode : true;
+    quizLockLevel = saved.lockLevel || false;
     reverseMode = saved.reverse || false;
     ttsMode = saved.tts || 'question';
     if (ttsMode === 'both') ttsMode = 'question'; // legacy fallback
@@ -7358,6 +7368,7 @@ function showLevelSelect() {
     quizSavedCount = saved.quizCount || 10;
   } else {
     quizDrillMode = true;
+    quizLockLevel = false;
     reverseMode = false;
     ttsMode = 'question';
     quizOrder = 'asc';
@@ -7384,6 +7395,10 @@ function showLevelSelect() {
 
   updateStartBtn();
 
+  // Restore lock level switch UI
+  const lockSwitch = document.getElementById('lockLevelSwitch');
+  if (lockSwitch) lockSwitch.checked = quizLockLevel;
+
   // Scroll selected card into view (e.g. うろ覚え/覚えた may be off-screen)
   setTimeout(() => {
     const sel = document.querySelector('.level-select-card.selected');
@@ -7404,6 +7419,7 @@ function showLockedMessage() {
 
 // ============ QUIZ SETUP ============
 let quizDrillMode = true;
+let quizLockLevel = false; // 習熟度固定: true = levels don't change
 let reviewMode = false;
 let lastMainQuizCount = 10; // remembers the count from non-review quizzes
 let reverseMode = false;
@@ -7432,7 +7448,7 @@ function startNextQuiz() {
 
 // Shared quiz launcher used by startQuiz and startNextQuiz
 function _launchQuiz(count) {
-  reviewMode = (selectedRange === 'bookmarked');
+  reviewMode = quizLockLevel;
   let pool = getQuizPool();
   if (pool.length === 0) {
     showToast('出題できる問題がありません');
@@ -7636,6 +7652,11 @@ function selectInputMode(mode, el) {
   el.parentElement.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('inputModeDesc').style.display = quizInputMode ? 'block' : 'none';
+  saveDeckSettings(activeDeckId);
+}
+
+function selectLockLevel(checked) {
+  quizLockLevel = checked;
   saveDeckSettings(activeDeckId);
 }
 
@@ -9091,7 +9112,6 @@ function renderWordList(level) {
 
   items.innerHTML = indexed.map(({w, idx}) => `
     <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
-      <span class="word-num">${idx + 1}</span>
       <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtmlBr(w.english)}</div>
       <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtmlBr(w.japanese)}</div></div>
     </div>
@@ -9197,8 +9217,11 @@ function updateBulkToolbar() {
     const total = getTotalSelectedCount();
     document.getElementById('bulkCount').textContent = total + '件選択';
     document.getElementById('bottomNav')?.classList.remove('show');
+    document.body.classList.remove('has-bottom-nav');
   } else {
     toolbar.classList.remove('show');
+    document.getElementById('bottomNav')?.classList.add('show');
+    document.body.classList.add('has-bottom-nav');
   }
 }
 
