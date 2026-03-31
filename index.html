@@ -4832,7 +4832,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.5.9';
+const APP_VERSION = 'v1.6.0';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -5131,9 +5131,20 @@ function renderHeatmap() {
   container.innerHTML = html;
 }
 
+let calDayPanelKey = null; // track which day is shown
+
 function showCalDayPopup(dateKey, event) {
   event.stopPropagation();
-  closeCalDayPopup();
+  const panel = document.getElementById('monthSummaryPanel');
+  if (!panel) return;
+
+  // Toggle: if same day is already open, close it
+  if (panel.classList.contains('open') && calDayPanelKey === dateKey) {
+    panel.classList.remove('open');
+    calDayPanelKey = null;
+    return;
+  }
+
   const log = getStudyLog();
   const data = log[dateKey];
 
@@ -5155,41 +5166,15 @@ function showCalDayPopup(dateKey, event) {
     content = '<div class="cdp-none">学習記録なし</div>';
   }
 
-  // Create backdrop
-  const backdrop = document.createElement('div');
-  backdrop.className = 'cal-popup-backdrop';
-  backdrop.id = 'calPopupBackdrop';
-  backdrop.onclick = closeCalDayPopup;
-  document.body.appendChild(backdrop);
-
-  // Create popup
-  const popup = document.createElement('div');
-  popup.className = 'cal-day-popup';
-  popup.id = 'calDayPopup';
-  popup.innerHTML = `<div class="cdp-date">${displayDate}</div>${content}`;
-  document.body.appendChild(popup);
-
-  // Position near the tapped cell
-  const rect = event.currentTarget.getBoundingClientRect();
-  const pw = popup.offsetWidth;
-  const ph = popup.offsetHeight;
-  let left = rect.left + rect.width / 2 - pw / 2;
-  let top = rect.bottom + 8;
-
-  // Keep within viewport
-  if (left < 8) left = 8;
-  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 8;
-
-  popup.style.left = left + 'px';
-  popup.style.top = top + 'px';
+  panel.innerHTML = `<div class="cdp-date">${displayDate}</div>${content}`;
+  panel.classList.add('open');
+  calDayPanelKey = dateKey;
 }
 
 function closeCalDayPopup() {
-  const popup = document.getElementById('calDayPopup');
-  const backdrop = document.getElementById('calPopupBackdrop');
-  if (popup) popup.remove();
-  if (backdrop) backdrop.remove();
+  const panel = document.getElementById('monthSummaryPanel');
+  if (panel) panel.classList.remove('open');
+  calDayPanelKey = null;
 }
 
 function changeHeatmapMonth(delta) {
@@ -5225,13 +5210,14 @@ function stopCalHold() {
 }
 
 function showMonthSummary(year, month) {
-  closeCalDayPopup();
   const panel = document.getElementById('monthSummaryPanel');
   if (!panel) return;
+  const monthKey = 'month-' + year + '-' + month;
 
-  // Toggle: if already open, close it
-  if (panel.classList.contains('open')) {
+  // Toggle: if same month summary is already open, close it
+  if (panel.classList.contains('open') && calDayPanelKey === monthKey) {
     panel.classList.remove('open');
+    calDayPanelKey = null;
     return;
   }
 
@@ -5270,6 +5256,7 @@ function showMonthSummary(year, month) {
     `;
   }
   panel.classList.add('open');
+  calDayPanelKey = monthKey;
 }
 
 // ============ GOOGLE DRIVE SYNC ============
