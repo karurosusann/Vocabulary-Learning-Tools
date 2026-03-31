@@ -4359,6 +4359,7 @@ body.dark-mode .gdrive-setup-hint code {
   <!-- Screen: Word List -->
   <div id="screen-wordlist" class="screen">
     <div class="word-list-header">
+      <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
       <h2>問題一覧</h2>
     </div>
     <div class="search-bar">
@@ -4386,18 +4387,20 @@ body.dark-mode .gdrive-setup-hint code {
   <div id="screen-word-editor" class="screen">
     <div class="editor-header" id="editorHeader">
       <div class="editor-header-top">
-        <h2 class="editor-title" style="margin:0;">問題を編集</h2>
-        <div style="display:flex;gap:6px;margin-left:auto;">
+        <button class="quiz-back" id="editorBackBtn" onclick="exitEditorSelectMode();showScreen('dashboard'); renderDeckList(); updateDashboard();">←</button>
+        <div style="display:flex;gap:6px;">
           <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
           <button class="editor-select-btn" id="editorSelectBtn" onclick="toggleEditorSelectMode()">選択</button>
         </div>
       </div>
+      <h2 class="editor-title">問題を編集</h2>
       <div class="search-bar" style="margin-top:10px;">
         <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <input type="text" id="editorSearchInput" placeholder="問題を検索..." oninput="onEditorSearch()" autocomplete="off">
         <button class="search-clear" id="editorSearchClear" onclick="clearEditorSearch()">✕</button>
       </div>
       <div class="deck-tabs" id="editorDeckTabs"></div>
+      <div class="filter-tabs" id="editorFilterTabs"></div>
     </div>
     <div class="editor-word-list" id="editorWordList"></div>
   </div>
@@ -4780,7 +4783,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.4.1';
+const APP_VERSION = 'v1.4.5';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6991,6 +6994,7 @@ function editDeckContent(deckId) {
   editorDeckId = deckId;
   showScreen('word-editor');
   editorSearchQuery = '';
+  editorFilter = 'all';
   const si = document.getElementById('editorSearchInput');
   if (si) si.value = '';
   document.getElementById('editorSearchClear')?.classList.remove('show');
@@ -9349,6 +9353,7 @@ function showWordEditor() {
   editorDeckId = activeDeckId;
   showScreen('word-editor');
   editorSearchQuery = '';
+  editorFilter = 'all';
   const si = document.getElementById('editorSearchInput');
   if (si) si.value = '';
   document.getElementById('editorSearchClear')?.classList.remove('show');
@@ -9376,6 +9381,7 @@ function switchEditorDeck(deckId, el) {
     editorScrollMap[editorDeckId] = list.scrollTop;
   }
   editorDeckId = deckId;
+  editorFilter = 'all';
   updateBulkToolbar();
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -9407,9 +9413,44 @@ function clearEditorSearch() {
   renderEditorList();
 }
 
+let editorFilter = 'all';
+
+function renderEditorFilterTabs() {
+  const words = getEditorWords();
+  const bookmarkedCount = words.filter(w => w.bookmarked).length;
+  const counts = { all: words.length, unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  words.forEach(w => {
+    if (counts[w.level] !== undefined) counts[w.level]++;
+  });
+
+  const tabs = [
+    { key: 'all', label: `すべて (${counts.all})` },
+    { key: 'bookmarked', label: `保存済み (${bookmarkedCount})` },
+    { key: 'unlearned', label: `未学習 (${counts.unlearned})` },
+    { key: 'weak', label: `苦手 (${counts.weak})` },
+    { key: 'fuzzy', label: `うろ覚え (${counts.fuzzy})` },
+    { key: 'mastered', label: `覚えた (${counts.mastered})` },
+  ];
+
+  document.getElementById('editorFilterTabs').innerHTML = tabs.map(t => `
+    <button class="filter-tab ${t.key} ${t.key === editorFilter ? 'active' : ''}" onclick="filterEditorWords('${t.key}', this)">${t.label}</button>
+  `).join('');
+}
+
+function filterEditorWords(level, el) {
+  el.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  editorFilter = level;
+  renderEditorList();
+}
+
 function renderEditorList() {
   const words = getEditorWords();
   const el = document.getElementById('editorWordList');
+
+  // Update filter tab counts
+  renderEditorFilterTabs();
+
   if (words.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">単語がありません</div>';
     return;
@@ -9417,6 +9458,14 @@ function renderEditorList() {
 
   // Build index-mapped filtered list
   let items = words.map((w, i) => ({ w, i }));
+
+  // Apply level filter
+  if (editorFilter === 'bookmarked') {
+    items = items.filter(({ w }) => w.bookmarked);
+  } else if (editorFilter !== 'all') {
+    items = items.filter(({ w }) => w.level === editorFilter);
+  }
+
   if (editorSearchQuery) {
     items = items.filter(({ w }) =>
       w.english.toLowerCase().includes(editorSearchQuery) ||
@@ -9432,7 +9481,6 @@ function renderEditorList() {
   el.innerHTML = items.map(({ w, i }) => `
     <div class="editor-word-item" data-index="${i}" onclick="${editorSelectMode ? 'toggleEditorCheckbox('+i+', event)' : 'showEditWordModal('+i+')'}">
       <div class="ew-inner">
-        <span class="word-num">${i + 1}</span>
         <div class="ew-checkbox ${getEditorSelected().has(i) ? 'checked' : ''}"></div>
         <div class="ew-content">
           <div class="ew-eng">${escapeHtmlBr(w.english)}</div>
