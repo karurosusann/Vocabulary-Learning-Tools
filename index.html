@@ -820,6 +820,53 @@ body.dark-mode .cal-day-popup {
   inset: 0;
   z-index: 2999;
 }
+.month-summary-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+  background: white;
+  border-radius: 12px;
+  padding: 0 16px;
+  margin-top: 0;
+  box-shadow: none;
+}
+.month-summary-panel.open {
+  max-height: 300px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  box-shadow: var(--shadow-sm);
+}
+body.dark-mode .month-summary-panel {
+  background: #1e1a28;
+}
+.month-summary-panel .cdp-date {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+.month-summary-panel .cdp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+.month-summary-panel .cdp-label {
+  font-size: 12px;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+.month-summary-panel .cdp-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+.month-summary-panel .cdp-none {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-align: center;
+  padding: 4px 0;
+}
 
 .app {
   max-width: 480px;
@@ -4173,6 +4220,7 @@ body.dark-mode .gdrive-setup-hint code {
           <h4><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:2px;"><rect x="1" y="3" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="1" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="1" x2="4.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="11.5" y1="1" x2="11.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> 学習カレンダー</h4>
         </div>
         <div id="heatmapContainer"></div>
+        <div id="monthSummaryPanel" class="month-summary-panel"></div>
       </div>
     </div>
 
@@ -4784,7 +4832,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.5.8';
+const APP_VERSION = 'v1.5.9';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -5146,6 +5194,8 @@ function closeCalDayPopup() {
 
 function changeHeatmapMonth(delta) {
   closeCalDayPopup();
+  const panel = document.getElementById('monthSummaryPanel');
+  if (panel) panel.classList.remove('open');
   heatmapMonth += delta;
   if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
   if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
@@ -5176,6 +5226,15 @@ function stopCalHold() {
 
 function showMonthSummary(year, month) {
   closeCalDayPopup();
+  const panel = document.getElementById('monthSummaryPanel');
+  if (!panel) return;
+
+  // Toggle: if already open, close it
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    return;
+  }
+
   const log = getStudyLog();
   const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   const prefix = year + '-' + String(month + 1).padStart(2, '0') + '-';
@@ -5195,19 +5254,8 @@ function showMonthSummary(year, month) {
   const pct = totalStudied > 0 ? Math.round((totalCorrect / totalStudied) * 100) : 0;
   const displayDate = year + '年' + monthNames[month];
 
-  // Reuse calendar popup style
-  const backdrop = document.createElement('div');
-  backdrop.className = 'cal-popup-backdrop';
-  backdrop.id = 'calPopupBackdrop';
-  backdrop.onclick = closeCalDayPopup;
-  document.body.appendChild(backdrop);
-
-  const popup = document.createElement('div');
-  popup.className = 'cal-day-popup';
-  popup.id = 'calDayPopup';
-
   if (totalStudied > 0) {
-    popup.innerHTML = `
+    panel.innerHTML = `
       <div class="cdp-date">${displayDate} のまとめ</div>
       <div class="cdp-row"><span class="cdp-label">学習日数</span><span class="cdp-value">${activeDays}日</span></div>
       <div class="cdp-row"><span class="cdp-label">問題数</span><span class="cdp-value">${totalStudied}問</span></div>
@@ -5216,25 +5264,12 @@ function showMonthSummary(year, month) {
       <div class="cdp-row"><span class="cdp-label">セッション</span><span class="cdp-value">${totalSessions}回</span></div>
     `;
   } else {
-    popup.innerHTML = `
+    panel.innerHTML = `
       <div class="cdp-date">${displayDate} のまとめ</div>
       <div class="cdp-none">学習記録なし</div>
     `;
   }
-  document.body.appendChild(popup);
-
-  // Position below the month label
-  const nav = document.querySelector('.cal-month-nav span');
-  const rect = nav.getBoundingClientRect();
-  const pw = popup.offsetWidth;
-  const ph = popup.offsetHeight;
-  let left = rect.left + rect.width / 2 - pw / 2;
-  let top = rect.bottom + 8;
-  if (left < 8) left = 8;
-  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 8;
-  popup.style.left = left + 'px';
-  popup.style.top = top + 'px';
+  panel.classList.add('open');
 }
 
 // ============ GOOGLE DRIVE SYNC ============
