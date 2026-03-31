@@ -2956,7 +2956,7 @@ body.dark-mode .sort-btn.active {
   font-weight: 700;
   color: var(--gray-500);
   white-space: nowrap;
-  min-width: 56px;
+  min-width: 80px;
   flex-shrink: 0;
 }
 .setting-row .mode-toggle {
@@ -4217,27 +4217,9 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="level-select-grid" id="levelSelectGrid"></div>
 
       <div class="setting-row" style="margin-top:12px;">
-        <span class="setting-label">習熟度固定</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="lockLevelSwitch" onchange="selectLockLevel(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-
-      <div class="setting-row">
         <span class="setting-label">出題数</span>
         <input type="range" id="quizCountSlider" class="quiz-count-slider" min="0" max="22" value="1" oninput="updateQuizCountLabel(this.value)">
         <span class="quiz-count-value" id="quizCountValue">10問</span>
-      </div>
-
-      <div class="setting-row">
-        <span class="setting-label">出題順</span>
-        <div class="mode-toggle" id="orderToggle">
-          <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
-          <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
-          <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
-          <button class="mode-toggle-btn" onclick="selectOrder('alpha', this)">ABC順</button>
-        </div>
       </div>
 
       <div style="text-align:center;margin-top:12px;">
@@ -4266,6 +4248,16 @@ body.dark-mode .gdrive-setup-hint code {
           <div class="drill-desc" id="drillDesc">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
 
           <div class="setting-row">
+            <span class="setting-label">出題順</span>
+            <div class="mode-toggle" id="orderToggle">
+              <button class="mode-toggle-btn active" onclick="selectOrder('asc', this)">リスト順</button>
+              <button class="mode-toggle-btn" onclick="selectOrder('desc', this)">逆順</button>
+              <button class="mode-toggle-btn" onclick="selectOrder('random', this)">ランダム</button>
+              <button class="mode-toggle-btn" onclick="selectOrder('alpha', this)">ABC順</button>
+            </div>
+          </div>
+
+          <div class="setting-row">
             <span class="setting-label">出題形式</span>
             <div class="mode-toggle" id="reverseToggle">
               <button class="mode-toggle-btn active" onclick="selectReverse(false, this)">問→答</button>
@@ -4290,6 +4282,15 @@ body.dark-mode .gdrive-setup-hint code {
               <button class="mode-toggle-btn" onclick="selectTTS('none', this)">なし</button>
             </div>
           </div>
+
+          <div class="setting-row">
+            <span class="setting-label">習熟度固定</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="lockLevelSwitch" onchange="selectLockLevel(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="drill-desc" id="lockLevelDesc" style="display:none;">正解・不正解に関わらず習熟度が変わりません</div>
 
           <div class="setting-row">
             <span class="setting-label">制限時間</span>
@@ -4783,7 +4784,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.4.5';
+const APP_VERSION = 'v1.4.9';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -7399,10 +7400,6 @@ function showLevelSelect() {
 
   updateStartBtn();
 
-  // Restore lock level switch UI
-  const lockSwitch = document.getElementById('lockLevelSwitch');
-  if (lockSwitch) lockSwitch.checked = quizLockLevel;
-
   // Scroll selected card into view (e.g. うろ覚え/覚えた may be off-screen)
   setTimeout(() => {
     const sel = document.querySelector('.level-select-card.selected');
@@ -7580,6 +7577,10 @@ function applyAdvancedSettingsUI() {
     b.classList.toggle('active', quizDrillMode ? i === 0 : i === 1);
   });
   document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
+  // Lock level switch
+  const lockSwitch = document.getElementById('lockLevelSwitch');
+  if (lockSwitch) lockSwitch.checked = quizLockLevel;
+  document.getElementById('lockLevelDesc').style.display = quizLockLevel ? 'block' : 'none';
   document.querySelectorAll('#reverseToggle .mode-toggle-btn').forEach((b, i) => {
     b.classList.toggle('active', reverseMode ? i === 1 : i === 0);
   });
@@ -7661,6 +7662,7 @@ function selectInputMode(mode, el) {
 
 function selectLockLevel(checked) {
   quizLockLevel = checked;
+  document.getElementById('lockLevelDesc').style.display = quizLockLevel ? 'block' : 'none';
   saveDeckSettings(activeDeckId);
 }
 
