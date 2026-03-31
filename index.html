@@ -4474,6 +4474,11 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="settings-panel-close" onclick="closeSettings()">✕</button>
     </div>
     <div class="settings-menu-list">
+      <button class="settings-menu-item" onclick="closeSettings();forceUpdate();">
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+        <span class="menu-label">アップデート</span>
+      </button>
+      <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="toggleDarkMode()">
         <span class="menu-icon" id="settingsDarkIcon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         <span class="menu-label" id="settingsDarkLabel">ダークモード</span>
@@ -4515,10 +4520,6 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="settings-menu-item" onclick="closeSettings();showHelp();">
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="menu-label">使い方ガイド</span>
-      </button>
-      <button class="settings-menu-item" onclick="closeSettings();forceUpdate();">
-        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
-        <span class="menu-label">アップデート</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
@@ -4771,7 +4772,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.2.6';
+const APP_VERSION = 'v1.2.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
