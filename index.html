@@ -4784,7 +4784,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.4.9';
+const APP_VERSION = 'v1.5.8';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6753,14 +6753,16 @@ water,水`
 // ============ DECK LIST ============
 function buildDonutSVG(counts, total) {
   const t = total || 1;
-  const greenPct = ((counts.mastered + counts.fuzzy) / t) * 100;
-  const bluePct  = (counts.weak / t) * 100;
-  const greenEnd = greenPct;
-  const blueEnd  = greenPct + bluePct;
+  const masteredPct = (counts.mastered / t) * 100;
+  const fuzzyPct = (counts.fuzzy / t) * 100;
+  const weakPct = (counts.weak / t) * 100;
+  const p1 = masteredPct;
+  const p2 = p1 + fuzzyPct;
+  const p3 = p2 + weakPct;
 
-  const pct = Math.round(((counts.mastered + counts.fuzzy + counts.weak) / t) * 100);
-  return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #4CAF50 0% ${greenEnd}%, #4285F4 ${greenEnd}% ${blueEnd}%, #E0E0E0 ${blueEnd}% 100%);"></div>
-    <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">学習</span></div>`;
+  const pct = Math.round((counts.mastered / t) * 100);
+  return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #4CAF50 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #4285F4 ${p2}% ${p3}%, #E0E0E0 ${p3}% 100%);"></div>
+    <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">習得</span></div>`;
 }
 
 function renderDeckList() {
