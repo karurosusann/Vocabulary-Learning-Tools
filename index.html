@@ -3901,7 +3901,7 @@ body.dark-mode .img-attach-box {
   z-index: 3;
   opacity: 0.6;
   transition: opacity 0.15s;
-  margin-left: auto;
+  margin-left: 4px;
   flex-shrink: 0;
 }
 .quiz-copy-btn svg {
@@ -4330,10 +4330,10 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
       <div class="quiz-card-topbar">
-        <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
-        <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
+        <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()" style="margin-left:0;margin-right:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         <div class="level-badge" id="quizBadge">未学習</div>
-        <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()" style="margin-left:auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
+        <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
       </div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
@@ -4772,7 +4772,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.3.1';
+const APP_VERSION = 'v1.3.3';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -7823,10 +7823,10 @@ async function preRenderNextCard() {
 
   nextEl.innerHTML = `
     <div class="quiz-card-topbar">
-      <button class="bookmark-btn card-bookmark ${pinActive}" style="pointer-events:none;">${bookmarkSvg}</button>
-      <button class="bookmark-btn card-camera" style="pointer-events:none;">${editSvg}</button>
+      <button class="quiz-copy-btn" style="pointer-events:none;margin-left:0;margin-right:2px;">${copySvg}</button>
       <div class="level-badge ${levelInfo.badge}">${levelInfo.label}</div>
-      <button class="quiz-copy-btn" style="pointer-events:none;">${copySvg}</button>
+      <button class="bookmark-btn card-camera" style="pointer-events:none;margin-left:auto;">${editSvg}</button>
+      <button class="bookmark-btn card-bookmark ${pinActive}" style="pointer-events:none;">${bookmarkSvg}</button>
     </div>
     <div class="english-word">${wordHtml}</div>
     <div class="answer-reveal">
