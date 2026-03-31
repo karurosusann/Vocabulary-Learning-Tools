@@ -2076,6 +2076,8 @@ body.dark-mode .input-answer-field::placeholder {
   justify-content: center;
   opacity: 0.6;
   flex-shrink: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .bookmark-btn.active {
   background: var(--orange-500);
@@ -4772,7 +4774,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.2.7';
+const APP_VERSION = 'v1.2.8';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
