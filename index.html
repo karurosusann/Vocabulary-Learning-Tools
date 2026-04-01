@@ -2908,8 +2908,13 @@ body.dark-mode .sort-btn.active {
 #screen-level-select.active {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  background: var(--bg, #FFEDD5);
+  padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(16px + env(safe-area-inset-left));
+  max-width: 480px;
+  margin: 0 auto;
 }
 #screen-level-select .unified-setup {
   margin-top: auto;
@@ -2948,8 +2953,13 @@ body.dark-mode .sort-btn.active {
 #screen-advanced-settings.active {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  background: var(--bg, #FFEDD5);
+  padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(16px + env(safe-area-inset-left));
+  max-width: 480px;
+  margin: 0 auto;
 }
 #screen-advanced-settings .unified-setup {
   flex: none;
@@ -4837,7 +4847,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.6.3';
+const APP_VERSION = 'v1.6.4';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
