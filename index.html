@@ -4847,10 +4847,10 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.6.9';
+const APP_VERSION = 'v1.7.2';
 
 // ============ STATE ============
-// decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
+// decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
 let decks = [];
 let activeDeckId = null;
 let currentQuiz = null;
@@ -8463,6 +8463,7 @@ function processQuizAnswer(word, isCorrect) {
   const q = currentQuiz;
   if (isCorrect) {
     q.correct++;
+    word.correctCount = (word.correctCount || 0) + 1;
     if (!reviewMode) {
       if (quizDrillMode && q.drillWrongSet.has(wordKey(word))) {
         // Drill mode: word was wrong before in this session → stay weak, just count as mastered for progress
@@ -8484,6 +8485,7 @@ function processQuizAnswer(word, isCorrect) {
     if (quizDrillMode) q.masteredCount++;
   } else {
     q.wrong++;
+    word.wrongCount = (word.wrongCount || 0) + 1;
     if (!reviewMode) {
       word.level = 'weak';
       word.correctStreak = 0;
@@ -8793,8 +8795,8 @@ function showResult() {
     `;
   }
 
-  // Correct words
-  const correct = q.results.filter(r => r.correct);
+  // Correct words (exclude words that were ever wrong in this session)
+  const correct = q.results.filter(r => r.correct && !seenMissed.has(wordKey(r.word)));
   const seenCorrect = new Set();
   const uniqueCorrect = correct.filter(r => {
     if (seenCorrect.has(wordKey(r.word))) return false;
@@ -9911,11 +9913,14 @@ function exportDeckAsCSV(deckId) {
   const deck = decks.find(d => d.id === deckId);
   if (!deck) return;
   const bom = '\uFEFF';
-  const header = '問題,解答,レベル,正答連続数';
-  const rows = deck.words.map(w =>
-    [w.english, w.japanese, w.level || 'unlearned', w.correctStreak || 0]
-      .map(escapeCSVField).join(',')
-  );
+  const header = '問題,解答,正解数,不正解数,不正解率';
+  const rows = deck.words.map(w => {
+    const c = w.correctCount || 0;
+    const wr = w.wrongCount || 0;
+    const total = c + wr;
+    const rate = total > 0 ? Math.round((wr / total) * 100) + '%' : '-';
+    return [w.english, w.japanese, c, wr, rate].map(escapeCSVField).join(',');
+  });
   const csv = bom + header + '\n' + rows.join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -9937,11 +9942,14 @@ function exportAllDecksAsCSV() {
   const date = new Date().toISOString().slice(0, 10);
   decks.forEach((deck, i) => {
     setTimeout(() => {
-      const header = '問題,解答,レベル,正答連続数';
-      const rows = deck.words.map(w =>
-        [w.english, w.japanese, w.level || 'unlearned', w.correctStreak || 0]
-          .map(escapeCSVField).join(',')
-      );
+      const header = '問題,解答,正解数,不正解数,不正解率';
+      const rows = deck.words.map(w => {
+        const c = w.correctCount || 0;
+        const wr = w.wrongCount || 0;
+        const total = c + wr;
+        const rate = total > 0 ? Math.round((wr / total) * 100) + '%' : '-';
+        return [w.english, w.japanese, c, wr, rate].map(escapeCSVField).join(',');
+      });
       const csv = bom + header + '\n' + rows.join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
