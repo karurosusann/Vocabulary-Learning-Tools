@@ -2908,9 +2908,12 @@ body.dark-mode .sort-btn.active {
 #screen-level-select.active {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
+}
+#screen-level-select .unified-setup {
+  margin-top: auto;
+  margin-bottom: auto;
 }
 .unified-setup {
   background: white;
@@ -2947,12 +2950,13 @@ body.dark-mode .sort-btn.active {
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  justify-content: center;
 }
 #screen-advanced-settings .unified-setup {
   flex: none;
   display: flex;
   flex-direction: column;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 .advanced-settings-toggle {
   display: flex;
@@ -4833,7 +4837,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.6.1';
+const APP_VERSION = 'v1.6.3';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak }] }
@@ -6806,8 +6810,6 @@ function renderDeckList() {
     }
     if (goldFlag || (total > 0 && counts.mastered === total)) {
       crownHtml = '<span class="dc-crown gold">👑</span>';
-    } else if (total > 0 && counts.unlearned === 0) {
-      crownHtml = '<span class="dc-crown silver">👑</span>';
     }
     return `
       <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
