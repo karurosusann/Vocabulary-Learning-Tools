@@ -5076,7 +5076,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.8.6';
+const APP_VERSION = 'v1.8.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -10329,9 +10329,28 @@ function toggleListening() {
   }
 }
 
+let wakeLock = null;
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch(e) {}
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && listeningState.playing && !wakeLock) {
+    requestWakeLock();
+  }
+});
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
 function resumeListening() {
   listeningState.playing = true;
   updatePlayBtnIcon();
+  requestWakeLock();
   playCurrentWord();
 }
 
@@ -10342,6 +10361,7 @@ function pauseListening() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   updatePlayBtnIcon();
   updateListeningDisplay();
+  releaseWakeLock();
 }
 
 function stopListening() {
@@ -10350,6 +10370,7 @@ function stopListening() {
   if (listeningState.timer) { clearTimeout(listeningState.timer); listeningState.timer = null; }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   listeningState.phase = 'idle';
+  releaseWakeLock();
 }
 
 function playCurrentWord() {
