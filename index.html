@@ -827,7 +827,7 @@ body.dark-mode .cal-day-popup {
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 20px;
+  padding: 8px 20px 20px;
 }
 .listening-progress {
   font-size: 14px;
@@ -841,6 +841,33 @@ body.dark-mode .cal-day-popup {
   margin-bottom: 20px;
   accent-color: var(--orange-500);
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gray-200);
+  outline: none;
+}
+.listening-seekbar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  cursor: pointer;
+}
+.listening-seekbar::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  cursor: pointer;
+  border: none;
+}
+.listening-seekbar::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gray-200);
 }
 .listening-speed-value {
   font-size: 13px;
@@ -5127,7 +5154,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.0.2';
+const APP_VERSION = 'v2.0.4';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
