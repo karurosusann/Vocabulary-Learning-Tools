@@ -827,7 +827,7 @@ body.dark-mode .cal-day-popup {
   align-items: center;
   justify-content: flex-start;
   flex: 1;
-  padding: 12px 20px 20px;
+  padding: 24px 20px 20px;
 }
 .listening-progress {
   font-size: 14px;
@@ -4742,12 +4742,11 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="listening-answer" id="listeningAnswer"></div>
     </div>
     <div class="listening-controls">
+      <div style="width:38px;margin-right:16px;"></div>
       <button class="listening-ctrl-btn" onclick="listeningPrev()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
       <button class="listening-ctrl-btn play" id="listeningPlayBtn" onclick="toggleListening()"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" id="listeningPlayIcon"><polygon points="8,5 20,12 8,19"/></svg></button>
       <button class="listening-ctrl-btn" onclick="listeningNext()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM5 6l9 6-9 6z"/></svg></button>
-    </div>
-    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="listening-shuffle-btn" onclick="toggleListeningSettings()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 設定</button>
+      <button class="listening-ctrl-btn" onclick="toggleListeningSettings()" style="margin-left:16px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
     <div class="listening-settings-panel" id="listeningSettingsPanel">
       <div class="listening-speed">
@@ -5154,7 +5153,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.0.5';
+const APP_VERSION = 'v2.0.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
