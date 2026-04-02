@@ -842,6 +842,13 @@ body.dark-mode .cal-day-popup {
   accent-color: var(--orange-500);
   cursor: pointer;
 }
+.listening-speed-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-500);
+  min-width: 36px;
+  text-align: right;
+}
 .listening-card {
   background: white;
   border-radius: var(--radius);
@@ -926,22 +933,23 @@ body.dark-mode .listening-card {
 .listening-speed {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 600;
   color: var(--gray-400);
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 .listening-speed span {
-  min-width: 42px;
+  min-width: 48px;
 }
 .listening-speed-btn {
   background: none;
   border: 2px solid var(--gray-200);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 6px 8px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--gray-500);
   cursor: pointer;
@@ -970,6 +978,18 @@ body.dark-mode .listening-card {
 .listening-shuffle-btn.active {
   border-color: var(--orange-500);
   color: var(--orange-500);
+}
+.listening-settings-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  width: 100%;
+  max-width: 400px;
+  padding: 0 4px;
+}
+.listening-settings-panel.open {
+  max-height: 400px;
+  padding: 8px 4px;
 }
 .month-summary-panel {
   max-height: 0;
@@ -4679,6 +4699,13 @@ body.dark-mode .gdrive-setup-hint code {
   </div>
   <div class="deck-tabs" id="listeningDeckTabs"></div>
   <div class="filter-tabs" id="listeningFilterTabs"></div>
+  <div class="sort-row" id="listeningSortRow">
+    <button class="sort-btn active" onclick="setListeningSort('asc', this)">リスト順</button>
+    <button class="sort-btn" onclick="setListeningSort('desc', this)">逆順</button>
+    <button class="sort-btn" onclick="setListeningSort('weak', this)">苦手順</button>
+    <button class="sort-btn" onclick="setListeningSort('random', this)">ランダム</button>
+    <button class="sort-btn" onclick="setListeningSort('alpha', this)">五十音順</button>
+  </div>
   <div class="listening-player">
     <div class="listening-progress" id="listeningProgress">0 / 0</div>
     <input type="range" class="listening-seekbar" id="listeningSeekbar" min="0" max="0" value="0" oninput="seekListening(this.value)">
@@ -4690,25 +4717,50 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="listening-controls">
       <button class="listening-ctrl-btn" onclick="listeningPrev()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
       <button class="listening-ctrl-btn play" id="listeningPlayBtn" onclick="toggleListening()"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" id="listeningPlayIcon"><polygon points="8,5 20,12 8,19"/></svg></button>
-      <button class="listening-ctrl-btn" onclick="listeningNext()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M16 18h2V6h-2zm-8.5-6l8.5 6V6z" transform="scale(-1,1) translate(-24,0)"/></svg></button>
+      <button class="listening-ctrl-btn" onclick="listeningNext()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM5 6l9 6-9 6z"/></svg></button>
     </div>
-    <div class="listening-speed">
-      <span>問→答</span>
-      <button class="listening-speed-btn q2a active" onclick="setListeningDelay('q2a', 1)">1秒</button>
-      <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 2)">2秒</button>
-      <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 3)">3秒</button>
-      <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 5)">5秒</button>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="listening-shuffle-btn" onclick="toggleListeningSettings()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 設定</button>
     </div>
-    <div class="listening-speed">
-      <span>答→次</span>
-      <button class="listening-speed-btn a2n active" onclick="setListeningDelay('a2n', 1)">1秒</button>
-      <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 2)">2秒</button>
-      <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 3)">3秒</button>
-      <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 5)">5秒</button>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button class="listening-shuffle-btn" onclick="shuffleListening()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> シャッフル</button>
-      <button class="listening-shuffle-btn" id="listeningRepeatBtn" onclick="toggleListeningRepeat()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg> リピート</button>
+    <div class="listening-settings-panel" id="listeningSettingsPanel">
+      <div class="listening-speed">
+        <span>問→答</span>
+        <button class="listening-speed-btn q2a active" onclick="setListeningDelay('q2a', 1)">1秒</button>
+        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 2)">2秒</button>
+        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 3)">3秒</button>
+        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 5)">5秒</button>
+        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 10)">10秒</button>
+        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 15)">15秒</button>
+      </div>
+      <div class="listening-speed">
+        <span>答→次</span>
+        <button class="listening-speed-btn a2n active" onclick="setListeningDelay('a2n', 1)">1秒</button>
+        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 2)">2秒</button>
+        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 3)">3秒</button>
+        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 5)">5秒</button>
+        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 10)">10秒</button>
+        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 15)">15秒</button>
+      </div>
+      <div class="listening-speed">
+        <span>タイマー</span>
+        <button class="listening-speed-btn sleep active" onclick="setSleepTimer(0)">OFF</button>
+        <button class="listening-speed-btn sleep" onclick="setSleepTimer(5)">5分</button>
+        <button class="listening-speed-btn sleep" onclick="setSleepTimer(10)">10分</button>
+        <button class="listening-speed-btn sleep" onclick="setSleepTimer(15)">15分</button>
+        <button class="listening-speed-btn sleep" onclick="setSleepTimer(30)">30分</button>
+        <button class="listening-speed-btn sleep" onclick="setSleepTimer(45)">45分</button>
+        <button class="listening-speed-btn sleep" onclick="setSleepTimer(60)">60分</button>
+      </div>
+      <div class="listening-speed">
+        <span>速度</span>
+        <input type="range" class="listening-seekbar" id="listeningSpeedSlider" min="5" max="20" value="10" step="1" oninput="updateListeningSpeed(this.value)" style="flex:1;">
+        <span class="listening-speed-value" id="listeningSpeedValue">1.0x</span>
+      </div>
+      <div class="listening-speed">
+        <span>出題形式</span>
+        <button class="listening-speed-btn rev active" id="listeningRevBtnQ" onclick="setListeningReverseBtn(false)">問→答</button>
+        <button class="listening-speed-btn rev" id="listeningRevBtnA" onclick="setListeningReverseBtn(true)">答→問</button>
+      </div>
     </div>
   </div>
 </div>
@@ -4717,20 +4769,20 @@ body.dark-mode .gdrive-setup-hint code {
 
 <!-- Bottom Navigation Bar -->
 <div class="bottom-nav" id="bottomNav">
-  <button class="bottom-nav-item" onclick="navTo('list')" id="navList">
-    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg></span>
-    <span class="nav-label">一覧</span>
-  </button>
   <button class="bottom-nav-item" onclick="navTo('home')" id="navHome">
     <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-8 9 8"/><path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9"/></svg></span>
     <span class="nav-label">ホーム</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navTo('list')" id="navList">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg></span>
+    <span class="nav-label">一覧</span>
   </button>
   <button class="bottom-nav-item" onclick="navTo('edit')" id="navEdit">
     <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span>
     <span class="nav-label">編集</span>
   </button>
   <button class="bottom-nav-item" onclick="navTo('listen')" id="navListen">
-    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3z"/><path d="M3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></span>
     <span class="nav-label">リスニング</span>
   </button>
 </div>
@@ -4782,6 +4834,10 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
         <span class="menu-label">アップデート</span>
       </button>
+      <button class="settings-menu-item" onclick="closeSettings();window.open('https://docs.google.com/forms/d/e/1FAIpQLScvQgvGe5yZRJllcdOQU3eLGxsxpQ14melDURRoUKB2GwF7dQ/viewform','_blank');">
+        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+        <span class="menu-label">ご意見・バグ報告</span>
+      </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="toggleDarkMode()">
         <span class="menu-icon" id="settingsDarkIcon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
@@ -4819,11 +4875,6 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
         <span class="menu-label">Google Drive同期</span>
         <span class="menu-badge" id="gdriveBadge">未接続</span>
-      </button>
-      <div class="settings-menu-divider"></div>
-      <button class="settings-menu-item" onclick="closeSettings();showHelp();">
-        <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-        <span class="menu-label">使い方ガイド</span>
       </button>
       <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
@@ -5076,7 +5127,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.8.7';
+const APP_VERSION = 'v2.0.2';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -10175,7 +10226,10 @@ function escapeCSVField(value) {
 // ============ LISTENING MODE ============
 let listeningDeckId = null;
 let listeningFilter = 'all';
-let listeningRepeat = false;
+let listeningRepeat = true;
+let listeningReverse = false;
+let listeningSpeed = 1;
+let listeningSort = 'asc';
 let listeningState = {
   words: [],
   index: 0,
@@ -10190,11 +10244,16 @@ function startListeningMode() {
   stopListening();
   listeningDeckId = activeDeckId;
   listeningFilter = 'all';
+  listeningSort = 'asc';
   showScreen('listening');
   renderListeningDeckTabs();
   renderListeningFilterTabs();
+  document.querySelectorAll('#listeningSortRow .sort-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   loadListeningDeck();
-  document.getElementById('listeningRepeatBtn')?.classList.toggle('active', listeningRepeat);
+  document.getElementById('listeningRevBtnQ')?.classList.toggle('active', !listeningReverse);
+  document.getElementById('listeningRevBtnA')?.classList.toggle('active', listeningReverse);
+  const sp = document.getElementById('listeningSettingsPanel');
+  if (sp) sp.classList.remove('open');
 }
 
 function loadListeningDeck() {
@@ -10205,7 +10264,26 @@ function loadListeningDeck() {
   } else if (listeningFilter !== 'all') {
     words = words.filter(w => w.level === listeningFilter);
   }
-  listeningState.words = words.slice();
+  words = words.slice();
+  if (listeningSort === 'desc') {
+    words.reverse();
+  } else if (listeningSort === 'random') {
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
+  } else if (listeningSort === 'weak') {
+    words.sort((a, b) => {
+      const aT = (a.correctCount || 0) + (a.wrongCount || 0);
+      const bT = (b.correctCount || 0) + (b.wrongCount || 0);
+      const aR = aT > 0 ? (a.correctCount || 0) / aT : -1;
+      const bR = bT > 0 ? (b.correctCount || 0) / bT : -1;
+      return aR - bR;
+    });
+  } else if (listeningSort === 'alpha') {
+    words.sort((a, b) => a.english.localeCompare(b.english, 'ja', { sensitivity: 'base' }));
+  }
+  listeningState.words = words;
   listeningState.index = 0;
   listeningState.playing = false;
   listeningState.phase = 'idle';
@@ -10255,26 +10333,74 @@ function switchListeningDeck(deckId, el) {
   stopListening();
   listeningDeckId = deckId;
   listeningFilter = 'all';
+  listeningSort = 'asc';
   el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderListeningFilterTabs();
+  document.querySelectorAll('#listeningSortRow .sort-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   loadListeningDeck();
 }
 
-function toggleListeningRepeat() {
-  listeningRepeat = !listeningRepeat;
-  document.getElementById('listeningRepeatBtn')?.classList.toggle('active', listeningRepeat);
-  showToast(listeningRepeat ? 'リピート ON' : 'リピート OFF');
+function toggleListeningReverse() {
+  listeningReverse = !listeningReverse;
+  document.getElementById('listeningRevBtnQ')?.classList.toggle('active', !listeningReverse);
+  document.getElementById('listeningRevBtnA')?.classList.toggle('active', listeningReverse);
+  updateListeningDisplay();
+}
+
+function setListeningReverseBtn(reverse) {
+  listeningReverse = reverse;
+  document.getElementById('listeningRevBtnQ')?.classList.toggle('active', !listeningReverse);
+  document.getElementById('listeningRevBtnA')?.classList.toggle('active', listeningReverse);
+  updateListeningDisplay();
+}
+
+function toggleListeningSettings() {
+  const panel = document.getElementById('listeningSettingsPanel');
+  if (panel) panel.classList.toggle('open');
+}
+
+function updateListeningSpeed(val) {
+  listeningSpeed = parseInt(val) / 10;
+  document.getElementById('listeningSpeedValue').textContent = listeningSpeed.toFixed(1) + 'x';
+}
+
+let sleepTimerId = null;
+let sleepTimerEnd = 0;
+
+function setSleepTimer(minutes) {
+  if (sleepTimerId) { clearTimeout(sleepTimerId); sleepTimerId = null; }
+  document.querySelectorAll('.listening-speed-btn.sleep').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === minutes || (minutes === 0 && b.textContent === 'OFF'));
+  });
+  if (minutes === 0) {
+    sleepTimerEnd = 0;
+    showToast('タイマー OFF');
+    return;
+  }
+  sleepTimerEnd = Date.now() + minutes * 60 * 1000;
+  sleepTimerId = setTimeout(() => {
+    pauseListening();
+    sleepTimerId = null;
+    sleepTimerEnd = 0;
+    document.querySelectorAll('.listening-speed-btn.sleep').forEach(b => {
+      b.classList.toggle('active', b.textContent === 'OFF');
+    });
+    showToast('タイマーで停止しました');
+  }, minutes * 60 * 1000);
+  showToast(minutes + '分後に停止します');
 }
 
 function updateListeningDisplay() {
   const s = listeningState;
   const w = s.words[s.index];
+  const qText = w ? (listeningReverse ? w.japanese : w.english) : '';
+  const aText = w ? (listeningReverse ? w.english : w.japanese) : '';
   document.getElementById('listeningProgress').textContent = (s.index + 1) + ' / ' + s.words.length;
-  document.getElementById('listeningQuestion').textContent = w ? w.english : '';
+  document.getElementById('listeningQuestion').textContent = qText;
   const ansEl = document.getElementById('listeningAnswer');
   if (s.phase === 'answer' || s.phase === 'pause2' || !s.playing) {
-    ansEl.textContent = w ? w.japanese : '';
+    ansEl.textContent = aText;
   } else {
     ansEl.textContent = '';
   }
@@ -10368,6 +10494,7 @@ function stopListening() {
   listeningState.playing = false;
   listeningGeneration++;
   if (listeningState.timer) { clearTimeout(listeningState.timer); listeningState.timer = null; }
+  if (sleepTimerId) { clearTimeout(sleepTimerId); sleepTimerId = null; sleepTimerEnd = 0; }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   listeningState.phase = 'idle';
   releaseWakeLock();
@@ -10387,16 +10514,18 @@ function playCurrentWord() {
     }
   }
   const w = s.words[s.index];
+  const firstText = listeningReverse ? w.japanese : w.english;
+  const secondText = listeningReverse ? w.english : w.japanese;
   s.phase = 'question';
   updateListeningDisplay();
-  speakForListening(w.english, () => {
+  speakForListening(firstText, () => {
     if (!s.playing) return;
     s.phase = 'pause1';
     s.timer = setTimeout(() => {
       if (!s.playing) return;
       s.phase = 'answer';
       updateListeningDisplay();
-      speakForListening(w.japanese, () => {
+      speakForListening(secondText, () => {
         if (!s.playing) return;
         s.phase = 'pause2';
         s.timer = setTimeout(() => {
@@ -10432,7 +10561,7 @@ function speakForListening(text, onDone) {
     const langMap = { en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
     const u = new SpeechSynthesisUtterance(cleanText);
     u.lang = langMap[lang] || 'en-US';
-    u.rate = lang === 'en' ? 0.85 : 1.0;
+    u.rate = (lang === 'en' ? 0.85 : 1.0) * listeningSpeed;
     u.volume = 0.8;
     if (ttsVoiceCache[lang]) u.voice = ttsVoiceCache[lang];
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
@@ -10479,18 +10608,12 @@ function setListeningDelay(type, sec) {
   });
 }
 
-function shuffleListening() {
+function setListeningSort(mode, btn) {
   stopListening();
-  const arr = listeningState.words;
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  listeningState.index = 0;
-  listeningState.phase = 'idle';
-  updateListeningDisplay();
-  updatePlayBtnIcon();
-  showToast('シャッフルしました');
+  listeningSort = mode;
+  document.querySelectorAll('#listeningSortRow .sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadListeningDeck();
 }
 
 function exportDeckAsCSV(deckId) {
