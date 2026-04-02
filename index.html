@@ -821,6 +821,156 @@ body.dark-mode .cal-day-popup {
   inset: 0;
   z-index: 2999;
 }
+.listening-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 20px;
+}
+.listening-progress {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-400);
+  margin-bottom: 8px;
+}
+.listening-seekbar {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 20px;
+  accent-color: var(--orange-500);
+  cursor: pointer;
+}
+.listening-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  position: relative;
+}
+body.dark-mode .listening-card {
+  background: #1e1a28;
+}
+.listening-bookmark-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-300);
+  padding: 4px;
+}
+.listening-bookmark-btn.active {
+  color: var(--orange-500);
+}
+.listening-bookmark-btn.active svg {
+  fill: var(--orange-500);
+  stroke: var(--orange-500);
+}
+.listening-question {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gray-800);
+  line-height: 1.5;
+}
+.listening-answer {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--orange-500);
+  line-height: 1.5;
+  min-height: 24px;
+}
+.listening-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.listening-ctrl-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-600);
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.listening-ctrl-btn:active {
+  background: var(--gray-100);
+}
+.listening-ctrl-btn.play {
+  background: var(--orange-500);
+  color: white;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.listening-ctrl-btn.play:active {
+  background: var(--orange-600);
+}
+.listening-speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-400);
+  margin-bottom: 6px;
+}
+.listening-speed span {
+  min-width: 42px;
+}
+.listening-speed-btn {
+  background: none;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+}
+.listening-speed-btn.active {
+  border-color: var(--orange-500);
+  color: var(--orange-500);
+}
+.listening-shuffle-btn {
+  background: none;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.listening-shuffle-btn:active {
+  background: var(--gray-100);
+}
+.listening-shuffle-btn.active {
+  border-color: var(--orange-500);
+  color: var(--orange-500);
+}
 .month-summary-panel {
   max-height: 0;
   overflow: hidden;
@@ -2969,6 +3119,15 @@ body.dark-mode .sort-btn.active {
 .advanced-nav-btn:active {
   background: var(--gray-100);
 }
+#screen-listening {
+  display: none;
+}
+#screen-listening.active {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
 #screen-advanced-settings {
   display: none;
 }
@@ -4511,6 +4670,49 @@ body.dark-mode .gdrive-setup-hint code {
   </div>
 </div>
 
+<!-- Screen: Listening Mode -->
+<div id="screen-listening" class="screen">
+  <div class="quiz-header">
+    <button class="quiz-back" onclick="stopListening(); navTo('home');">←</button>
+    <span class="quiz-progress-text">リスニング</span>
+    <div style="width:40px"></div>
+  </div>
+  <div class="deck-tabs" id="listeningDeckTabs"></div>
+  <div class="filter-tabs" id="listeningFilterTabs"></div>
+  <div class="listening-player">
+    <div class="listening-progress" id="listeningProgress">0 / 0</div>
+    <input type="range" class="listening-seekbar" id="listeningSeekbar" min="0" max="0" value="0" oninput="seekListening(this.value)">
+    <div class="listening-card" id="listeningCard">
+      <button class="listening-bookmark-btn" id="listeningBookmarkBtn" onclick="toggleListeningBookmark()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+      <div class="listening-question" id="listeningQuestion"></div>
+      <div class="listening-answer" id="listeningAnswer"></div>
+    </div>
+    <div class="listening-controls">
+      <button class="listening-ctrl-btn" onclick="listeningPrev()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="listening-ctrl-btn play" id="listeningPlayBtn" onclick="toggleListening()"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" id="listeningPlayIcon"><polygon points="8,5 20,12 8,19"/></svg></button>
+      <button class="listening-ctrl-btn" onclick="listeningNext()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M16 18h2V6h-2zm-8.5-6l8.5 6V6z" transform="scale(-1,1) translate(-24,0)"/></svg></button>
+    </div>
+    <div class="listening-speed">
+      <span>問→答</span>
+      <button class="listening-speed-btn q2a active" onclick="setListeningDelay('q2a', 1)">1秒</button>
+      <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 2)">2秒</button>
+      <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 3)">3秒</button>
+      <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 5)">5秒</button>
+    </div>
+    <div class="listening-speed">
+      <span>答→次</span>
+      <button class="listening-speed-btn a2n active" onclick="setListeningDelay('a2n', 1)">1秒</button>
+      <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 2)">2秒</button>
+      <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 3)">3秒</button>
+      <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 5)">5秒</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="listening-shuffle-btn" onclick="shuffleListening()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> シャッフル</button>
+      <button class="listening-shuffle-btn" id="listeningRepeatBtn" onclick="toggleListeningRepeat()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg> リピート</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <!-- Bottom Navigation Bar -->
@@ -4526,6 +4728,10 @@ body.dark-mode .gdrive-setup-hint code {
   <button class="bottom-nav-item" onclick="navTo('edit')" id="navEdit">
     <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span>
     <span class="nav-label">編集</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navTo('listen')" id="navListen">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+    <span class="nav-label">リスニング</span>
   </button>
 </div>
 
@@ -4870,7 +5076,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.7.6';
+const APP_VERSION = 'v1.8.6';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -7162,6 +7368,7 @@ function showScreen(name) {
   stopAllAudio();
   closeLightbox();
   closeCopyMenu();
+  if (name !== 'listening') stopListening();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const screenEl = document.getElementById(`screen-${name}`);
   if (!screenEl) { console.error('Screen not found:', name); return; }
@@ -7191,7 +7398,7 @@ function showScreen(name) {
     renderHeatmap();
   }
   // Bottom nav visibility
-  const navScreens = ['dashboard', 'wordlist', 'word-editor'];
+  const navScreens = ['dashboard', 'wordlist', 'word-editor', 'listening'];
   const nav = document.getElementById('bottomNav');
   // Reset bulk select mode when leaving editor
   if (name !== 'word-editor') {
@@ -7219,14 +7426,14 @@ function showScreen(name) {
 }
 
 function updateBottomNavActive(name) {
-  const map = { 'dashboard': 'navHome', 'wordlist': 'navList', 'word-editor': 'navEdit' };
+  const map = { 'dashboard': 'navHome', 'wordlist': 'navList', 'word-editor': 'navEdit', 'listening': 'navListen' };
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
   const id = map[name];
   if (id) document.getElementById(id)?.classList.add('active');
 }
 
 function navTo(target) {
-  const screenMap = { home: 'dashboard', list: 'wordlist', edit: 'word-editor' };
+  const screenMap = { home: 'dashboard', list: 'wordlist', edit: 'word-editor', listen: 'listening' };
   const current = document.querySelector('.screen.active');
   if (current && current.id === 'screen-' + screenMap[target]) return;
   if (target === 'home') {
@@ -7237,6 +7444,8 @@ function navTo(target) {
     showWordList();
   } else if (target === 'edit') {
     showWordEditor();
+  } else if (target === 'listen') {
+    startListeningMode();
   }
 }
 
@@ -9961,6 +10170,306 @@ function escapeCSVField(value) {
     return '"' + str.replace(/"/g, '""') + '"';
   }
   return str;
+}
+
+// ============ LISTENING MODE ============
+let listeningDeckId = null;
+let listeningFilter = 'all';
+let listeningRepeat = false;
+let listeningState = {
+  words: [],
+  index: 0,
+  playing: false,
+  phase: 'idle', // 'question', 'pause1', 'answer', 'pause2'
+  delayQ2A: 1,
+  delayA2N: 1,
+  timer: null
+};
+
+function startListeningMode() {
+  stopListening();
+  listeningDeckId = activeDeckId;
+  listeningFilter = 'all';
+  showScreen('listening');
+  renderListeningDeckTabs();
+  renderListeningFilterTabs();
+  loadListeningDeck();
+  document.getElementById('listeningRepeatBtn')?.classList.toggle('active', listeningRepeat);
+}
+
+function loadListeningDeck() {
+  const deck = decks.find(d => d.id === listeningDeckId);
+  let words = deck ? deck.words : [];
+  if (listeningFilter === 'bookmarked') {
+    words = words.filter(w => w.bookmarked);
+  } else if (listeningFilter !== 'all') {
+    words = words.filter(w => w.level === listeningFilter);
+  }
+  listeningState.words = words.slice();
+  listeningState.index = 0;
+  listeningState.playing = false;
+  listeningState.phase = 'idle';
+  updateListeningDisplay();
+  updatePlayBtnIcon();
+  if (words.length === 0) showToast('該当する問題がありません');
+}
+
+function renderListeningDeckTabs() {
+  const container = document.getElementById('listeningDeckTabs');
+  if (!container) return;
+  container.innerHTML = decks.map(deck => `
+    <button class="deck-tab ${deck.id === listeningDeckId ? 'active' : ''}" onclick="switchListeningDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
+  `).join('');
+}
+
+function renderListeningFilterTabs() {
+  const deck = decks.find(d => d.id === listeningDeckId);
+  const words = deck ? deck.words : [];
+  const bookmarkedCount = words.filter(w => w.bookmarked).length;
+  const counts = { all: words.length, unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
+
+  const tabs = [
+    { key: 'all', label: `すべて (${counts.all})` },
+    { key: 'bookmarked', label: `保存済み (${bookmarkedCount})` },
+    { key: 'unlearned', label: `未学習 (${counts.unlearned})` },
+    { key: 'weak', label: `苦手 (${counts.weak})` },
+    { key: 'fuzzy', label: `うろ覚え (${counts.fuzzy})` },
+    { key: 'mastered', label: `覚えた (${counts.mastered})` },
+  ];
+
+  document.getElementById('listeningFilterTabs').innerHTML = tabs.map(t => `
+    <button class="filter-tab ${t.key} ${t.key === listeningFilter ? 'active' : ''}" onclick="filterListeningWords('${t.key}', this)">${t.label}</button>
+  `).join('');
+}
+
+function filterListeningWords(level, el) {
+  stopListening();
+  el.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  listeningFilter = level;
+  loadListeningDeck();
+}
+
+function switchListeningDeck(deckId, el) {
+  stopListening();
+  listeningDeckId = deckId;
+  listeningFilter = 'all';
+  el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderListeningFilterTabs();
+  loadListeningDeck();
+}
+
+function toggleListeningRepeat() {
+  listeningRepeat = !listeningRepeat;
+  document.getElementById('listeningRepeatBtn')?.classList.toggle('active', listeningRepeat);
+  showToast(listeningRepeat ? 'リピート ON' : 'リピート OFF');
+}
+
+function updateListeningDisplay() {
+  const s = listeningState;
+  const w = s.words[s.index];
+  document.getElementById('listeningProgress').textContent = (s.index + 1) + ' / ' + s.words.length;
+  document.getElementById('listeningQuestion').textContent = w ? w.english : '';
+  const ansEl = document.getElementById('listeningAnswer');
+  if (s.phase === 'answer' || s.phase === 'pause2' || !s.playing) {
+    ansEl.textContent = w ? w.japanese : '';
+  } else {
+    ansEl.textContent = '';
+  }
+  const bmBtn = document.getElementById('listeningBookmarkBtn');
+  if (bmBtn) bmBtn.classList.toggle('active', w ? !!w.bookmarked : false);
+  const seekbar = document.getElementById('listeningSeekbar');
+  if (seekbar) {
+    seekbar.max = Math.max(s.words.length - 1, 0);
+    seekbar.value = s.index;
+  }
+}
+
+function seekListening(val) {
+  const idx = parseInt(val);
+  const s = listeningState;
+  const wasPlaying = s.playing;
+  if (wasPlaying) {
+    listeningGeneration++;
+    if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+  s.index = idx;
+  s.phase = 'idle';
+  updateListeningDisplay();
+  if (wasPlaying) playCurrentWord();
+}
+
+function toggleListeningBookmark() {
+  const w = listeningState.words[listeningState.index];
+  if (!w) return;
+  w.bookmarked = !w.bookmarked;
+  const bmBtn = document.getElementById('listeningBookmarkBtn');
+  if (bmBtn) bmBtn.classList.toggle('active', w.bookmarked);
+  sfxBookmark();
+  saveState();
+}
+
+function updatePlayBtnIcon() {
+  const icon = document.getElementById('listeningPlayIcon');
+  if (listeningState.playing) {
+    icon.innerHTML = '<rect x="7" y="5" width="4" height="14" rx="1"/><rect x="13" y="5" width="4" height="14" rx="1"/>';
+  } else {
+    icon.innerHTML = '<polygon points="8,5 20,12 8,19"/>';
+  }
+}
+
+function toggleListening() {
+  if (listeningState.playing) {
+    pauseListening();
+  } else {
+    resumeListening();
+  }
+}
+
+function resumeListening() {
+  listeningState.playing = true;
+  updatePlayBtnIcon();
+  playCurrentWord();
+}
+
+function pauseListening() {
+  listeningState.playing = false;
+  listeningGeneration++;
+  if (listeningState.timer) { clearTimeout(listeningState.timer); listeningState.timer = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  updatePlayBtnIcon();
+  updateListeningDisplay();
+}
+
+function stopListening() {
+  listeningState.playing = false;
+  listeningGeneration++;
+  if (listeningState.timer) { clearTimeout(listeningState.timer); listeningState.timer = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  listeningState.phase = 'idle';
+}
+
+function playCurrentWord() {
+  if (!listeningState.playing) return;
+  const s = listeningState;
+  if (s.index >= s.words.length) {
+    if (listeningRepeat) {
+      s.index = 0;
+      updateListeningDisplay();
+    } else {
+      pauseListening();
+      showToast('すべて再生しました');
+      return;
+    }
+  }
+  const w = s.words[s.index];
+  s.phase = 'question';
+  updateListeningDisplay();
+  speakForListening(w.english, () => {
+    if (!s.playing) return;
+    s.phase = 'pause1';
+    s.timer = setTimeout(() => {
+      if (!s.playing) return;
+      s.phase = 'answer';
+      updateListeningDisplay();
+      speakForListening(w.japanese, () => {
+        if (!s.playing) return;
+        s.phase = 'pause2';
+        s.timer = setTimeout(() => {
+          if (!s.playing) return;
+          s.index++;
+          if (s.index < s.words.length) {
+            playCurrentWord();
+          } else if (listeningRepeat) {
+            s.index = 0;
+            playCurrentWord();
+          } else {
+            pauseListening();
+            showToast('すべて再生しました');
+          }
+        }, s.delayA2N * 1000);
+      });
+    }, s.delayQ2A * 1000);
+  });
+}
+
+let listeningGeneration = 0;
+
+function speakForListening(text, onDone) {
+  if (!('speechSynthesis' in window) || !text) { if (onDone) onDone(); return; }
+  window.speechSynthesis.cancel();
+  // Wait a tick after cancel to avoid onend firing for cancelled speech
+  const gen = ++listeningGeneration;
+  setTimeout(() => {
+    if (gen !== listeningGeneration) return;
+    let cleanText = text.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
+    if (/^[\d\s.,:;!?()\/\-]+$/.test(cleanText)) { if (onDone) onDone(); return; }
+    const lang = detectLang(cleanText);
+    const langMap = { en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
+    const u = new SpeechSynthesisUtterance(cleanText);
+    u.lang = langMap[lang] || 'en-US';
+    u.rate = lang === 'en' ? 0.85 : 1.0;
+    u.volume = 0.8;
+    if (ttsVoiceCache[lang]) u.voice = ttsVoiceCache[lang];
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    u.onend = () => { clearInterval(keepAlive); if (gen === listeningGeneration && onDone) onDone(); };
+    u.onerror = () => { clearInterval(keepAlive); if (gen === listeningGeneration && onDone) onDone(); };
+    window.speechSynthesis.speak(u);
+    let keepAlive = setInterval(() => {
+      if (!window.speechSynthesis.speaking) { clearInterval(keepAlive); }
+      else { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }
+    }, 5000);
+  }, 100);
+}
+
+function listeningNext() {
+  const s = listeningState;
+  listeningGeneration++;
+  if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  s.index = Math.min(s.index + 1, s.words.length - 1);
+  s.phase = 'idle';
+  updateListeningDisplay();
+  if (s.playing) playCurrentWord();
+}
+
+function listeningPrev() {
+  const s = listeningState;
+  listeningGeneration++;
+  if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  s.index = Math.max(s.index - 1, 0);
+  s.phase = 'idle';
+  updateListeningDisplay();
+  if (s.playing) playCurrentWord();
+}
+
+function setListeningDelay(type, sec) {
+  if (type === 'q2a') {
+    listeningState.delayQ2A = sec;
+  } else {
+    listeningState.delayA2N = sec;
+  }
+  document.querySelectorAll('.listening-speed-btn.' + type).forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === sec);
+  });
+}
+
+function shuffleListening() {
+  stopListening();
+  const arr = listeningState.words;
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  listeningState.index = 0;
+  listeningState.phase = 'idle';
+  updateListeningDisplay();
+  updatePlayBtnIcon();
+  showToast('シャッフルしました');
 }
 
 function exportDeckAsCSV(deckId) {
