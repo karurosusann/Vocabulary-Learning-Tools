@@ -2448,14 +2448,19 @@ body.dark-mode .copy-menu-popup button {
 .missed-section-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 4px;
   margin-bottom: 10px;
-  position: relative;
 }
 .missed-section-header .answer-toggle-btn {
-  position: absolute;
-  right: 0;
+  font-size: 11px;
+  padding: 5px 8px;
+  flex-shrink: 0;
+}
+.missed-section-header .question-toggle-btn {
+  font-size: 11px;
+  padding: 5px 8px;
+  flex-shrink: 0;
 }
 .missed-list {
   border-radius: var(--radius-sm);
@@ -2514,6 +2519,23 @@ body.dark-mode .copy-menu-popup button {
   text-align: center;
 }
 .missed-jpn.result-hidden-answer::after {
+  content: 'タップ';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  font-size: 11px;
+  font-weight: 600;
+}
+.missed-eng.result-hidden-question {
+  color: transparent;
+  background: var(--gray-200);
+  position: relative;
+  text-align: center;
+}
+.missed-eng.result-hidden-question::after {
   content: 'タップ';
   position: absolute;
   inset: 0;
@@ -4436,6 +4458,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="sort-row" id="sortRow">
       <button class="sort-btn active" onclick="setWordSort('asc', this)">リスト順</button>
       <button class="sort-btn" onclick="setWordSort('desc', this)">逆順</button>
+      <button class="sort-btn" onclick="setWordSort('weak', this)">苦手順</button>
       <button class="sort-btn" onclick="setWordSort('random', this)">ランダム</button>
       <button class="sort-btn" onclick="setWordSort('alpha', this)">五十音順</button>
     </div>
@@ -4847,7 +4870,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v1.7.2';
+const APP_VERSION = 'v1.7.6';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -8134,6 +8157,7 @@ function toggleResultBookmark(btn, eng, jpn) {
 }
 
 let resultAnswersHidden = false;
+let resultQuestionsHidden = false;
 function toggleResultAnswers() {
   resultAnswersHidden = !resultAnswersHidden;
   const btn = document.getElementById('resultAnswerToggleBtn');
@@ -8144,6 +8168,25 @@ function toggleResultAnswers() {
   document.querySelectorAll('#resultContent .missed-jpn').forEach(el => {
     el.classList.toggle('result-hidden-answer', resultAnswersHidden);
   });
+}
+function toggleResultQuestions() {
+  resultQuestionsHidden = !resultQuestionsHidden;
+  const btn = document.getElementById('resultQuestionToggleBtn');
+  if (btn) {
+    btn.textContent = resultQuestionsHidden ? '問題を表示' : '問題を隠す';
+    btn.classList.toggle('hiding', resultQuestionsHidden);
+  }
+  document.querySelectorAll('#resultContent .missed-eng').forEach(el => {
+    el.classList.toggle('result-hidden-question', resultQuestionsHidden);
+  });
+}
+
+function onTapResultEng(el, text) {
+  if (resultQuestionsHidden && el.classList.contains('result-hidden-question')) {
+    el.classList.remove('result-hidden-question');
+    return;
+  }
+  if (text) speakText(text);
 }
 
 function onTapResultJpn(el, text) {
@@ -8658,6 +8701,7 @@ function showResult() {
   stopQuizTimer();
   showScreen('result');
   resultAnswersHidden = false;
+  resultQuestionsHidden = false;
   // Cancel again after screen transition in case iOS queued speech
   setTimeout(() => {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -8771,6 +8815,7 @@ function showResult() {
     missedHtml = `
       <div class="missed-section">
         <div class="missed-section-header">
+          <button class="answer-toggle-btn question-toggle-btn" id="resultQuestionToggleBtn" onclick="toggleResultQuestions()">問題を隠す</button>
           <h4 class="missed-heading">間違えた問題（${uniqueMissed.length}語）</h4>
           <button class="answer-toggle-btn" id="resultAnswerToggleBtn" onclick="toggleResultAnswers()">答えを隠す</button>
         </div>
@@ -8785,7 +8830,7 @@ function showResult() {
             const jpnEsc = escapeForInlineJS(r.word.japanese);
             return `
             <div class="missed-item">
-              <span class="missed-eng" onclick="speakText('${qEsc}')" style="cursor:pointer;">${escapeHtmlBr(qText)}</span>
+              <span class="missed-eng" onclick="onTapResultEng(this,'${qEsc}')" style="cursor:pointer;">${escapeHtmlBr(qText)}</span>
               <span class="missed-jpn" onclick="onTapResultJpn(this,'${aEsc}')" style="cursor:pointer;">${escapeHtmlBr(aText)}</span>
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
@@ -8809,6 +8854,7 @@ function showResult() {
     correctHtml = `
       <div class="missed-section" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-200);">
         <div class="missed-section-header">
+          ${uniqueMissed.length === 0 ? '<button class="answer-toggle-btn question-toggle-btn" id="resultQuestionToggleBtn" onclick="toggleResultQuestions()">問題を隠す</button>' : ''}
           <h4 class="correct-heading">正解した問題（${uniqueCorrect.length}語）</h4>
           ${uniqueMissed.length === 0 ? '<button class="answer-toggle-btn" id="resultAnswerToggleBtn" onclick="toggleResultAnswers()">答えを隠す</button>' : ''}
         </div>
@@ -8823,7 +8869,7 @@ function showResult() {
             const jpnEsc = escapeForInlineJS(r.word.japanese);
             return `
             <div class="missed-item">
-              <span class="missed-eng" onclick="speakText('${qEsc}')" style="cursor:pointer;">${escapeHtmlBr(qText)}</span>
+              <span class="missed-eng" onclick="onTapResultEng(this,'${qEsc}')" style="cursor:pointer;">${escapeHtmlBr(qText)}</span>
               <span class="missed-jpn" style="cursor:pointer;" onclick="onTapResultJpn(this,'${aEsc}')">${escapeHtmlBr(aText)}</span>
               <button class="result-pin-btn ${pinActive}" onclick="toggleResultBookmark(this, '${engEsc}', '${jpnEsc}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
@@ -9138,6 +9184,14 @@ function renderWordList(level) {
   // Apply sort
   if (wordListSort === 'desc') {
     indexed = indexed.slice().reverse();
+  } else if (wordListSort === 'weak') {
+    indexed = indexed.slice().sort((a, b) => {
+      const aTotal = (a.w.correctCount || 0) + (a.w.wrongCount || 0);
+      const bTotal = (b.w.correctCount || 0) + (b.w.wrongCount || 0);
+      const aRate = aTotal > 0 ? (a.w.correctCount || 0) / aTotal : -1;
+      const bRate = bTotal > 0 ? (b.w.correctCount || 0) / bTotal : -1;
+      return aRate - bRate;
+    });
   } else if (wordListSort === 'random') {
     indexed = indexed.slice();
     for (let i = indexed.length - 1; i > 0; i--) {
@@ -9913,12 +9967,12 @@ function exportDeckAsCSV(deckId) {
   const deck = decks.find(d => d.id === deckId);
   if (!deck) return;
   const bom = '\uFEFF';
-  const header = '問題,解答,正解数,不正解数,不正解率';
+  const header = '問題,解答,正解数,不正解数,正答率';
   const rows = deck.words.map(w => {
     const c = w.correctCount || 0;
     const wr = w.wrongCount || 0;
     const total = c + wr;
-    const rate = total > 0 ? Math.round((wr / total) * 100) + '%' : '-';
+    const rate = total > 0 ? Math.round((c / total) * 100) + '%' : '-';
     return [w.english, w.japanese, c, wr, rate].map(escapeCSVField).join(',');
   });
   const csv = bom + header + '\n' + rows.join('\n');
@@ -9942,12 +9996,12 @@ function exportAllDecksAsCSV() {
   const date = new Date().toISOString().slice(0, 10);
   decks.forEach((deck, i) => {
     setTimeout(() => {
-      const header = '問題,解答,正解数,不正解数,不正解率';
+      const header = '問題,解答,正解数,不正解数,正答率';
       const rows = deck.words.map(w => {
         const c = w.correctCount || 0;
         const wr = w.wrongCount || 0;
         const total = c + wr;
-        const rate = total > 0 ? Math.round((wr / total) * 100) + '%' : '-';
+        const rate = total > 0 ? Math.round((c / total) * 100) + '%' : '-';
         return [w.english, w.japanese, c, wr, rate].map(escapeCSVField).join(',');
       });
       const csv = bom + header + '\n' + rows.join('\n');
