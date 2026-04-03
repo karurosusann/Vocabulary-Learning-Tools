@@ -3287,6 +3287,9 @@ body.dark-mode .sort-btn.active {
   min-height: 100vh;
   min-height: 100dvh;
 }
+body.has-bottom-nav #screen-listening.active {
+  min-height: calc(100dvh - 70px - env(safe-area-inset-bottom, 0px));
+}
 #screen-advanced-settings {
   display: none;
 }
@@ -5274,7 +5277,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.11';
+const APP_VERSION = 'v2.5.12';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
