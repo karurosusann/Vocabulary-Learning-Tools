@@ -297,7 +297,7 @@ body.dark-mode .drill-desc {
   color: var(--gray-500);
 }
 body.dark-mode .swipe-overlay.swipe-right-overlay {
-  background: linear-gradient(to right, transparent, rgba(249,115,22,0.25));
+  background: linear-gradient(to right, transparent, rgba(20,184,166,0.25));
 }
 body.dark-mode .swipe-overlay.swipe-left-overlay {
   background: linear-gradient(to left, transparent, rgba(100,116,139,0.25));
@@ -2265,16 +2265,16 @@ body.answer-match-question .answer-text-area {
   padding: 8px 0;
 }
 .quiz-card.input-correct {
-  background: #FFF7ED;
-  border: 2px solid #F97316;
+  background: #F0FDFA;
+  border: 2px solid #14B8A6;
 }
 .quiz-card.input-wrong {
   background: #F1F5F9;
   border: 2px solid #94A3B8;
 }
 body.dark-mode .quiz-card.input-correct {
-  background: #1c1408;
-  border-color: #F97316;
+  background: #0a1c1a;
+  border-color: #14B8A6;
 }
 body.dark-mode .quiz-card.input-wrong {
   background: #1a1e24;
@@ -2381,11 +2381,11 @@ body.dark-mode .input-answer-field::placeholder {
   transform: rotate(15deg);
 }
 .swipe-overlay.swipe-right-overlay {
-  background: rgba(249,115,22,0.10);
+  background: rgba(20,184,166,0.10);
 }
 .swipe-overlay.swipe-right-overlay .swipe-label {
-  color: #EA580C;
-  border-color: #F97316;
+  color: #0D9488;
+  border-color: #14B8A6;
 }
 .swipe-overlay.swipe-left-overlay {
   background: rgba(100,116,139,0.10);
@@ -4724,7 +4724,7 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">×</span></div>
       <div class="quiz-card-topbar">
         <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()" style="margin-left:0;margin-right:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
-        <div class="level-badge" id="quizBadge">未学習</div>
+        <div class="level-badge" id="quizBadge">新規</div>
         <button class="bookmark-btn card-camera" id="quizMoreBtn" onclick="event.stopPropagation();quizEditCurrentWord()" style="margin-left:auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></button>
         <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
       </div>
@@ -4758,7 +4758,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="sort-row" id="sortRow">
       <button class="sort-btn active" onclick="setWordSort('asc', this)">リスト順</button>
       <button class="sort-btn" onclick="setWordSort('desc', this)">逆順</button>
-      <button class="sort-btn" onclick="setWordSort('weak', this)">苦手順</button>
+      <button class="sort-btn" onclick="setWordSort('weak', this)">要学習順</button>
       <button class="sort-btn" onclick="setWordSort('random', this)">ランダム</button>
       <button class="sort-btn" onclick="setWordSort('alpha', this)">五十音順</button>
     </div>
@@ -4823,7 +4823,7 @@ body.dark-mode .gdrive-setup-hint code {
   <div class="sort-row" id="listeningSortRow">
     <button class="sort-btn active" onclick="setListeningSort('asc', this)">リスト順</button>
     <button class="sort-btn" onclick="setListeningSort('desc', this)">逆順</button>
-    <button class="sort-btn" onclick="setListeningSort('weak', this)">苦手順</button>
+    <button class="sort-btn" onclick="setListeningSort('weak', this)">要学習順</button>
     <button class="sort-btn" onclick="setListeningSort('random', this)">ランダム</button>
     <button class="sort-btn" onclick="setListeningSort('alpha', this)">五十音順</button>
   </div>
@@ -5097,7 +5097,7 @@ body.dark-mode .gdrive-setup-hint code {
 
       <div class="help-section">
         <h3>📝 学習の使い方</h3>
-        <p><strong>ステータスカード：</strong> 各状態（未学習・苦手など）をタップで直接学習開始</p>
+        <p><strong>ステータスカード：</strong> 各状態（新規・要学習など）をタップで直接学習開始</p>
         <p><strong>ノーマルモード：</strong> スワイプで知ってる/知らないを仕分け。正解で状態がアップ</p>
         <p><strong>特訓モード：</strong> 間違えた問題を覚えるまで繰り返し出題</p>
         <p><strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> 保存：</strong> 気になる単語をピンして後でまとめて復習</p>
@@ -5113,7 +5113,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div style="font-size:60px;margin-bottom:12px;">🎊</div>
     <h2 style="color:var(--orange-500);margin-bottom:8px;">完全制覇！</h2>
     <p style="font-size:15px;color:var(--gray-600);margin-bottom:4px;"><strong id="celebrationDeck"></strong></p>
-    <p style="font-size:28px;font-weight:900;color:var(--green-500);margin-bottom:8px;"><span id="celebrationCount">0</span>語 すべて覚えた！</p>
+    <p style="font-size:28px;font-weight:900;color:var(--green-500);margin-bottom:8px;"><span id="celebrationCount">0</span>語 すべてマスター！</p>
     <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.6;">本当にすごい！あなたの努力の成果です。<br>この調子で次のデッキにも挑戦しよう！</p>
     <button class="result-btn" onclick="closeCelebration()">ありがとう！💪</button>
   </div>
@@ -5238,7 +5238,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="deck-edit-actions">
       <button class="deck-edit-btn" onclick="closeDeckEdit();editDeckContent(activeDeckId)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span> デッキ内を編集</button>
       <button class="deck-edit-btn" onclick="closeDeckEdit();openReorderModal()"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></span> デッキの並べ替え</button>
-      <button class="deck-edit-btn danger" onclick="closeDeckEdit();confirmAction('このデッキの進捗をリセット', 'すべての単語が「未学習」に戻ります。この操作は取り消せません。', doResetCurrentDeck)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></span> このデッキをリセット</button>
+      <button class="deck-edit-btn danger" onclick="closeDeckEdit();confirmAction('このデッキの進捗をリセット', 'すべての単語が「新規」に戻ります。この操作は取り消せません。', doResetCurrentDeck)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></span> このデッキをリセット</button>
       <button class="deck-edit-btn danger" onclick="closeDeckEdit();deleteDeck(activeDeckId)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span> このデッキを削除</button>
     </div>
   </div>
@@ -5260,7 +5260,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.4';
+const APP_VERSION = 'v2.5.6';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -5270,10 +5270,10 @@ let currentQuiz = null;
 let selectedRange = 'unlearned';
 
 const LEVELS = {
-  unlearned: { label: '未学習', badge: 'badge-unlearned' },
-  weak: { label: '苦手', badge: 'badge-weak' },
-  fuzzy: { label: 'うろ覚え', badge: 'badge-fuzzy' },
-  mastered: { label: '覚えた', badge: 'badge-mastered' }
+  unlearned: { label: '新規', badge: 'badge-unlearned' },
+  weak: { label: '要学習', badge: 'badge-weak' },
+  fuzzy: { label: 'あと一歩', badge: 'badge-fuzzy' },
+  mastered: { label: 'マスター', badge: 'badge-mastered' }
 };
 
 // ============ SETTINGS MENU ============
@@ -7882,10 +7882,10 @@ function showLevelSelect() {
   const options = [
     { key: 'all', icon: allUnlocked ? '👹' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allUnlocked },
     { key: 'bookmarked', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="var(--orange-500)" stroke="var(--orange-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
-    { key: 'unlearned', icon: '📋', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
-    { key: 'weak', icon: '🔵', label: '苦手', count: counts.weak, cls: 'weak' },
-    { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy, cls: 'fuzzy' },
-    { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
+    { key: 'unlearned', icon: '📋', label: '新規', count: counts.unlearned, cls: 'unlearned' },
+    { key: 'weak', icon: '🔵', label: '要学習', count: counts.weak, cls: 'weak' },
+    { key: 'fuzzy', icon: '🟡', label: 'あと一歩', count: counts.fuzzy, cls: 'fuzzy' },
+    { key: 'mastered', icon: '🟢', label: 'マスター', count: counts.mastered, cls: 'mastered' },
   ];
 
   let html = '';
@@ -7993,7 +7993,7 @@ function selectRange(key, el) {
 }
 
 function showLockedMessage() {
-  showToast('🔒 全問を一度「覚えた」にすると解放されます！');
+  showToast('🔒 全問を一度「マスター」にすると解放されます！');
 }
 
 // ============ QUIZ SETUP ============
@@ -9288,7 +9288,7 @@ function showResult() {
     }
   });
 
-  const levelNames = { unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた' };
+  const levelNames = { unlearned: '新規', weak: '要学習', fuzzy: 'あと一歩', mastered: 'マスター' };
   const levelColors = { unlearned: 'var(--gray-400)', weak: 'var(--blue-500)', fuzzy: 'var(--yellow-500)', mastered: 'var(--green-500)' };
   const levelOrder = ['mastered', 'fuzzy', 'weak', 'unlearned'];
 
@@ -9601,10 +9601,10 @@ function renderFilterTabs() {
   const tabs = [
     { key: 'all', count: counts.all, name: 'すべて' },
     { key: 'bookmarked', count: bookmarkedCount, name: '保存済み' },
-    { key: 'unlearned', count: counts.unlearned, name: '未学習' },
-    { key: 'weak', count: counts.weak, name: '苦手' },
-    { key: 'fuzzy', count: counts.fuzzy, name: 'うろ覚え' },
-    { key: 'mastered', count: counts.mastered, name: '覚えた' },
+    { key: 'unlearned', count: counts.unlearned, name: '新規' },
+    { key: 'weak', count: counts.weak, name: '要学習' },
+    { key: 'fuzzy', count: counts.fuzzy, name: 'あと一歩' },
+    { key: 'mastered', count: counts.mastered, name: 'マスター' },
   ];
 
   document.getElementById('filterTabs').innerHTML = tabs.map((t, i) => `
@@ -10039,10 +10039,10 @@ function renderEditorFilterTabs() {
   const tabs = [
     { key: 'all', count: counts.all, name: 'すべて' },
     { key: 'bookmarked', count: bookmarkedCount, name: '保存済み' },
-    { key: 'unlearned', count: counts.unlearned, name: '未学習' },
-    { key: 'weak', count: counts.weak, name: '苦手' },
-    { key: 'fuzzy', count: counts.fuzzy, name: 'うろ覚え' },
-    { key: 'mastered', count: counts.mastered, name: '覚えた' },
+    { key: 'unlearned', count: counts.unlearned, name: '新規' },
+    { key: 'weak', count: counts.weak, name: '要学習' },
+    { key: 'fuzzy', count: counts.fuzzy, name: 'あと一歩' },
+    { key: 'mastered', count: counts.mastered, name: 'マスター' },
   ];
 
   document.getElementById('editorFilterTabs').innerHTML = tabs.map(t => `
@@ -10631,10 +10631,10 @@ function renderListeningFilterTabs() {
   const tabs = [
     { key: 'all', count: counts.all, name: 'すべて' },
     { key: 'bookmarked', count: bookmarkedCount, name: '保存済み' },
-    { key: 'unlearned', count: counts.unlearned, name: '未学習' },
-    { key: 'weak', count: counts.weak, name: '苦手' },
-    { key: 'fuzzy', count: counts.fuzzy, name: 'うろ覚え' },
-    { key: 'mastered', count: counts.mastered, name: '覚えた' },
+    { key: 'unlearned', count: counts.unlearned, name: '新規' },
+    { key: 'weak', count: counts.weak, name: '要学習' },
+    { key: 'fuzzy', count: counts.fuzzy, name: 'あと一歩' },
+    { key: 'mastered', count: counts.mastered, name: 'マスター' },
   ];
 
   document.getElementById('listeningFilterTabs').innerHTML = tabs.map(t => `
