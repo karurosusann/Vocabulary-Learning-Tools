@@ -1026,17 +1026,69 @@ body.dark-mode .listening-save-bar.active {
   border-color: var(--orange-500);
   color: var(--orange-500);
 }
-.listening-settings-panel {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease;
-  width: 100%;
-  max-width: 400px;
-  padding: 0 4px;
+.listening-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+  -webkit-tap-highlight-color: transparent;
 }
-.listening-settings-panel.open {
-  max-height: 400px;
-  padding: 8px 4px;
+.listening-sheet-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+.listening-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  padding: 12px 20px calc(env(safe-area-inset-bottom, 16px) + 16px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.listening-sheet-overlay.show .listening-sheet {
+  transform: translateY(0);
+}
+body.dark-mode .listening-sheet {
+  background: #1e1a28;
+}
+.listening-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--gray-300);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+body.dark-mode .listening-sheet-handle {
+  background: #3a3545;
+}
+.listening-sheet-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 16px;
+  text-align: center;
+}
+body.dark-mode .listening-sheet-title {
+  color: #e0dde6;
+}
+.listening-settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.timer-popup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 .timer-badge {
   position: absolute;
@@ -1049,16 +1101,6 @@ body.dark-mode .listening-save-bar.active {
   padding: 1px 4px;
   border-radius: 8px;
   line-height: 1.2;
-}
-.timer-popup {
-  display: none;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-.timer-popup.open {
-  display: flex;
 }
 .timer-popup-btn {
   background: none;
@@ -4847,43 +4889,53 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="listening-ctrl-btn" onclick="listeningNext()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM5 6l9 6-9 6z"/></svg></button>
       <button class="listening-ctrl-btn" onclick="toggleListeningSettings()" style="margin-left:16px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
-    <div class="timer-popup" id="timerPopup">
-      <button class="timer-popup-btn active" onclick="setSleepTimer(0)">OFF</button>
-      <button class="timer-popup-btn" onclick="setSleepTimer(5)">5分</button>
-      <button class="timer-popup-btn" onclick="setSleepTimer(10)">10分</button>
-      <button class="timer-popup-btn" onclick="setSleepTimer(15)">15分</button>
-      <button class="timer-popup-btn" onclick="setSleepTimer(30)">30分</button>
-      <button class="timer-popup-btn" onclick="setSleepTimer(45)">45分</button>
-      <button class="timer-popup-btn" onclick="setSleepTimer(60)">60分</button>
-    </div>
-    <div class="listening-settings-panel" id="listeningSettingsPanel">
-      <div class="listening-speed">
-        <span>問→答</span>
-        <button class="listening-speed-btn q2a active" onclick="setListeningDelay('q2a', 1)">1秒</button>
-        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 2)">2秒</button>
-        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 3)">3秒</button>
-        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 5)">5秒</button>
-        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 10)">10秒</button>
-        <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 15)">15秒</button>
-      </div>
-      <div class="listening-speed">
-        <span>答→次</span>
-        <button class="listening-speed-btn a2n active" onclick="setListeningDelay('a2n', 1)">1秒</button>
-        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 2)">2秒</button>
-        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 3)">3秒</button>
-        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 5)">5秒</button>
-        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 10)">10秒</button>
-        <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 15)">15秒</button>
-      </div>
-      <div class="listening-speed">
-        <span>出題形式</span>
-        <button class="listening-speed-btn rev active" id="listeningRevBtnQ" onclick="setListeningReverseBtn(false)">問→答</button>
-        <button class="listening-speed-btn rev" id="listeningRevBtnA" onclick="setListeningReverseBtn(true)">答→問</button>
-      </div>
-    </div>
   </div>
 </div>
 
+<!-- Listening Bottom Sheet -->
+<div class="listening-sheet-overlay" id="listeningSheetOverlay" onclick="closeListeningSheet(event)">
+  <div class="listening-sheet" onclick="event.stopPropagation()">
+    <div class="listening-sheet-handle"></div>
+    <div class="listening-sheet-title" id="listeningSheetTitle"></div>
+    <div id="listeningSheetTimer" style="display:none;">
+      <div class="timer-popup" id="timerPopup">
+        <button class="timer-popup-btn active" onclick="setSleepTimer(0)">OFF</button>
+        <button class="timer-popup-btn" onclick="setSleepTimer(5)">5分</button>
+        <button class="timer-popup-btn" onclick="setSleepTimer(10)">10分</button>
+        <button class="timer-popup-btn" onclick="setSleepTimer(15)">15分</button>
+        <button class="timer-popup-btn" onclick="setSleepTimer(30)">30分</button>
+        <button class="timer-popup-btn" onclick="setSleepTimer(45)">45分</button>
+        <button class="timer-popup-btn" onclick="setSleepTimer(60)">60分</button>
+      </div>
+    </div>
+    <div id="listeningSheetSettings" style="display:none;">
+      <div class="listening-settings-panel" id="listeningSettingsPanel">
+        <div class="listening-speed">
+          <span>問→答</span>
+          <button class="listening-speed-btn q2a active" onclick="setListeningDelay('q2a', 1)">1秒</button>
+          <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 2)">2秒</button>
+          <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 3)">3秒</button>
+          <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 5)">5秒</button>
+          <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 10)">10秒</button>
+          <button class="listening-speed-btn q2a" onclick="setListeningDelay('q2a', 15)">15秒</button>
+        </div>
+        <div class="listening-speed">
+          <span>答→次</span>
+          <button class="listening-speed-btn a2n active" onclick="setListeningDelay('a2n', 1)">1秒</button>
+          <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 2)">2秒</button>
+          <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 3)">3秒</button>
+          <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 5)">5秒</button>
+          <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 10)">10秒</button>
+          <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 15)">15秒</button>
+        </div>
+        <div class="listening-speed">
+          <span>出題形式</span>
+          <button class="listening-speed-btn rev active" id="listeningRevBtnQ" onclick="setListeningReverseBtn(false)">問→答</button>
+          <button class="listening-speed-btn rev" id="listeningRevBtnA" onclick="setListeningReverseBtn(true)">答→問</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Bottom Navigation Bar -->
@@ -5255,7 +5307,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.4.0';
+const APP_VERSION = 'v2.4.5';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -10593,9 +10645,8 @@ function startListeningMode() {
   loadListeningDeck();
   document.getElementById('listeningRevBtnQ')?.classList.toggle('active', !listeningReverse);
   document.getElementById('listeningRevBtnA')?.classList.toggle('active', listeningReverse);
-  const sp = document.getElementById('listeningSettingsPanel');
-  if (sp) sp.classList.remove('open');
-  document.getElementById('timerPopup')?.classList.remove('open');
+  const sp = document.getElementById('listeningSheetOverlay');
+  if (sp) sp.classList.remove('show');
 }
 
 function loadListeningDeck() {
@@ -10698,13 +10749,29 @@ function setListeningReverseBtn(reverse) {
 }
 
 function toggleListeningSettings() {
-  const panel = document.getElementById('listeningSettingsPanel');
-  if (panel) {
-    panel.classList.toggle('open');
-    if (panel.classList.contains('open')) {
-      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-    }
+  openListeningSheet('settings');
+}
+
+function openListeningSheet(type) {
+  const overlay = document.getElementById('listeningSheetOverlay');
+  const timerSection = document.getElementById('listeningSheetTimer');
+  const settingsSection = document.getElementById('listeningSheetSettings');
+  const title = document.getElementById('listeningSheetTitle');
+  timerSection.style.display = 'none';
+  settingsSection.style.display = 'none';
+  if (type === 'timer') {
+    timerSection.style.display = '';
+    title.textContent = 'スリープタイマー';
+  } else {
+    settingsSection.style.display = '';
+    title.textContent = '設定';
   }
+  overlay.classList.add('show');
+}
+
+function closeListeningSheet(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('listeningSheetOverlay').classList.remove('show');
 }
 
 function updateListeningSpeed(val) {
@@ -10716,13 +10783,7 @@ let sleepTimerId = null;
 let sleepTimerEnd = 0;
 
 function toggleTimerPopup() {
-  const popup = document.getElementById('timerPopup');
-  if (popup) {
-    popup.classList.toggle('open');
-    if (popup.classList.contains('open')) {
-      setTimeout(() => popup.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-    }
-  }
+  openListeningSheet('timer');
 }
 
 function setSleepTimer(minutes) {
@@ -10735,7 +10796,7 @@ function setSleepTimer(minutes) {
     sleepTimerEnd = 0;
     if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
     showToast('タイマー OFF');
-    document.getElementById('timerPopup')?.classList.remove('open');
+    document.getElementById('listeningSheetOverlay')?.classList.remove('show');
     return;
   }
   sleepTimerEnd = Date.now() + minutes * 60 * 1000;
@@ -10751,7 +10812,7 @@ function setSleepTimer(minutes) {
     showToast('タイマーで停止しました');
   }, minutes * 60 * 1000);
   showToast(minutes + '分後に停止します');
-  document.getElementById('timerPopup')?.classList.remove('open');
+  document.getElementById('listeningSheetOverlay')?.classList.remove('show');
 }
 
 function updateListeningDisplay() {
