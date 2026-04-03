@@ -878,17 +878,17 @@ body.dark-mode .cal-day-popup {
 .listening-card {
   background: white;
   border-radius: var(--radius);
-  padding: 40px 24px;
+  padding: 36px 24px;
   box-shadow: var(--shadow-md);
   width: 100%;
   max-width: 400px;
   text-align: center;
-  min-height: 220px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 18px;
   margin-bottom: 10px;
   position: relative;
 }
@@ -934,17 +934,17 @@ body.dark-mode .listening-save-bar.active {
   background: #2a2535;
 }
 .listening-question {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--gray-800);
   line-height: 1.5;
 }
 .listening-answer {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--answer-color, #F97316);
   line-height: 1.5;
-  min-height: 28px;
+  min-height: 26px;
 }
 .listening-controls {
   display: flex;
@@ -5255,7 +5255,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.3.8';
+const APP_VERSION = 'v2.4.0';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -10699,7 +10699,12 @@ function setListeningReverseBtn(reverse) {
 
 function toggleListeningSettings() {
   const panel = document.getElementById('listeningSettingsPanel');
-  if (panel) panel.classList.toggle('open');
+  if (panel) {
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    }
+  }
 }
 
 function updateListeningSpeed(val) {
@@ -10712,7 +10717,12 @@ let sleepTimerEnd = 0;
 
 function toggleTimerPopup() {
   const popup = document.getElementById('timerPopup');
-  if (popup) popup.classList.toggle('open');
+  if (popup) {
+    popup.classList.toggle('open');
+    if (popup.classList.contains('open')) {
+      setTimeout(() => popup.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    }
+  }
 }
 
 function setSleepTimer(minutes) {
