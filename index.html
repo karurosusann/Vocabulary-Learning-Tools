@@ -922,7 +922,7 @@ body.dark-mode .listening-card {
 .listening-answer {
   font-size: 16px;
   font-weight: 600;
-  color: var(--orange-500);
+  color: var(--answer-color, #F97316);
   line-height: 1.5;
   min-height: 24px;
 }
@@ -1017,6 +1017,43 @@ body.dark-mode .listening-card {
 .listening-settings-panel.open {
   max-height: 400px;
   padding: 8px 4px;
+}
+.timer-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--orange-500);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 8px;
+  line-height: 1.2;
+}
+.timer-popup {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.timer-popup.open {
+  display: flex;
+}
+.timer-popup-btn {
+  background: none;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+}
+.timer-popup-btn.active {
+  border-color: var(--orange-500);
+  color: var(--orange-500);
 }
 .month-summary-panel {
   max-height: 0;
@@ -1767,9 +1804,11 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 .reorder-item:last-child { border-bottom: none; }
 .reorder-item.dragging {
   background: var(--orange-50);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   z-index: 10;
   border-radius: 10px;
+  position: relative;
+  border: 2px solid var(--orange-400);
 }
 .reorder-item .ro-handle {
   display: flex;
@@ -4575,7 +4614,7 @@ body.dark-mode .gdrive-setup-hint code {
           </div>
 
           <div class="setting-row">
-            <span class="setting-label">習熟度固定</span>
+            <span class="setting-label">習熟度ロック</span>
             <label class="toggle-switch">
               <input type="checkbox" id="lockLevelSwitch" onchange="selectLockLevel(this.checked)">
               <span class="toggle-slider"></span>
@@ -4742,11 +4781,20 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="listening-answer" id="listeningAnswer"></div>
     </div>
     <div class="listening-controls">
-      <div style="width:38px;margin-right:16px;"></div>
+      <button class="listening-ctrl-btn" id="listeningTimerBtn" onclick="toggleTimerPopup()" style="margin-right:16px;position:relative;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path d="M15 3h2l-2 3h2"/></svg><span class="timer-badge" id="timerBadge" style="display:none;"></span></button>
       <button class="listening-ctrl-btn" onclick="listeningPrev()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
       <button class="listening-ctrl-btn play" id="listeningPlayBtn" onclick="toggleListening()"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" id="listeningPlayIcon"><polygon points="8,5 20,12 8,19"/></svg></button>
       <button class="listening-ctrl-btn" onclick="listeningNext()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM5 6l9 6-9 6z"/></svg></button>
       <button class="listening-ctrl-btn" onclick="toggleListeningSettings()" style="margin-left:16px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+    <div class="timer-popup" id="timerPopup">
+      <button class="timer-popup-btn active" onclick="setSleepTimer(0)">OFF</button>
+      <button class="timer-popup-btn" onclick="setSleepTimer(5)">5分</button>
+      <button class="timer-popup-btn" onclick="setSleepTimer(10)">10分</button>
+      <button class="timer-popup-btn" onclick="setSleepTimer(15)">15分</button>
+      <button class="timer-popup-btn" onclick="setSleepTimer(30)">30分</button>
+      <button class="timer-popup-btn" onclick="setSleepTimer(45)">45分</button>
+      <button class="timer-popup-btn" onclick="setSleepTimer(60)">60分</button>
     </div>
     <div class="listening-settings-panel" id="listeningSettingsPanel">
       <div class="listening-speed">
@@ -4766,21 +4814,6 @@ body.dark-mode .gdrive-setup-hint code {
         <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 5)">5秒</button>
         <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 10)">10秒</button>
         <button class="listening-speed-btn a2n" onclick="setListeningDelay('a2n', 15)">15秒</button>
-      </div>
-      <div class="listening-speed">
-        <span>タイマー</span>
-        <button class="listening-speed-btn sleep active" onclick="setSleepTimer(0)">OFF</button>
-        <button class="listening-speed-btn sleep" onclick="setSleepTimer(5)">5分</button>
-        <button class="listening-speed-btn sleep" onclick="setSleepTimer(10)">10分</button>
-        <button class="listening-speed-btn sleep" onclick="setSleepTimer(15)">15分</button>
-        <button class="listening-speed-btn sleep" onclick="setSleepTimer(30)">30分</button>
-        <button class="listening-speed-btn sleep" onclick="setSleepTimer(45)">45分</button>
-        <button class="listening-speed-btn sleep" onclick="setSleepTimer(60)">60分</button>
-      </div>
-      <div class="listening-speed">
-        <span>速度</span>
-        <input type="range" class="listening-seekbar" id="listeningSpeedSlider" min="5" max="20" value="10" step="1" oninput="updateListeningSpeed(this.value)" style="flex:1;">
-        <span class="listening-speed-value" id="listeningSpeedValue">1.0x</span>
       </div>
       <div class="listening-speed">
         <span>出題形式</span>
@@ -5041,7 +5074,7 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="reorder-overlay" id="reorderOverlay" onclick="closeReorder()">
   <div class="reorder-modal" onclick="event.stopPropagation()">
     <h3>📚 デッキの並べ替え</h3>
-    <p class="reorder-hint">ボタンで順番を入れ替え</p>
+    <p class="reorder-hint">☰ をドラッグして並べ替え</p>
     <div class="reorder-list" id="reorderList"></div>
     <button class="reorder-done-btn" onclick="closeReorder()">完了</button>
   </div>
@@ -5053,8 +5086,8 @@ body.dark-mode .gdrive-setup-hint code {
     <h3 style="text-align:center;margin-bottom:16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>データをエクスポート</h3>
     <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポート形式を選択</p>
     <div class="demo-list" style="gap:8px;">
-      <button class="deck-edit-btn" onclick="closeExportPicker();exportAllData();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> JSON（バックアップ用）</button>
-      <button class="deck-edit-btn" onclick="closeExportPicker();showCsvExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> CSV（表計算ソフト用）</button>
+      <button class="deck-edit-btn" onclick="closeExportPicker();showJsonExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> バックアップ・共有用</button>
+      <button class="deck-edit-btn" onclick="closeExportPicker();showCsvExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> 一覧表示用（Excel・スプレッドシート）</button>
     </div>
   </div>
 </div>
@@ -5065,6 +5098,15 @@ body.dark-mode .gdrive-setup-hint code {
     <h3 style="text-align:center;margin-bottom:16px;">📄 CSVエクスポート</h3>
     <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
     <div class="demo-list" id="csvExportDeckList"></div>
+  </div>
+</div>
+
+<!-- JSON Export picker overlay -->
+<div class="confirm-overlay" id="deckJsonExportOverlay" onclick="closeDeckJsonExport()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📦 JSONエクスポート</h3>
+    <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
+    <div class="demo-list" id="deckJsonExportList"></div>
   </div>
 </div>
 
@@ -5153,7 +5195,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.0.7';
+const APP_VERSION = 'v2.2.3';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -5914,13 +5956,12 @@ let imgDB = null;
 function openImageDB() {
   return new Promise((resolve, reject) => {
     if (imgDB) {
-      // Check if connection is still alive
       try {
         imgDB.transaction(IMG_STORE, 'readonly');
         resolve(imgDB);
         return;
       } catch(e) {
-        // Connection was closed — reopen
+        try { imgDB.close(); } catch(e2) {}
         imgDB = null;
       }
     }
@@ -5934,7 +5975,13 @@ function openImageDB() {
       imgDB.onversionchange = () => { imgDB.close(); imgDB = null; };
       resolve(imgDB);
     };
-    req.onerror = e => reject(e);
+    req.onerror = e => reject(e.target.error || e);
+    req.onblocked = () => {
+      // DB is blocked by a pending deleteDatabase - retry after a short delay
+      setTimeout(() => {
+        openImageDB().then(resolve).catch(reject);
+      }, 200);
+    };
   });
 }
 
@@ -7279,14 +7326,98 @@ function renderReorderList() {
   const list = document.getElementById('reorderList');
   list.innerHTML = decks.map((deck, i) => `
     <div class="reorder-item" data-index="${i}">
-      <div class="ro-arrows">
-        <button class="ro-arrow-btn" onclick="moveDeckInList(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
-        <button class="ro-arrow-btn" onclick="moveDeckInList(${i}, 1)" ${i === decks.length - 1 ? 'disabled' : ''}>▼</button>
-      </div>
+      <div class="ro-handle">☰</div>
       <div class="ro-name">${escapeHtml(deck.name)}</div>
       <div class="ro-count">${deck.words.length}問</div>
     </div>
   `).join('');
+  initReorderDrag();
+}
+
+function initReorderDrag() {
+  const list = document.getElementById('reorderList');
+  if (!list) return;
+  let dragItem = null;
+  let startY = 0;
+  let dragIndex = -1;
+
+  list.querySelectorAll('.ro-handle').forEach(handle => {
+    handle.addEventListener('touchstart', onStart, { passive: false });
+    handle.addEventListener('mousedown', onStart);
+  });
+
+  function onStart(e) {
+    e.preventDefault();
+    dragItem = e.target.closest('.reorder-item');
+    if (!dragItem) return;
+    dragIndex = parseInt(dragItem.dataset.index);
+    startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+    dragItem.classList.add('dragging');
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('mouseup', onEnd);
+  }
+
+  function onMove(e) {
+    if (!dragItem) return;
+    e.preventDefault();
+    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+    const diff = clientY - startY;
+    dragItem.style.transform = `translateY(${diff}px)`;
+
+    const items = [...list.querySelectorAll('.reorder-item')];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item === dragItem) continue;
+      const rect = item.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (clientY < mid && i < dragIndex) {
+        list.insertBefore(dragItem, item);
+        reindexItems();
+        startY = clientY;
+        dragItem.style.transform = '';
+        break;
+      } else if (clientY > mid && i > dragIndex) {
+        list.insertBefore(dragItem, item.nextSibling);
+        reindexItems();
+        startY = clientY;
+        dragItem.style.transform = '';
+        break;
+      }
+    }
+  }
+
+  function reindexItems() {
+    [...list.querySelectorAll('.reorder-item')].forEach((item, i) => {
+      item.dataset.index = i;
+    });
+    dragIndex = parseInt(dragItem.dataset.index);
+  }
+
+  function onEnd() {
+    if (dragItem) {
+      dragItem.classList.remove('dragging');
+      dragItem.style.transform = '';
+      // Commit new order
+      const newOrder = [...list.querySelectorAll('.reorder-item')].map(item => {
+        const name = item.querySelector('.ro-name').textContent;
+        return decks.find(d => d.name === name);
+      }).filter(Boolean);
+      if (newOrder.length === decks.length) {
+        decks.length = 0;
+        decks.push(...newOrder);
+        saveState();
+        renderDeckList();
+        updateDashboard();
+      }
+      dragItem = null;
+    }
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchend', onEnd);
+    document.removeEventListener('mouseup', onEnd);
+  }
 }
 
 function moveDeckInList(fromIdx, direction) {
@@ -7766,7 +7897,7 @@ function showLockedMessage() {
 
 // ============ QUIZ SETUP ============
 let quizDrillMode = true;
-let quizLockLevel = false; // 習熟度固定: true = levels don't change
+let quizLockLevel = false; // 習熟度ロック: true = levels don't change
 let reviewMode = false;
 let lastMainQuizCount = 10; // remembers the count from non-review quizzes
 let reverseMode = false;
@@ -10120,7 +10251,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'deckJsonExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
@@ -10159,8 +10290,14 @@ function doResetAll() {
   lsRemove('mikan_decks');
   lsRemove('mikan_activeDeck');
   lsRemove(STUDY_LOG_KEY);
-  // Clear image DB
-  try { indexedDB.deleteDatabase(IMG_DB_NAME); imgDB = null; } catch(e) {}
+  // Clear image DB - close connection first, then delete
+  try {
+    if (imgDB) { imgDB.close(); imgDB = null; }
+    const delReq = indexedDB.deleteDatabase(IMG_DB_NAME);
+    delReq.onsuccess = () => { console.log('Image DB deleted'); };
+    delReq.onerror = () => { console.error('Image DB delete error'); };
+    delReq.onblocked = () => { console.warn('Image DB delete blocked'); };
+  } catch(e) {}
   showScreen('import');
   showToast('すべてのデッキを削除しました');
 }
@@ -10241,6 +10378,63 @@ function closeCsvExport() {
   document.getElementById('csvExportOverlay').classList.remove('show');
 }
 
+function showJsonExport() {
+  if (decks.length === 0) {
+    showToast('エクスポートするデッキがありません');
+    return;
+  }
+  const list = document.getElementById('deckJsonExportList');
+  let html = '';
+  html += '<button class="demo-item" onclick="closeDeckJsonExport();exportAllData();">📦 全デッキ（全体バックアップ）<span>' + decks.length + 'デッキ</span></button>';
+  decks.forEach(d => {
+    html += '<button class="demo-item" onclick="exportDeckAsJson(\'' + d.id + '\')">' +
+      escapeHtml(d.name) + '<span>' + d.words.length + '語</span></button>';
+  });
+  list.innerHTML = html;
+  document.getElementById('deckJsonExportOverlay').classList.add('show');
+}
+
+function closeDeckJsonExport() {
+  document.getElementById('deckJsonExportOverlay').classList.remove('show');
+}
+
+async function exportDeckAsJson(deckId) {
+  const deck = decks.find(d => d.id === deckId);
+  if (!deck) return;
+  // Collect image IDs for this deck
+  const imageIds = new Set();
+  deck.words.forEach(w => {
+    if (w.questionImageId) imageIds.add(w.questionImageId);
+    if (w.answerImageId) imageIds.add(w.answerImageId);
+  });
+  const images = {};
+  for (const id of imageIds) {
+    const data = await loadImage(id);
+    if (data) images[id] = data;
+  }
+  const data = {
+    version: 2,
+    app: 'CSVocab',
+    type: 'single_deck',
+    exportedAt: new Date().toISOString(),
+    deck: deck,
+    images: Object.keys(images).length > 0 ? images : undefined
+  };
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = deck.name + '_' + date + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  closeDeckJsonExport();
+  showToast('📤 「' + deck.name + '」をエクスポートしました');
+}
+
 function escapeCSVField(value) {
   const str = String(value);
   if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
@@ -10280,6 +10474,7 @@ function startListeningMode() {
   document.getElementById('listeningRevBtnA')?.classList.toggle('active', listeningReverse);
   const sp = document.getElementById('listeningSettingsPanel');
   if (sp) sp.classList.remove('open');
+  document.getElementById('timerPopup')?.classList.remove('open');
 }
 
 function loadListeningDeck() {
@@ -10394,27 +10589,38 @@ function updateListeningSpeed(val) {
 let sleepTimerId = null;
 let sleepTimerEnd = 0;
 
+function toggleTimerPopup() {
+  const popup = document.getElementById('timerPopup');
+  if (popup) popup.classList.toggle('open');
+}
+
 function setSleepTimer(minutes) {
   if (sleepTimerId) { clearTimeout(sleepTimerId); sleepTimerId = null; }
-  document.querySelectorAll('.listening-speed-btn.sleep').forEach(b => {
+  document.querySelectorAll('.timer-popup-btn').forEach(b => {
     b.classList.toggle('active', parseInt(b.textContent) === minutes || (minutes === 0 && b.textContent === 'OFF'));
   });
+  const badge = document.getElementById('timerBadge');
   if (minutes === 0) {
     sleepTimerEnd = 0;
+    if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
     showToast('タイマー OFF');
+    document.getElementById('timerPopup')?.classList.remove('open');
     return;
   }
   sleepTimerEnd = Date.now() + minutes * 60 * 1000;
+  if (badge) { badge.style.display = ''; badge.textContent = minutes + '分'; }
   sleepTimerId = setTimeout(() => {
     pauseListening();
     sleepTimerId = null;
     sleepTimerEnd = 0;
-    document.querySelectorAll('.listening-speed-btn.sleep').forEach(b => {
+    if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
+    document.querySelectorAll('.timer-popup-btn').forEach(b => {
       b.classList.toggle('active', b.textContent === 'OFF');
     });
     showToast('タイマーで停止しました');
   }, minutes * 60 * 1000);
   showToast(minutes + '分後に停止します');
+  document.getElementById('timerPopup')?.classList.remove('open');
 }
 
 function updateListeningDisplay() {
@@ -10703,16 +10909,15 @@ function importAllData(event) {
   const file = fileInput.files[0];
   if (!file) return;
 
-  // iOS Safari fix: aggressively reset file input to prevent phantom overlay blocking touches
-  fileInput.value = '';
-  fileInput.blur();
-  if (document.activeElement === fileInput) {
-    document.activeElement.blur();
-  }
-
   const reader = new FileReader();
-  reader.onload = function(e) {
-    // iOS Safari fix: ensure no element retains focus that could block interactions
+  reader.onerror = function() {
+    fileInput.value = '';
+    showToast('❌ ファイルの読み込みに失敗しました');
+  };
+  reader.onload = async function(e) {
+    // Reset file input AFTER reading is complete
+    fileInput.value = '';
+    fileInput.blur();
     if (document.activeElement && document.activeElement !== document.body) {
       document.activeElement.blur();
     }
@@ -10720,7 +10925,28 @@ function importAllData(event) {
     try {
       const data = JSON.parse(e.target.result);
 
-      // Validate
+      // Handle single deck JSON
+      if (data.type === 'single_deck' && data.deck) {
+        if (!data.deck.id || !data.deck.name || !Array.isArray(data.deck.words)) {
+          showToast('❌ デッキデータが不正です');
+          return;
+        }
+        // Convert to full format for import
+        const fullData = {
+          version: data.version,
+          app: data.app,
+          decks: [data.deck],
+          images: data.images
+        };
+        if (decks.length > 0) {
+          showImportChoiceModal(fullData);
+        } else {
+          await applyImportData(fullData, 'replace');
+        }
+        return;
+      }
+
+      // Validate full backup format
       if (!data.decks || !Array.isArray(data.decks)) {
         showToast('❌ 無効なファイル形式です');
         return;
@@ -10740,10 +10966,11 @@ function importAllData(event) {
         showImportChoiceModal(data);
       } else {
         // No existing data, just load
-        applyImportData(data, 'replace');
+        await applyImportData(data, 'replace');
       }
     } catch (err) {
-      showToast('❌ JSONの読み込みに失敗しました');
+      console.error('Import parse error:', err);
+      showToast('❌ JSONの読み込みに失敗しました: ' + (err.message || ''));
     }
   };
   reader.readAsText(file);
@@ -10768,88 +10995,92 @@ function showImportChoiceModal(data) {
       <button class="confirm-cancel" onclick="closeConfirm();">キャンセル</button>
     </div>
   `;
-  window._importData = data;
+
+  // Use closure to capture data directly
+  const mergeBtn = document.getElementById('importMergeBtn');
+  const replaceBtn = document.getElementById('importReplaceBtn');
   
-  // Use addEventListener instead of inline onclick for more reliable iOS behavior
-  document.getElementById('importMergeBtn').addEventListener('click', function() {
-    const d = window._importData;
+  mergeBtn.onclick = async function() {
+    mergeBtn.disabled = true;
+    replaceBtn.disabled = true;
     closeConfirm();
-    if (d) applyImportData(d, 'merge');
-  });
-  document.getElementById('importReplaceBtn').addEventListener('click', function() {
-    const d = window._importData;
+    await applyImportData(data, 'merge');
+  };
+  replaceBtn.onclick = async function() {
+    mergeBtn.disabled = true;
+    replaceBtn.disabled = true;
     closeConfirm();
-    if (d) applyImportData(d, 'replace');
-  });
+    await applyImportData(data, 'replace');
+  };
   
   overlay.classList.add('show');
 }
 
 async function applyImportData(data, mode) {
-  if (mode === 'replace') {
-    decks = data.decks;
-    activeDeckId = data.activeDeckId || (decks.length > 0 ? decks[0].id : null);
-    // Replace study log
-    if (data.studyLog) saveStudyLog(data.studyLog);
-  } else {
-    // Merge: add new decks, update existing by ID
-    for (const importDeck of data.decks) {
-      const existing = decks.find(d => d.id === importDeck.id);
-      if (existing) {
-        existing.name = importDeck.name;
-        existing.words = importDeck.words;
-      } else {
-        decks.push(importDeck);
-      }
-    }
-    if (!activeDeckId && decks.length > 0) {
-      activeDeckId = decks[0].id;
-    }
-    // Merge study log
-    if (data.studyLog) {
-      const current = getStudyLog();
-      for (const date in data.studyLog) {
-        if (current[date]) {
-          current[date].studied += data.studyLog[date].studied || 0;
-          current[date].correct += data.studyLog[date].correct || 0;
-          current[date].sessions += data.studyLog[date].sessions || 0;
-          current[date].timeSec = (current[date].timeSec || 0) + (data.studyLog[date].timeSec || 0);
+  try {
+    if (mode === 'replace') {
+      decks = data.decks;
+      activeDeckId = data.activeDeckId || (decks.length > 0 ? decks[0].id : null);
+      if (data.studyLog) saveStudyLog(data.studyLog);
+    } else {
+      for (const importDeck of data.decks) {
+        const existing = decks.find(d => d.id === importDeck.id);
+        if (existing) {
+          existing.name = importDeck.name;
+          existing.words = importDeck.words;
         } else {
-          current[date] = data.studyLog[date];
+          decks.push(importDeck);
         }
       }
-      saveStudyLog(current);
+      if (!activeDeckId && decks.length > 0) {
+        activeDeckId = decks[0].id;
+      }
+      if (data.studyLog) {
+        const current = getStudyLog();
+        for (const date in data.studyLog) {
+          if (current[date]) {
+            current[date].studied += data.studyLog[date].studied || 0;
+            current[date].correct += data.studyLog[date].correct || 0;
+            current[date].sessions += data.studyLog[date].sessions || 0;
+            current[date].timeSec = (current[date].timeSec || 0) + (data.studyLog[date].timeSec || 0);
+          } else {
+            current[date] = data.studyLog[date];
+          }
+        }
+        saveStudyLog(current);
+      }
     }
-  }
 
-  // Import images to IndexedDB
-  if (data.images) {
-    for (const id in data.images) {
-      await saveImage(id, data.images[id]);
+    // Import images to IndexedDB
+    if (data.images) {
+      for (const id in data.images) {
+        try {
+          await saveImage(id, data.images[id]);
+        } catch(imgErr) {
+          console.error('Image import failed for', id, imgErr);
+        }
+      }
     }
-  }
 
-  // Ensure all imported words have _id and migrate old 'almost' level
-  decks.forEach(d => d.words.forEach(w => {
-    if (!w._id) w._id = generateId();
-    if (w.level === 'almost') w.level = 'mastered';
-  }));
+    // Ensure all imported words have _id and migrate old 'almost' level
+    decks.forEach(d => d.words.forEach(w => {
+      if (!w._id) w._id = generateId();
+      if (w.level === 'almost') w.level = 'mastered';
+    }));
 
-  saveState();
-  renderDeckList();
-  updateDashboard();
-  showToast('📥 データをインポートしました（' + data.decks.length + 'デッキ）');
-  window._importData = null;
-
-  // iOS Safari fix: ensure all overlays are properly closed after import
-  closeAllOverlays();
-  
-  // Navigate to dashboard after import
-  showScreen('dashboard');
-
-  // iOS Safari fix: reset any lingering focus/touch state
-  if (document.activeElement && document.activeElement !== document.body) {
-    document.activeElement.blur();
+    saveState();
+    renderDeckList();
+    updateDashboard();
+    showToast('📥 データをインポートしました（' + data.decks.length + 'デッキ）');
+    window._importData = null;
+    closeAllOverlays();
+    showScreen('dashboard');
+    if (document.activeElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
+  } catch(err) {
+    console.error('Import failed:', err);
+    showToast('❌ インポートに失敗しました: ' + err.message);
   }
 }
 
