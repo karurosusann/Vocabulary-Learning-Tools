@@ -941,9 +941,6 @@ body.dark-mode .listening-save-bar.active {
   gap: 24px;
   margin-bottom: 24px;
 }
-body.has-bottom-nav .listening-controls {
-  margin-bottom: calc(24px + 70px + env(safe-area-inset-bottom, 0px));
-}
 .listening-ctrl-btn {
   background: none;
   border: none;
@@ -1204,7 +1201,6 @@ body.dark-mode .month-summary-panel {
   /* Action section */
   .action-section { margin-top: 8px; }
   .action-btn { padding: 28px; gap: 20px; border-radius: 20px; }
-  .action-btn.study { min-height: 150px; }
   .action-btn .icon { width: 72px; height: 72px; border-radius: 50%; }
   .action-btn .text h3 { font-size: 20px; }
   .action-btn .text p { font-size: 14px; }
@@ -2011,20 +2007,6 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 .action-btn.study .icon {
   background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
   border-radius: 50%;
-  position: absolute;
-  left: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.action-btn.study {
-  position: relative;
-  min-height: 130px;
-  padding-top: 36px;
-  padding-bottom: 36px;
-}
-.action-btn.study .text {
-  width: 100%;
-  text-align: center;
 }
 .action-btn.review .icon { background: linear-gradient(135deg, var(--blue-400), var(--blue-500)); }
 .action-btn.list .icon { background: linear-gradient(135deg, var(--green-400), var(--green-600)); }
@@ -4599,6 +4581,7 @@ body.dark-mode .gdrive-setup-hint code {
         <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="8,5 20,12 8,19"/></svg></div>
         <div class="text">
           <h3>学習を始める</h3>
+          <p>範囲を選んで一問一答スタート</p>
         </div>
       </button>
     </div>
@@ -5277,7 +5260,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.13';
+const APP_VERSION = 'v2.5.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
