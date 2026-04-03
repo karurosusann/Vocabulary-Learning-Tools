@@ -1201,6 +1201,7 @@ body.dark-mode .month-summary-panel {
   /* Action section */
   .action-section { margin-top: 8px; }
   .action-btn { padding: 28px; gap: 20px; border-radius: 20px; }
+  .action-btn.study { min-height: 128px; }
   .action-btn .icon { width: 72px; height: 72px; border-radius: 50%; }
   .action-btn .text h3 { font-size: 20px; }
   .action-btn .text p { font-size: 14px; }
@@ -2012,6 +2013,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 .action-btn.study {
   position: relative;
+  min-height: 108px;
 }
 .action-btn.study .text {
   width: 100%;
@@ -5268,7 +5270,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.9';
+const APP_VERSION = 'v2.5.10';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
