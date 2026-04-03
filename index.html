@@ -297,10 +297,10 @@ body.dark-mode .drill-desc {
   color: var(--gray-500);
 }
 body.dark-mode .swipe-overlay.swipe-right-overlay {
-  background: linear-gradient(to right, transparent, rgba(251,113,133,0.25));
+  background: linear-gradient(to right, transparent, rgba(20,184,166,0.25));
 }
 body.dark-mode .swipe-overlay.swipe-left-overlay {
-  background: linear-gradient(to left, transparent, rgba(99,102,241,0.25));
+  background: linear-gradient(to left, transparent, rgba(100,116,139,0.25));
 }
 
 body.dark-mode .start-quiz-btn {
@@ -2265,20 +2265,20 @@ body.answer-match-question .answer-text-area {
   padding: 8px 0;
 }
 .quiz-card.input-correct {
-  background: #FFF1F2;
-  border: 2px solid #FDA4AF;
+  background: #F0FDFA;
+  border: 2px solid #14B8A6;
 }
 .quiz-card.input-wrong {
-  background: #EEF2FF;
-  border: 2px solid #818CF8;
+  background: #F1F5F9;
+  border: 2px solid #94A3B8;
 }
 body.dark-mode .quiz-card.input-correct {
-  background: #1c1012;
-  border-color: #FDA4AF;
+  background: #0a1c1a;
+  border-color: #14B8A6;
 }
 body.dark-mode .quiz-card.input-wrong {
-  background: #151530;
-  border-color: #818CF8;
+  background: #1a1e24;
+  border-color: #94A3B8;
 }
 .input-answer-field {
   width: 85%;
@@ -2378,22 +2378,22 @@ body.dark-mode .input-answer-field::placeholder {
   padding: 6px 24px;
   border-radius: 14px;
   border: 4px solid;
-  transform: rotate(-15deg);
+  transform: rotate(15deg);
 }
 .swipe-overlay.swipe-right-overlay {
-  background: rgba(251,113,133,0.10);
+  background: rgba(20,184,166,0.10);
 }
 .swipe-overlay.swipe-right-overlay .swipe-label {
-  color: #FB7185;
-  border-color: #FDA4AF;
+  color: #0D9488;
+  border-color: #14B8A6;
 }
 .swipe-overlay.swipe-left-overlay {
-  background: rgba(99,102,241,0.10);
+  background: rgba(100,116,139,0.10);
 }
 .swipe-overlay.swipe-left-overlay .swipe-label {
-  color: #6366F1;
-  border-color: #818CF8;
-  transform: rotate(15deg);
+  color: #64748B;
+  border-color: #94A3B8;
+  transform: rotate(-15deg);
 }
 /* Bookmark button */
 .bookmark-btn {
@@ -5260,7 +5260,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.2';
+const APP_VERSION = 'v2.5.3';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
