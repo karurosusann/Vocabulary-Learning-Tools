@@ -5195,7 +5195,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.2.3';
+const APP_VERSION = 'v2.2.4';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -11323,9 +11323,26 @@ async function forceUpdate() {
 
 // ============ PWA SERVICE WORKER ============
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(() => {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
     console.log('SW registered');
+    // 定期的にSWの更新をチェック（1時間ごと）
+    setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+    // 新しいSWが待機状態になったら自動でアクティベート
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            showToast('新しいバージョンに更新されました');
+          }
+        });
+      }
+    });
   }).catch(err => console.log('SW error:', err));
+  // controllerchangeで自動リロード
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    location.reload();
+  });
 }
 </script>
 <!-- Copy Menu (pre-rendered) -->
