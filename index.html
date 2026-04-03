@@ -3209,40 +3209,6 @@ body.dark-mode .sort-btn.active {
   font-size: 11px;
   font-weight: 600;
 }
-.word-item .wi-bookmark {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.3;
-  transition: opacity 0.15s, transform 0.15s;
-  align-self: center;
-  -webkit-tap-highlight-color: transparent;
-}
-.word-item .wi-bookmark svg {
-  width: 16px;
-  height: 16px;
-  stroke: var(--gray-400);
-  fill: none;
-  stroke-width: 2;
-  transition: stroke 0.15s, fill 0.15s;
-}
-.word-item .wi-bookmark.active {
-  opacity: 1;
-}
-.word-item .wi-bookmark.active svg {
-  stroke: var(--orange-500);
-  fill: var(--orange-500);
-}
-.word-item .wi-bookmark:active {
-  transform: scale(1.2);
-}
 
 /* Quiz mode selector */
 .answer-toggle-btn {
@@ -4810,7 +4776,6 @@ body.dark-mode .gdrive-setup-hint code {
       <button class="sort-btn" onclick="setWordSort('alpha', this)">五十音順</button>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;flex-shrink:0;">
-      <button class="answer-toggle-btn" id="clearAllBookmarksBtn" onclick="clearAllBookmarks()" style="display:none;margin-right:auto;color:var(--red-500);">すべて解除</button>
       <button class="answer-toggle-btn" id="questionToggleBtn" onclick="toggleAllQuestions()">問題を隠す</button>
       <button class="answer-toggle-btn" id="answerToggleBtn" onclick="toggleAllAnswers()">答えを隠す</button>
     </div>
@@ -4854,6 +4819,7 @@ body.dark-mode .gdrive-setup-hint code {
     <button class="bulk-action-btn select-all" onclick="bulkSelectAll()">全選択</button>
     <button class="bulk-action-btn move" onclick="showBulkMoveModal('move')">移動</button>
     <button class="bulk-action-btn move" style="background:var(--green-500);" onclick="showBulkMoveModal('copy')">コピー</button>
+    <button class="bulk-action-btn move" style="background:var(--orange-500);" onclick="bulkClearBookmarks()">保存解除</button>
     <button class="bulk-action-btn delete" onclick="bulkDelete()">削除</button>
   </div>
 </div>
@@ -5307,7 +5273,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.4.5';
+const APP_VERSION = 'v2.4.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -9599,8 +9565,6 @@ function showWordList() {
   if (abtn) { abtn.textContent = '答えを隠す'; abtn.classList.remove('hiding'); }
   const qbtn = document.getElementById('questionToggleBtn');
   if (qbtn) { qbtn.textContent = '問題を隠す'; qbtn.classList.remove('hiding'); }
-  const clearBmBtn = document.getElementById('clearAllBookmarksBtn');
-  if (clearBmBtn) clearBmBtn.style.display = 'none';
   const searchInput = document.getElementById('wordSearchInput');
   if (searchInput) { searchInput.value = ''; }
   document.getElementById('searchClear')?.classList.remove('show');
@@ -9686,35 +9650,11 @@ function filterWords(level, el) {
   el.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentWordFilter = level;
-  // Show/hide clear bookmarks button
-  const clearBtn = document.getElementById('clearAllBookmarksBtn');
-  if (clearBtn) clearBtn.style.display = (level === 'bookmarked') ? '' : 'none';
   renderWordList(level);
 }
 
 let answersHidden = false;
 let questionsHidden = false;
-
-function clearAllBookmarks() {
-  const words = getWordListWords();
-  const bookmarkedCount = words.filter(w => w.bookmarked).length;
-  if (bookmarkedCount === 0) {
-    showToast('保存済みの問題がありません');
-    return;
-  }
-  confirmAction('保存済みをすべて解除', `このデッキの保存済み（${bookmarkedCount}件）をすべて解除します。`, function() {
-    words.forEach(w => { w.bookmarked = false; });
-    saveDecks();
-    renderFilterTabs();
-    // Re-select bookmarked tab
-    const tabs = document.querySelectorAll('#filterTabs .filter-tab');
-    tabs.forEach(t => t.classList.remove('active'));
-    const bmTab = [...tabs].find(t => t.classList.contains('bookmarked'));
-    if (bmTab) bmTab.classList.add('active');
-    renderWordList('bookmarked');
-    showToast('保存済みをすべて解除しました');
-  }, '解除する');
-}
 
 function toggleAllAnswers() {
   answersHidden = !answersHidden;
@@ -9781,10 +9721,9 @@ function renderWordList(level) {
   }
 
   items.innerHTML = indexed.map(({w, idx}) => `
-    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}" data-idx="${idx}">
+    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
       <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtmlBr(w.english)}</div>
       <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtmlBr(w.japanese)}</div></div>
-      <button class="wi-bookmark ${w.bookmarked ? 'active' : ''}" onclick="event.stopPropagation();toggleWordListBookmark(this,${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
     </div>
   `).join('');
 }
@@ -9807,24 +9746,6 @@ function onTapJpn(el) {
   } else {
     speakText(el.dataset.jpn);
   }
-}
-
-function toggleWordListBookmark(btn, idx) {
-  const words = getWordListWords();
-  if (!words[idx]) return;
-  words[idx].bookmarked = !words[idx].bookmarked;
-  btn.classList.toggle('active', words[idx].bookmarked);
-  if (words[idx].bookmarked) sfxBookmark(); else sfxTap();
-  saveState();
-  // Update only the bookmarked tab count (avoid full re-render which causes layout shift)
-  updateBookmarkTabCount();
-}
-
-function updateBookmarkTabCount() {
-  const words = getWordListWords();
-  const count = words.filter(w => w.bookmarked).length;
-  const span = document.querySelector('#filterTabs .filter-tab.bookmarked .tab-count');
-  if (span) span.textContent = count;
 }
 
 // Speak two texts in sequence (wait for first to finish)
@@ -9947,6 +9868,32 @@ function bulkDelete() {
 }
 
 let bulkMoveMode = 'move'; // 'move' or 'copy'
+
+function bulkClearBookmarks() {
+  const total = getTotalSelectedCount();
+  if (total === 0) { showToast('単語を選択してください'); return; }
+  let cleared = 0;
+  for (const deckId in editorSelectedMap) {
+    const sel = editorSelectedMap[deckId];
+    if (sel.size === 0) continue;
+    const deck = decks.find(d => d.id === deckId);
+    if (!deck) continue;
+    for (const i of sel) {
+      if (deck.words[i] && deck.words[i].bookmarked) {
+        deck.words[i].bookmarked = false;
+        cleared++;
+      }
+    }
+  }
+  if (cleared === 0) { showToast('保存済みの問題がありません'); return; }
+  editorSelectedMap = {};
+  saveState();
+  exitEditorSelectMode();
+  renderEditorDeckTabs();
+  renderEditorFilterTabs();
+  renderEditorList();
+  showToast(cleared + '件の保存を解除しました');
+}
 
 function showBulkMoveModal(mode) {
   const total = getTotalSelectedCount();
