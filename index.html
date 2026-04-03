@@ -5195,7 +5195,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.2.4';
+const APP_VERSION = 'v2.2.5';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -6314,11 +6314,25 @@ let audioCtx = null;
 let audioEnabled = false;
 let soundMuted = false; // Always on
 let audioNeedsRecreate = false; // Set when page goes to background
+let audioResuming = false; // Guard against concurrent resume
+
+// Play a tiny silent buffer to force iOS to activate the audio session
+function warmUpAudio() {
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  try {
+    const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start(0);
+  } catch(e) {}
+}
 
 function initAudio() {
+  if (audioResuming) return;
   try {
+    // iOS: old context is unusable after background, close and recreate
     if (audioCtx && (audioCtx.state === 'closed' || audioNeedsRecreate)) {
-      // iOS: old context is unusable after background, close and recreate
       if (audioCtx.state !== 'closed') {
         try { audioCtx.close(); } catch(e) {}
       }
@@ -6329,10 +6343,17 @@ function initAudio() {
       audioNeedsRecreate = false;
     }
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(() => {});
+      audioResuming = true;
+      audioCtx.resume().then(() => {
+        audioResuming = false;
+        warmUpAudio();
+      }).catch(() => { audioResuming = false; });
+    } else {
+      // Context is running but may be stale after iOS background — warm it up
+      warmUpAudio();
     }
     audioEnabled = true;
-  } catch(e) { audioEnabled = false; }
+  } catch(e) { audioEnabled = false; audioResuming = false; }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -6526,11 +6547,21 @@ function playTone(freq, duration, type, vol) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       audioNeedsRecreate = false;
       audioEnabled = true;
+      warmUpAudio();
     } catch(e) { return; }
   }
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {});
+    audioCtx.resume().then(() => {
+      warmUpAudio();
+      _doPlayTone(freq, duration, type, vol);
+    }).catch(() => {});
+    return;
   }
+  _doPlayTone(freq, duration, type, vol);
+}
+
+function _doPlayTone(freq, duration, type, vol) {
+  if (!audioCtx || audioCtx.state !== 'running') return;
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
