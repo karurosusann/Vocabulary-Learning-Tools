@@ -297,23 +297,12 @@ body.dark-mode .drill-desc {
   color: var(--gray-500);
 }
 body.dark-mode .swipe-overlay.swipe-right-overlay {
-  background: linear-gradient(to right, transparent, rgba(34,197,94,0.25));
+  background: linear-gradient(to right, transparent, rgba(202,138,4,0.25));
 }
 body.dark-mode .swipe-overlay.swipe-left-overlay {
-  background: linear-gradient(to left, transparent, rgba(239,68,68,0.25));
+  background: linear-gradient(to left, transparent, rgba(139,92,246,0.25));
 }
-body.dark-mode .know-btn.dont-know {
-  background: #1a1e35;
-  border-color: var(--blue-400);
-  color: var(--blue-400);
-}
-body.dark-mode .know-btn.dont-know:hover { background: #222840; }
-body.dark-mode .know-btn.know {
-  background: #1a2818;
-  border-color: var(--green-400);
-  color: var(--green-400);
-}
-body.dark-mode .know-btn.know:hover { background: #223220; }
+
 body.dark-mode .start-quiz-btn {
   box-shadow: 0 4px 16px rgba(249,115,22,0.3);
 }
@@ -2121,13 +2110,13 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   position: relative;
   flex: 1;
   min-height: 0;
-  max-height: calc(100dvh - 310px);
+  max-height: calc(100dvh - 220px);
   margin-bottom: 4px;
   overflow: visible;
 }
 @media (max-width: 767px) {
   .quiz-card-area {
-    max-height: calc(100dvh - 360px);
+    max-height: calc(100dvh - 260px);
   }
 }
 .quiz-card-next {
@@ -2276,20 +2265,20 @@ body.answer-match-question .answer-text-area {
   padding: 8px 0;
 }
 .quiz-card.input-correct {
-  background: #F0FDF4;
-  border: 2px solid var(--green-400);
+  background: #FEFCE8;
+  border: 2px solid #EAB308;
 }
 .quiz-card.input-wrong {
-  background: #EFF6FF;
-  border: 2px solid var(--blue-400);
+  background: #F5F3FF;
+  border: 2px solid #A78BFA;
 }
 body.dark-mode .quiz-card.input-correct {
-  background: #1a2818;
-  border-color: var(--green-400);
+  background: #1c1a0a;
+  border-color: #EAB308;
 }
 body.dark-mode .quiz-card.input-wrong {
-  background: #1a1e35;
-  border-color: var(--blue-400);
+  background: #1e1535;
+  border-color: #A78BFA;
 }
 .input-answer-field {
   width: 85%;
@@ -2383,27 +2372,27 @@ body.dark-mode .input-answer-field::placeholder {
   transition: opacity 0.05s ease;
 }
 .swipe-overlay .swipe-label {
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 900;
-  letter-spacing: 4px;
-  padding: 10px 28px;
+  letter-spacing: 0;
+  padding: 6px 24px;
   border-radius: 14px;
   border: 4px solid;
   transform: rotate(-15deg);
 }
 .swipe-overlay.swipe-right-overlay {
-  background: rgba(34,197,94,0.10);
+  background: rgba(202,138,4,0.10);
 }
 .swipe-overlay.swipe-right-overlay .swipe-label {
-  color: var(--green-600);
-  border-color: var(--green-400);
+  color: #CA8A04;
+  border-color: #EAB308;
 }
 .swipe-overlay.swipe-left-overlay {
-  background: rgba(59,130,246,0.10);
+  background: rgba(139,92,246,0.10);
 }
 .swipe-overlay.swipe-left-overlay .swipe-label {
-  color: var(--blue-500);
-  border-color: var(--blue-400);
+  color: #8B5CF6;
+  border-color: #A78BFA;
   transform: rotate(15deg);
 }
 /* Bookmark button */
@@ -2577,39 +2566,40 @@ body.dark-mode .copy-menu-popup button {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Know / Don't Know buttons */
-.know-buttons-wrap {
-  margin-top: 20px;
+/* Swipe hint (shown after answer reveal in flashcard mode) */
+.swipe-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-400);
+  opacity: 0;
+  transition: opacity 0.4s ease 0.3s;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+  z-index: 3;
 }
-.know-buttons {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
+.quiz-card.revealed .swipe-hint {
+  opacity: 1;
 }
-.know-btn {
-  flex: 1;
-  padding: 18px;
-  border-radius: 14px;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid;
+@keyframes swipeHintPulse {
+  0%, 100% { transform: translateX(0); opacity: 0.6; }
+  50% { transform: translateX(4px); opacity: 1; }
 }
-.know-btn.dont-know {
-  background: #EFF6FF;
-  border-color: var(--blue-400);
-  color: var(--blue-500);
+.swipe-hint .hint-arrow-r {
+  display: inline-block;
+  animation: swipeHintPulse 1.5s ease-in-out infinite;
 }
-.know-btn.dont-know:hover { background: #DBEAFE; }
-.know-btn.know {
-  background: #F0FFF4;
-  border-color: var(--green-400);
-  color: var(--green-600);
+@keyframes swipeHintPulseL {
+  0%, 100% { transform: translateX(0); opacity: 0.6; }
+  50% { transform: translateX(-4px); opacity: 1; }
 }
-.know-btn.know:hover { background: #DCFCE7; }
+.swipe-hint .hint-arrow-l {
+  display: inline-block;
+  animation: swipeHintPulseL 1.5s ease-in-out infinite;
+}
 
 /* Quiz result */
 .quiz-result {
@@ -4458,8 +4448,6 @@ body.dark-mode .gdrive-setup-hint code {
   .action-btn:hover { transform: none; box-shadow: var(--shadow-md); }
   .quiz-back:hover { background: white; }
   .quiz-img-toggle:hover { background: white; }
-  .know-btn.dont-know:hover { background: #EFF6FF; }
-  .know-btn.know:hover { background: #F0FFF4; }
   .result-close-btn:hover { background: var(--gray-100); }
   .result-btn:hover { background: white; transform: none; }
   .result-btn.review-btn:hover { background: white; color: var(--gray-600); }
@@ -4476,8 +4464,6 @@ body.dark-mode .gdrive-setup-hint code {
   .reset-btn:hover { color: var(--gray-500); }
   .color-dot:hover { transform: none; }
   body.dark-mode .confirm-cancel:hover { background: #2a2535; }
-  body.dark-mode .know-btn.dont-know:hover { background: #1a1e35; }
-  body.dark-mode .know-btn.know:hover { background: #1a2818; }
 }
 </style>
 </head>
@@ -4643,7 +4629,7 @@ body.dark-mode .gdrive-setup-hint code {
               <button class="mode-toggle-btn" onclick="selectMode('normal', this)">ノーマル</button>
             </div>
           </div>
-          <div class="drill-desc" id="drillDesc">「知らない」を選んだ単語を覚えるまで繰り返し出題します</div>
+          <div class="drill-desc" id="drillDesc">「知らない」と判定した単語を覚えるまで繰り返し出題します</div>
 
           <div class="setting-row">
             <span class="setting-label">出題順</span>
@@ -4734,8 +4720,8 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="quiz-timer-bar" id="quizTimerBar" style="display:none;">
         <div class="quiz-timer-fill" id="quizTimerFill"></div>
       </div>
-      <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
-      <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
+      <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">○</span></div>
+      <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">×</span></div>
       <div class="quiz-card-topbar">
         <button class="quiz-copy-btn" id="quizCopyBtn" onclick="event.stopPropagation();copyQuizText()" style="margin-left:0;margin-right:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         <div class="level-badge" id="quizBadge">未学習</div>
@@ -4744,6 +4730,7 @@ body.dark-mode .gdrive-setup-hint code {
       </div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
+      <div class="swipe-hint" id="swipeHint"><span class="hint-arrow-l">←</span> × ｜ ○ <span class="hint-arrow-r">→</span></div>
       </div>
     </div>
     <div id="quizBody" onclick="onQuizBodyTap()"></div>
@@ -5111,7 +5098,7 @@ body.dark-mode .gdrive-setup-hint code {
       <div class="help-section">
         <h3>📝 学習の使い方</h3>
         <p><strong>ステータスカード：</strong> 各状態（未学習・苦手など）をタップで直接学習開始</p>
-        <p><strong>ノーマルモード：</strong> 知ってる/知らないで仕分け。正解で状態がアップ</p>
+        <p><strong>ノーマルモード：</strong> スワイプで知ってる/知らないを仕分け。正解で状態がアップ</p>
         <p><strong>特訓モード：</strong> 間違えた問題を覚えるまで繰り返し出題</p>
         <p><strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> 保存：</strong> 気になる単語をピンして後でまとめて復習</p>
       </div>
@@ -5273,7 +5260,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.4.7';
+const APP_VERSION = 'v2.5.0';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -8532,6 +8519,10 @@ async function showQuizQuestion() {
   if (swLO) { swLO.style.transition = 'none'; swLO.style.opacity = '0'; }
   swipeEnabled = false;
   
+  // Show/hide swipe hint based on mode
+  const swipeHint = document.getElementById('swipeHint');
+  if (swipeHint) swipeHint.style.display = quizInputMode ? 'none' : '';
+
   // Update bookmark button in card (skip transition to prevent flash)
   const bkmBtn = document.getElementById('bookmarkBtn');
   if (bkmBtn) {
@@ -8563,19 +8554,12 @@ async function showQuizQuestion() {
     `;
     body.innerHTML = '';
   } else {
-    // Flashcard mode: tap hint + hidden answer + know buttons
+    // Flashcard mode: tap hint + hidden answer (swipe to answer)
     answerReveal.innerHTML = `
       <div class="answer-tap-hint">タップして答えを見る</div>
       <div class="answer-text-area">${answerContentHtml}</div>
     `;
-    body.innerHTML = `
-      <div class="know-buttons-wrap">
-        <div class="know-buttons" id="knowButtons" style="opacity:0.3;">
-          <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない</button>
-          <button class="know-btn know" onclick="answerKnowledge(true)">知ってる</button>
-        </div>
-      </div>
-    `;
+    body.innerHTML = '';
   }
 
   // All content updated — now reveal card
@@ -8666,9 +8650,6 @@ function revealAnswer() {
     const answerText = reverseMode ? word.english : word.japanese;
     setTimeout(() => speakText(answerText), 200);
   }
-  // Make know/don't-know buttons fully visible
-  const btns = document.getElementById('knowButtons');
-  if (btns) btns.style.opacity = '1';
   // Enable swipe
   swipeEnabled = true;
 }
