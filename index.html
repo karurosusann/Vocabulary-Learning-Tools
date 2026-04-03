@@ -839,7 +839,6 @@ body.dark-mode .cal-day-popup {
   width: 100%;
   max-width: 400px;
   margin-bottom: 20px;
-  accent-color: var(--orange-500);
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
@@ -853,21 +852,21 @@ body.dark-mode .cal-day-popup {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--orange-500);
+  background: #888;
   cursor: pointer;
 }
 .listening-seekbar::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--orange-500);
+  background: #888;
   cursor: pointer;
   border: none;
 }
 .listening-seekbar::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: var(--gray-200);
+  background: transparent;
 }
 .listening-speed-value {
   font-size: 13px;
@@ -890,28 +889,49 @@ body.dark-mode .cal-day-popup {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 10px;
   position: relative;
 }
 body.dark-mode .listening-card {
   background: #1e1a28;
 }
-.listening-bookmark-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
+.listening-save-bar {
+  width: 100%;
+  max-width: 400px;
+  padding: 26px 0;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--gray-200);
+  background: white;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-400);
   cursor: pointer;
-  color: var(--gray-300);
-  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
-.listening-bookmark-btn.active {
+.listening-save-bar.active {
   color: var(--orange-500);
+  border-color: var(--orange-500);
 }
-.listening-bookmark-btn.active svg {
-  fill: var(--orange-500);
+.listening-save-bar.active svg {
   stroke: var(--orange-500);
+  fill: var(--orange-500);
+}
+body.dark-mode .listening-save-bar {
+  background: #2a2535;
+  border-color: #3a3545;
+  color: var(--gray-400);
+}
+body.dark-mode .listening-save-bar.active {
+  color: var(--orange-500);
+  border-color: var(--orange-500);
+  background: #2a2535;
 }
 .listening-question {
   font-size: 18px;
@@ -2980,6 +3000,12 @@ body.dark-mode .copy-menu-popup button {
   white-space: nowrap;
   flex-shrink: 0;
 }
+.filter-tab .tab-count {
+  display: inline-block;
+  min-width: 1.6em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
 .filter-tab.active { color: white; }
 .filter-tab.all.active { background: var(--gray-700); }
 .filter-tab.unlearned.active { background: var(--gray-400); }
@@ -3140,6 +3166,40 @@ body.dark-mode .sort-btn.active {
   color: var(--gray-400);
   font-size: 11px;
   font-weight: 600;
+}
+.word-item .wi-bookmark {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.3;
+  transition: opacity 0.15s, transform 0.15s;
+  align-self: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.word-item .wi-bookmark svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--gray-400);
+  fill: none;
+  stroke-width: 2;
+  transition: stroke 0.15s, fill 0.15s;
+}
+.word-item .wi-bookmark.active {
+  opacity: 1;
+}
+.word-item .wi-bookmark.active svg {
+  stroke: var(--orange-500);
+  fill: var(--orange-500);
+}
+.word-item .wi-bookmark:active {
+  transform: scale(1.2);
 }
 
 /* Quiz mode selector */
@@ -4774,12 +4834,12 @@ body.dark-mode .gdrive-setup-hint code {
   </div>
   <div class="listening-player">
     <div class="listening-progress" id="listeningProgress">0 / 0</div>
-    <input type="range" class="listening-seekbar" id="listeningSeekbar" min="0" max="0" value="0" oninput="seekListening(this.value)">
+    <input type="range" class="listening-seekbar" id="listeningSeekbar" min="0" max="0" value="0" oninput="updateSeekbarFill(this);seekListening(this.value)">
     <div class="listening-card" id="listeningCard">
-      <button class="listening-bookmark-btn" id="listeningBookmarkBtn" onclick="toggleListeningBookmark()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
       <div class="listening-question" id="listeningQuestion"></div>
       <div class="listening-answer" id="listeningAnswer"></div>
     </div>
+    <button class="listening-save-bar" id="listeningBookmarkBtn" onclick="toggleListeningBookmark()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> 保存</button>
     <div class="listening-controls">
       <button class="listening-ctrl-btn" id="listeningTimerBtn" onclick="toggleTimerPopup()" style="margin-right:16px;position:relative;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path d="M15 3h2l-2 3h2"/></svg><span class="timer-badge" id="timerBadge" style="display:none;"></span></button>
       <button class="listening-ctrl-btn" onclick="listeningPrev()"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
@@ -5195,7 +5255,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.2.5';
+const APP_VERSION = 'v2.3.7';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -6664,9 +6724,7 @@ function detectLang(text) {
 
 function speakText(text) {
   if (soundMuted || !('speechSynthesis' in window) || !text) return;
-  // Stop any ongoing speech
-  window.speechSynthesis.cancel();
-  
+
   // Clean text: remove emojis, special markers, numbers-only prefixes
   let cleanText = text.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
   // Skip if text is just numbers or symbols
@@ -6689,8 +6747,15 @@ function speakText(text) {
   if (window.speechSynthesis.paused) {
     window.speechSynthesis.resume();
   }
-  
-  window.speechSynthesis.speak(u);
+
+  // iOS bug: cancel() immediately followed by speak() can swallow the utterance.
+  // Only cancel if actually speaking/pending, and delay speak after cancel.
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    window.speechSynthesis.cancel();
+    setTimeout(() => { window.speechSynthesis.speak(u); }, 50);
+  } else {
+    window.speechSynthesis.speak(u);
+  }
   
   // iOS Safari bug workaround: keep alive with periodic resume
   let iosKeepAlive = setInterval(() => {
@@ -8449,9 +8514,13 @@ async function showQuizQuestion() {
   if (swLO) { swLO.style.transition = 'none'; swLO.style.opacity = '0'; }
   swipeEnabled = false;
   
-  // Update bookmark button in card
+  // Update bookmark button in card (skip transition to prevent flash)
   const bkmBtn = document.getElementById('bookmarkBtn');
-  if (bkmBtn) bkmBtn.classList.toggle('active', !!word.bookmarked);
+  if (bkmBtn) {
+    bkmBtn.style.transition = 'none';
+    bkmBtn.classList.toggle('active', !!word.bookmarked);
+    bkmBtn.offsetHeight;
+  }
 
   const answerReveal = document.getElementById('answerReveal');
   const body = document.getElementById('quizBody');
@@ -8495,6 +8564,8 @@ async function showQuizQuestion() {
   card.offsetHeight; // force reflow to apply all changes
   card.style.transition = '';
   card.style.opacity = '';
+  // Restore bookmark button transition
+  if (bkmBtn) bkmBtn.style.transition = '';
   // Restore overlay transitions
   if (swRO) swRO.style.transition = '';
   if (swLO) swLO.style.transition = '';
@@ -9531,16 +9602,16 @@ function renderFilterTabs() {
   });
 
   const tabs = [
-    { key: 'all', label: `すべて (${counts.all})` },
-    { key: 'bookmarked', label: `保存済み (${bookmarkedCount})` },
-    { key: 'unlearned', label: `未学習 (${counts.unlearned})` },
-    { key: 'weak', label: `苦手 (${counts.weak})` },
-    { key: 'fuzzy', label: `うろ覚え (${counts.fuzzy})` },
-    { key: 'mastered', label: `覚えた (${counts.mastered})` },
+    { key: 'all', count: counts.all, name: 'すべて' },
+    { key: 'bookmarked', count: bookmarkedCount, name: '保存済み' },
+    { key: 'unlearned', count: counts.unlearned, name: '未学習' },
+    { key: 'weak', count: counts.weak, name: '苦手' },
+    { key: 'fuzzy', count: counts.fuzzy, name: 'うろ覚え' },
+    { key: 'mastered', count: counts.mastered, name: '覚えた' },
   ];
 
   document.getElementById('filterTabs').innerHTML = tabs.map((t, i) => `
-    <button class="filter-tab ${t.key} ${i === 0 ? 'active' : ''}" onclick="filterWords('${t.key}', this)">${t.label}</button>
+    <button class="filter-tab ${t.key} ${i === 0 ? 'active' : ''}" onclick="filterWords('${t.key}', this)">${t.name} (<span class="tab-count">${t.count}</span>)</button>
   `).join('');
 }
 
@@ -9658,9 +9729,10 @@ function renderWordList(level) {
   }
 
   items.innerHTML = indexed.map(({w, idx}) => `
-    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}">
+    <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}" data-idx="${idx}">
       <div class="eng ${questionsHidden ? 'hidden-question' : ''}" onclick="onTapEng(this.parentElement)">${escapeHtmlBr(w.english)}</div>
       <div class="jpn-container" onclick="onTapJpn(this.parentElement)"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtmlBr(w.japanese)}</div></div>
+      <button class="wi-bookmark ${w.bookmarked ? 'active' : ''}" onclick="event.stopPropagation();toggleWordListBookmark(this,${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
     </div>
   `).join('');
 }
@@ -9683,6 +9755,24 @@ function onTapJpn(el) {
   } else {
     speakText(el.dataset.jpn);
   }
+}
+
+function toggleWordListBookmark(btn, idx) {
+  const words = getWordListWords();
+  if (!words[idx]) return;
+  words[idx].bookmarked = !words[idx].bookmarked;
+  btn.classList.toggle('active', words[idx].bookmarked);
+  if (words[idx].bookmarked) sfxBookmark(); else sfxTap();
+  saveState();
+  // Update only the bookmarked tab count (avoid full re-render which causes layout shift)
+  updateBookmarkTabCount();
+}
+
+function updateBookmarkTabCount() {
+  const words = getWordListWords();
+  const count = words.filter(w => w.bookmarked).length;
+  const span = document.querySelector('#filterTabs .filter-tab.bookmarked .tab-count');
+  if (span) span.textContent = count;
 }
 
 // Speak two texts in sequence (wait for first to finish)
@@ -9967,16 +10057,16 @@ function renderEditorFilterTabs() {
   });
 
   const tabs = [
-    { key: 'all', label: `すべて (${counts.all})` },
-    { key: 'bookmarked', label: `保存済み (${bookmarkedCount})` },
-    { key: 'unlearned', label: `未学習 (${counts.unlearned})` },
-    { key: 'weak', label: `苦手 (${counts.weak})` },
-    { key: 'fuzzy', label: `うろ覚え (${counts.fuzzy})` },
-    { key: 'mastered', label: `覚えた (${counts.mastered})` },
+    { key: 'all', count: counts.all, name: 'すべて' },
+    { key: 'bookmarked', count: bookmarkedCount, name: '保存済み' },
+    { key: 'unlearned', count: counts.unlearned, name: '未学習' },
+    { key: 'weak', count: counts.weak, name: '苦手' },
+    { key: 'fuzzy', count: counts.fuzzy, name: 'うろ覚え' },
+    { key: 'mastered', count: counts.mastered, name: '覚えた' },
   ];
 
   document.getElementById('editorFilterTabs').innerHTML = tabs.map(t => `
-    <button class="filter-tab ${t.key} ${t.key === editorFilter ? 'active' : ''}" onclick="filterEditorWords('${t.key}', this)">${t.label}</button>
+    <button class="filter-tab ${t.key} ${t.key === editorFilter ? 'active' : ''}" onclick="filterEditorWords('${t.key}', this)">${t.name} (<span class="tab-count">${t.count}</span>)</button>
   `).join('');
 }
 
@@ -10560,16 +10650,16 @@ function renderListeningFilterTabs() {
   words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
 
   const tabs = [
-    { key: 'all', label: `すべて (${counts.all})` },
-    { key: 'bookmarked', label: `保存済み (${bookmarkedCount})` },
-    { key: 'unlearned', label: `未学習 (${counts.unlearned})` },
-    { key: 'weak', label: `苦手 (${counts.weak})` },
-    { key: 'fuzzy', label: `うろ覚え (${counts.fuzzy})` },
-    { key: 'mastered', label: `覚えた (${counts.mastered})` },
+    { key: 'all', count: counts.all, name: 'すべて' },
+    { key: 'bookmarked', count: bookmarkedCount, name: '保存済み' },
+    { key: 'unlearned', count: counts.unlearned, name: '未学習' },
+    { key: 'weak', count: counts.weak, name: '苦手' },
+    { key: 'fuzzy', count: counts.fuzzy, name: 'うろ覚え' },
+    { key: 'mastered', count: counts.mastered, name: '覚えた' },
   ];
 
   document.getElementById('listeningFilterTabs').innerHTML = tabs.map(t => `
-    <button class="filter-tab ${t.key} ${t.key === listeningFilter ? 'active' : ''}" onclick="filterListeningWords('${t.key}', this)">${t.label}</button>
+    <button class="filter-tab ${t.key} ${t.key === listeningFilter ? 'active' : ''}" onclick="filterListeningWords('${t.key}', this)">${t.name} (<span class="tab-count">${t.count}</span>)</button>
   `).join('');
 }
 
@@ -10673,7 +10763,23 @@ function updateListeningDisplay() {
   if (seekbar) {
     seekbar.max = Math.max(s.words.length - 1, 0);
     seekbar.value = s.index;
+    updateSeekbarFill(seekbar);
   }
+}
+
+function updateSeekbarFill(el) {
+  const max = parseFloat(el.max) || 1;
+  const val = parseFloat(el.value) || 0;
+  const ratio = val / max;
+  // Thumb is 18px wide; its center moves from 9px to (trackWidth - 9px)
+  const thumbHalf = 9;
+  const trackW = el.offsetWidth || 200;
+  const pos = thumbHalf + ratio * (trackW - thumbHalf * 2);
+  const pct = (pos / trackW) * 100;
+  const dark = document.body.classList.contains('dark-mode');
+  const filled = dark ? '#aaa' : '#999';
+  const track = dark ? '#3a3545' : '#e5e7eb';
+  el.style.background = `linear-gradient(to right, ${filled} ${pct}%, ${track} ${pct}%)`;
 }
 
 function seekListening(val) {
@@ -10697,8 +10803,17 @@ function toggleListeningBookmark() {
   w.bookmarked = !w.bookmarked;
   const bmBtn = document.getElementById('listeningBookmarkBtn');
   if (bmBtn) bmBtn.classList.toggle('active', w.bookmarked);
-  sfxBookmark();
+  if (w.bookmarked) sfxBookmark(); else sfxTap();
   saveState();
+  updateListeningBookmarkTabCount();
+}
+
+function updateListeningBookmarkTabCount() {
+  const deck = decks.find(d => d.id === listeningDeckId);
+  const words = deck ? deck.words : [];
+  const count = words.filter(w => w.bookmarked).length;
+  const span = document.querySelector('#listeningFilterTabs .filter-tab.bookmarked .tab-count');
+  if (span) span.textContent = count;
 }
 
 function updatePlayBtnIcon() {
