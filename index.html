@@ -5229,12 +5229,6 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-label">プライバシーポリシー</span>
       </button>
       <div class="settings-menu-divider"></div>
-      <!-- DEBUG: Remove before release -->
-      <button class="settings-menu-item" onclick="closeSettings();localStorage.removeItem('csvocab_onboarding_done');document.getElementById('welcomeOverlay').style.display='flex';">
-        <span class="menu-icon" style="background:var(--blue-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-        <span class="menu-label" style="color:var(--blue-500);">ウェルカム画面を再表示（デバッグ）</span>
-      </button>
-      <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)" style="color:var(--red-500);">
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
         <span class="menu-label" style="color:var(--red-500);">すべてのデータを削除</span>
@@ -5499,7 +5493,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.6.9';
+const APP_VERSION = 'v2.7.0';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
