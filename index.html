@@ -5493,7 +5493,33 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.7.0';
+const APP_VERSION = 'v2.7.1';
+
+// ============ CAPACITOR NATIVE INTEGRATION ============
+const isCapacitor = typeof window.Capacitor !== 'undefined';
+
+function triggerHaptic(style) {
+  if (!isCapacitor) return;
+  try {
+    const { Haptics } = Capacitor.Plugins;
+    if (style === 'success') {
+      Haptics.notification({ type: 'SUCCESS' });
+    } else if (style === 'error') {
+      Haptics.notification({ type: 'ERROR' });
+    } else {
+      Haptics.impact({ style: 'MEDIUM' });
+    }
+  } catch(e) { /* not available */ }
+}
+
+function updateStatusBarStyle(isDark) {
+  if (!isCapacitor) return;
+  try {
+    const { StatusBar } = Capacitor.Plugins;
+    StatusBar.setStyle({ style: isDark ? 'DARK' : 'LIGHT' });
+    StatusBar.setBackgroundColor({ color: isDark ? '#121018' : '#F8F9FA' });
+  } catch(e) { /* not available */ }
+}
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -5529,6 +5555,7 @@ function toggleDarkMode() {
   lsSet('csvocab_dark_mode', isDark ? '1' : '0');
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', isDark ? '#121018' : '#F8F9FA');
+  updateStatusBarStyle(isDark);
   updateSettingsDarkUI();
   updateAnswerColorUI(localStorage.getItem(ANSWER_COLOR_KEY) || DEFAULT_ANSWER_COLOR);
 }
@@ -5554,6 +5581,9 @@ function updateSettingsDarkUI() {
     document.documentElement.classList.add('dark-mode');
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', '#121018');
+    updateStatusBarStyle(true);
+  } else {
+    updateStatusBarStyle(false);
   }
 })();
 
@@ -9257,6 +9287,7 @@ function processQuizAnswer(word, isCorrect) {
   const q = currentQuiz;
   if (isCorrect) {
     q.correct++;
+    triggerHaptic('success');
     word.correctCount = (word.correctCount || 0) + 1;
     if (!reviewMode) {
       if (quizDrillMode && q.drillWrongSet.has(wordKey(word))) {
@@ -9279,6 +9310,7 @@ function processQuizAnswer(word, isCorrect) {
     if (quizDrillMode) q.masteredCount++;
   } else {
     q.wrong++;
+    triggerHaptic('error');
     word.wrongCount = (word.wrongCount || 0) + 1;
     if (!reviewMode) {
       word.level = 'weak';
