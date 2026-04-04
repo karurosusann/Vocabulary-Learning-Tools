@@ -941,9 +941,6 @@ body.dark-mode .listening-save-bar.active {
   gap: 24px;
   margin-bottom: 24px;
 }
-body.has-bottom-nav .listening-controls {
-  margin-bottom: calc(24px + 70px + env(safe-area-inset-bottom, 0px));
-}
 .listening-ctrl-btn {
   background: none;
   border: none;
@@ -3287,8 +3284,12 @@ body.dark-mode .sort-btn.active {
 #screen-listening.active {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+body.has-bottom-nav #screen-listening.active {
+  height: calc(100dvh - 70px - env(safe-area-inset-bottom, 0px));
 }
 #screen-advanced-settings {
   display: none;
@@ -5277,7 +5278,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.14';
+const APP_VERSION = 'v2.5.15';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
