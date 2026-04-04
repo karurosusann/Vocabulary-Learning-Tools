@@ -2785,8 +2785,11 @@ body.dark-mode .copy-menu-popup button {
   transform: scale(0.9);
 }
 .quiz-result .result-icon {
-  font-size: 56px;
   margin-bottom: 16px;
+}
+.quiz-result .result-icon svg {
+  width: 56px;
+  height: 56px;
 }
 .quiz-result h2 {
   font-size: 24px;
@@ -2878,6 +2881,7 @@ body.dark-mode .copy-menu-popup button {
   color: var(--gray-600);
   margin-bottom: 0;
   text-align: center;
+  flex: 1;
 }
 .missed-section h4.missed-heading { color: var(--gray-800); }
 .missed-section h4.correct-heading { color: var(--gray-800); }
@@ -4650,7 +4654,7 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
 
     <div class="format-hint">
-      <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--gray-600);">📋 CSVフォーマット例（左:問題, 右:答え）</h4>
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--gray-600);">CSVフォーマット例（左:問題, 右:答え）</h4>
       <div class="format-tabs">
         <button class="format-tab active" onclick="switchFormatTab(0, this)">英単語</button>
         <button class="format-tab" onclick="switchFormatTab(1, this)">歴史</button>
@@ -4776,8 +4780,8 @@ body.dark-mode .gdrive-setup-hint code {
           <div class="setting-row" style="margin-top:4px;">
             <span class="setting-label">モード</span>
             <div class="mode-toggle" id="modeToggle">
-              <button class="mode-toggle-btn active" onclick="selectMode('drill', this)">反復</button>
-              <button class="mode-toggle-btn" onclick="selectMode('normal', this)">ノーマル</button>
+              <button class="mode-toggle-btn active" onclick="selectMode('normal', this)">ノーマル</button>
+              <button class="mode-toggle-btn" onclick="selectMode('drill', this)">反復</button>
             </div>
           </div>
           <div class="drill-desc" id="drillDesc">「知らない」と判定した単語を覚えるまで繰り返し出題します</div>
@@ -5461,7 +5465,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.7.2';
+const APP_VERSION = 'v2.7.7';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -8141,7 +8145,7 @@ function showLevelSelect() {
   // Load saved settings for this deck
   const saved = loadDeckSettings(activeDeckId);
   if (saved) {
-    quizDrillMode = saved.drillMode !== undefined ? saved.drillMode : true;
+    quizDrillMode = saved.drillMode !== undefined ? saved.drillMode : false;
     quizLockLevel = saved.lockLevel || false;
     reverseMode = saved.reverse || false;
     ttsMode = saved.tts || 'question';
@@ -8153,7 +8157,7 @@ function showLevelSelect() {
     quizInputMode = saved.inputMode || false;
     quizSavedCount = saved.quizCount || 10;
   } else {
-    quizDrillMode = true;
+    quizDrillMode = false;
     quizLockLevel = false;
     reverseMode = false;
     ttsMode = 'question';
@@ -8200,7 +8204,7 @@ function showLockedMessage() {
 }
 
 // ============ QUIZ SETUP ============
-let quizDrillMode = true;
+let quizDrillMode = false;
 let quizLockLevel = false; // 習熟度ロック: true = levels don't change
 let reviewMode = false;
 let lastMainQuizCount = 10; // remembers the count from non-review quizzes
@@ -8355,7 +8359,7 @@ function applyAdvancedSettingsUI() {
   // Quiz count slider
   setQuizCountSlider(quizSavedCount || 10);
   document.querySelectorAll('#modeToggle .mode-toggle-btn').forEach((b, i) => {
-    b.classList.toggle('active', quizDrillMode ? i === 0 : i === 1);
+    b.classList.toggle('active', quizDrillMode ? i === 1 : i === 0);
   });
   document.getElementById('drillDesc').style.display = quizDrillMode ? 'block' : 'none';
   // Lock level switch
@@ -9466,11 +9470,24 @@ function showResult() {
   quizHiddenAt = null;
   recordStudySession(totalAnswered, displayCorrect, elapsedSec);
 
-  let emoji, msg;
-  if (pct >= 90) { emoji = '🎉'; msg = 'すばらしい！'; }
-  else if (pct >= 70) { emoji = '😊'; msg = 'いい調子！'; }
-  else if (pct >= 50) { emoji = '💪'; msg = 'もう少し頑張ろう！'; }
-  else { emoji = '📚'; msg = '復習が大事！'; }
+  const _resultMessages = {
+    excellent: ['完璧に近い', '見事なスコア', '実力がついてきた', 'しっかり身についてる', '文句なしの結果'],
+    good: ['着実に伸びてる', 'いい仕上がり', '良いペースで進んでる', '手応えのある結果', 'もう少しで完璧'],
+    fair: ['伸びしろがある', '次はもっといける', '繰り返しが力になる', 'あと少し詰めよう'],
+    needs_work: ['ここからが勝負', '焦らず積み上げよう', '繰り返せば必ず身につく', '今日の復習が明日の力']
+  };
+  const _pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const _resultIcons = {
+    excellent: '<svg viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="26" stroke="var(--green-500)" stroke-width="2" fill="none"/><path d="M17 29l7 7 15-15" stroke="var(--green-500)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    good: '<svg viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="26" stroke="var(--blue-500)" stroke-width="2" fill="none"/><polyline points="14,36 22,28 30,32 42,20" stroke="var(--blue-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M36 20h6v6" stroke="var(--blue-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+    fair: '<svg viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="26" stroke="var(--yellow-500)" stroke-width="2" fill="none"/><path d="M28 18v12" stroke="var(--yellow-500)" stroke-width="3" stroke-linecap="round"/><circle cx="28" cy="37" r="2.5" fill="var(--yellow-500)"/></svg>',
+    needs_work: '<svg viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="26" stroke="var(--gray-400)" stroke-width="2" fill="none"/><path d="M28 40v-12" stroke="var(--gray-400)" stroke-width="2" stroke-linecap="round"/><path d="M28 28c-6-2-8-8-6-14 6 2 10 6 6 14z" stroke="var(--gray-400)" stroke-width="1.8" fill="var(--gray-400)" fill-opacity=".1"/><path d="M28 32c4-3 9-3 12 0-3 3-8 3-12 0z" stroke="var(--gray-400)" stroke-width="1.8" fill="var(--gray-400)" fill-opacity=".1"/></svg>'
+  };
+  let icon, msg;
+  if (pct >= 90) { icon = _resultIcons.excellent; msg = _pick(_resultMessages.excellent); }
+  else if (pct >= 70) { icon = _resultIcons.good; msg = _pick(_resultMessages.good); }
+  else if (pct >= 50) { icon = _resultIcons.fair; msg = _pick(_resultMessages.fair); }
+  else { icon = _resultIcons.needs_work; msg = _pick(_resultMessages.needs_work); }
 
   // Calculate cumulative counts (all words in active deck) for AFTER
   const allWords = getActiveWords();
@@ -9603,7 +9620,7 @@ function showResult() {
   }
 
   document.getElementById('resultContent').innerHTML = `
-    <div class="result-icon">${emoji}</div>
+    <div class="result-icon">${icon}</div>
     <h2>${msg}</h2>
     <p>${totalAnswered}問中 ${displayCorrect}問正解</p>
     <div class="result-stats">
