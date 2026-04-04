@@ -1255,7 +1255,9 @@ body.dark-mode .month-summary-panel {
   border-radius: 50%;
   border: none;
   background: var(--gray-100);
-  font-size: 18px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gray-400);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -4493,7 +4495,7 @@ body.dark-mode .gdrive-setup-hint code {
   <div id="screen-import" class="screen active">
     <div class="header">
       <div style="width:40px"></div>
-      <button class="help-toggle" onclick="showHelp()">❓</button>
+      <button class="help-toggle" onclick="showHelp()">?</button>
     </div>
 
     <div class="import-dual-row">
@@ -4628,7 +4630,7 @@ body.dark-mode .gdrive-setup-hint code {
         <button class="advanced-nav-btn" onclick="showScreen('advanced-settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>詳細設定</button>
       </div>
 
-      <button class="start-quiz-btn" id="startQuizBtn" onclick="startQuiz()">スタート！</button>
+      <button class="start-quiz-btn" id="startQuizBtn" onclick="startQuiz()">スタート</button>
     </div>
   </div>
 
@@ -4643,7 +4645,7 @@ body.dark-mode .gdrive-setup-hint code {
           <div class="setting-row" style="margin-top:4px;">
             <span class="setting-label">モード</span>
             <div class="mode-toggle" id="modeToggle">
-              <button class="mode-toggle-btn active" onclick="selectMode('drill', this)">特訓</button>
+              <button class="mode-toggle-btn active" onclick="selectMode('drill', this)">反復</button>
               <button class="mode-toggle-btn" onclick="selectMode('normal', this)">ノーマル</button>
             </div>
           </div>
@@ -4871,7 +4873,6 @@ body.dark-mode .gdrive-setup-hint code {
     <div id="listeningSheetTimer" style="display:none;">
       <div class="timer-popup" id="timerPopup">
         <button class="timer-popup-btn active" onclick="setSleepTimer(0)">OFF</button>
-        <button class="timer-popup-btn" onclick="setSleepTimer(5)">5分</button>
         <button class="timer-popup-btn" onclick="setSleepTimer(10)">10分</button>
         <button class="timer-popup-btn" onclick="setSleepTimer(15)">15分</button>
         <button class="timer-popup-btn" onclick="setSleepTimer(30)">30分</button>
@@ -5083,42 +5084,47 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="confirm-overlay" id="helpOverlay" onclick="closeHelp()">
   <div class="confirm-modal help-modal" onclick="event.stopPropagation()">
     <div class="help-scroll">
-      <h2 style="text-align:center;margin-bottom:16px;">📖 使い方ガイド</h2>
+      <h2 style="text-align:center;margin-bottom:16px;">使い方ガイド</h2>
 
       <div class="help-section">
-        <h3>🤖 AIでCSVファイルを作る</h3>
-        <p>ChatGPT、Gemini、Claudeなどに以下のように頼むと問題集を作れます：</p>
-        <div class="help-prompt">「TOEIC頻出英単語100個を『英単語,日本語訳』の形式でCSVにしてください」</div>
-        <p>他にも：</p>
-        <div class="help-prompt">「日本史の重要年号50個を『出来事,年号』のCSVにして」</div>
-        <div class="help-prompt">「ITパスポートの用語30個を『用語,意味』のCSVにして」</div>
-      </div>
-
-      <div class="help-section">
-        <h3>💾 CSVファイルの保存方法</h3>
-        <p><strong>スマホの場合：</strong></p>
-        <p>AIの回答をコピー → メモ帳アプリに貼り付け → 共有メニューから「ファイルに保存」で <code>.txt</code> または <code>.csv</code> で保存</p>
-        <p><strong>PCの場合：</strong></p>
-        <p>メモ帳に貼り付け →「名前を付けて保存」→ ファイル名を <code>〇〇.csv</code> にして保存</p>
-      </div>
-
-      <div class="help-section">
-        <h3>📥 ファイルの取り込み方</h3>
-        <p>ホーム画面の「＋ 新しいデッキを追加」をタップ → 保存したファイルを選択するだけ！</p>
-      </div>
-
-      <div class="help-section">
-        <h3>📋 CSVの形式</h3>
-        <p>1行に「問題,答え」をカンマ区切りで書きます：</p>
+        <h3>問題集をつくる</h3>
+        <p>CSVファイル（カンマ区切り）を用意します。1行に「問題,答え」の形式で記述してください。</p>
         <code style="display:block;margin:8px 0;">apple,りんご<br>鎌倉幕府の成立,1185年<br>TCP/IP,通信プロトコル</code>
+        <p>ChatGPT・Gemini・Claudeなどに頼むと簡単に生成できます。</p>
+        <div class="help-prompt">「TOEIC頻出英単語100個を『英単語,日本語訳』のCSV形式で出力して」</div>
       </div>
 
       <div class="help-section">
-        <h3>📝 学習の使い方</h3>
-        <p><strong>ステータスカード：</strong> 各状態（新規・要学習など）をタップで直接学習開始</p>
-        <p><strong>ノーマルモード：</strong> スワイプで知ってる/知らないを仕分け。正解で状態がアップ</p>
-        <p><strong>特訓モード：</strong> 間違えた問題を覚えるまで繰り返し出題</p>
-        <p><strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> 保存：</strong> 気になる単語をピンして後でまとめて復習</p>
+        <h3>デッキの取り込み</h3>
+        <p>ホーム画面の「＋ 新しいデッキを追加」から、保存した CSV / TXT ファイルを選択するだけで取り込めます。空のデッキを作成して、編集画面から1問ずつ追加することもできます。</p>
+      </div>
+
+      <div class="help-section">
+        <h3>クイズで学習する</h3>
+        <p><strong>ノーマル ―</strong> カードをスワイプして「知ってる／知らない」を仕分け。正解するごとにステータスが上がります。</p>
+        <p><strong>反復 ―</strong> 不正解の問題だけを、覚えるまで繰り返し出題します。</p>
+        <p><strong>タイピング ―</strong> 答えをキーボードで入力するモード。スペルの定着に有効です。</p>
+        <p>出題順（リスト順・逆順・ランダム）、出題方向（問→答 / 答→問）、読み上げ、習熟度ロックなども設定できます。</p>
+      </div>
+
+      <div class="help-section">
+        <h3>リスニングモード</h3>
+        <p>問題と答えを自動で読み上げる聞き流し学習。通勤・通学中や作業中のながら学習に最適です。再生間隔や出題形式はカスタマイズできます。</p>
+      </div>
+
+      <div class="help-section">
+        <h3>ステータス管理</h3>
+        <p>各カードは「新規 → 要学習 → あと一歩 → マスター」の4段階で進行します。ダッシュボードのステータスカードをタップすると、その状態の問題だけを直接学習できます。</p>
+      </div>
+
+      <div class="help-section">
+        <h3>便利な機能</h3>
+        <p><strong>保存（ブックマーク） ―</strong> 気になる問題をピンして、あとでまとめて復習できます。</p>
+        <p><strong>画像添付 ―</strong> 問題・答えそれぞれに画像を追加可能。図表や写真を使った学習に対応します。</p>
+        <p><strong>一括操作 ―</strong> 一覧・編集画面で複数の問題をまとめて削除・移動・コピーできます。</p>
+        <p><strong>Google Drive 同期 ―</strong> 学習データをクラウドに保存して、複数端末間で同期できます。</p>
+        <p><strong>学習カレンダー ―</strong> 日々の学習記録と連続日数をホーム画面で確認できます。</p>
+        <p><strong>ダークモード / 文字色変更 ―</strong> 設定メニューから外観をカスタマイズできます。</p>
       </div>
     </div>
   </div>
@@ -5278,7 +5284,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.5.15';
+const APP_VERSION = 'v2.5.22';
 
 // ============ STATE ============
 // decks: { id, name, words: [{ english, japanese, level, correctStreak, wrongCount, correctCount }] }
@@ -8366,7 +8372,7 @@ function updateStartBtn() {
   const btn = document.getElementById('startQuizBtn');
   const pool = getQuizPool();
   btn.disabled = pool.length === 0;
-  btn.textContent = pool.length === 0 ? '対象の単語がありません' : 'スタート！';
+  btn.textContent = pool.length === 0 ? '対象の単語がありません' : 'スタート';
 }
 
 function getQuizPool() {
