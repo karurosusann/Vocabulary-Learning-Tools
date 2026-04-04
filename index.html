@@ -256,9 +256,6 @@ body.dark-mode .reorder-item {
   background: #2a2535;
   border-color: #332e40;
 }
-body.dark-mode .progress-bar-container {
-  background: #2a2535;
-}
 body.dark-mode .quiz-back {
   background: #2a2535;
   color: var(--gray-600);
@@ -2105,35 +2102,6 @@ body.dark-mode .deck-card .dc-checkbox.checked {
 }
 
 /* Dashboard */
-
-/* Progress bar */
-.progress-bar-container {
-  background: white;
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
-}
-.progress-bar-container h4 {
-  font-size: 13px;
-  color: var(--gray-500);
-  margin-bottom: 10px;
-  font-weight: 500;
-}
-.progress-bar {
-  height: 14px;
-  border-radius: 7px;
-  background: var(--gray-200);
-  overflow: hidden;
-  display: flex;
-}
-.progress-segment {
-  height: 100%;
-  transition: width 0.5s ease;
-}
-.progress-segment.mastered { background: var(--green-500); }
-.progress-segment.fuzzy { background: var(--yellow-400); }
-.progress-segment.weak { background: var(--blue-400); }
 
 /* Action buttons */
 .action-section {
@@ -5493,7 +5461,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.7.1';
+const APP_VERSION = 'v2.7.2';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -7784,20 +7752,6 @@ function initReorderDrag() {
   }
 }
 
-function moveDeckInList(fromIdx, direction) {
-  const toIdx = fromIdx + direction;
-  if (toIdx < 0 || toIdx >= decks.length) return;
-  sfxTap();
-  // Swap
-  const temp = decks[fromIdx];
-  decks[fromIdx] = decks[toIdx];
-  decks[toIdx] = temp;
-  saveState();
-  renderReorderList();
-  renderDeckList();
-  updateDashboard();
-}
-
 // ============ DECK EDIT MODAL ============
 function openDeckEdit(id) {
   const deck = decks.find(d => d.id === id);
@@ -8032,20 +7986,6 @@ function updateDashboard() {
 
   const total = words.length || 1;
   const pct = Math.round((counts.mastered / total) * 100);
-
-  // Update progress bar
-  const bar = document.getElementById('progressBar');
-  if (bar) {
-    bar.innerHTML = '';
-    ['mastered', 'fuzzy', 'weak'].forEach(level => {
-      if (counts[level] > 0) {
-        const seg = document.createElement('div');
-        seg.className = `progress-segment ${level}`;
-        seg.style.width = `${(counts[level] / total) * 100}%`;
-        bar.appendChild(seg);
-      }
-    });
-  }
 
   // Celebration: all words mastered!
   if (words.length > 0 && counts.mastered === words.length) {
@@ -9280,7 +9220,7 @@ let swipeState = null;
   });
 })();
 
-const DRILL_MAX_RETRIES = 50; // Safety cap — effectively unlimited for normal use
+const DRILL_MAX_RETRIES = 10; // Safety cap to prevent excessive re-queuing
 
 // Shared quiz answer processing: updates level, tracks drill state, re-queues if needed
 function processQuizAnswer(word, isCorrect) {
@@ -10660,7 +10600,7 @@ function doResetAll() {
   try {
     if (imgDB) { imgDB.close(); imgDB = null; }
     const delReq = indexedDB.deleteDatabase(IMG_DB_NAME);
-    delReq.onsuccess = () => { console.log('Image DB deleted'); };
+    delReq.onsuccess = () => {};
     delReq.onerror = () => { console.error('Image DB delete error'); };
     delReq.onblocked = () => { console.warn('Image DB delete blocked'); };
   } catch(e) {}
@@ -10927,13 +10867,6 @@ function switchListeningDeck(deckId, el) {
   loadListeningDeck();
 }
 
-function toggleListeningReverse() {
-  listeningReverse = !listeningReverse;
-  document.getElementById('listeningRevBtnQ')?.classList.toggle('active', !listeningReverse);
-  document.getElementById('listeningRevBtnA')?.classList.toggle('active', listeningReverse);
-  updateListeningDisplay();
-}
-
 function setListeningReverseBtn(reverse) {
   listeningReverse = reverse;
   document.getElementById('listeningRevBtnQ')?.classList.toggle('active', !listeningReverse);
@@ -10965,11 +10898,6 @@ function openListeningSheet(type) {
 function closeListeningSheet(e) {
   if (e && e.target !== e.currentTarget) return;
   document.getElementById('listeningSheetOverlay').classList.remove('show');
-}
-
-function updateListeningSpeed(val) {
-  listeningSpeed = parseInt(val) / 10;
-  document.getElementById('listeningSpeedValue').textContent = listeningSpeed.toFixed(1) + 'x';
 }
 
 let sleepTimerId = null;
@@ -11785,7 +11713,6 @@ async function forceUpdate() {
 // ============ PWA SERVICE WORKER ============
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
-    console.log('SW registered');
     // 定期的にSWの更新をチェック（1時間ごと）
     setInterval(() => { reg.update(); }, 60 * 60 * 1000);
     // 新しいSWが待機状態になったら自動でアクティベート
@@ -11799,9 +11726,12 @@ if ('serviceWorker' in navigator) {
         });
       }
     });
-  }).catch(err => console.log('SW error:', err));
-  // controllerchangeで自動リロード
+  }).catch(() => {});
+  // controllerchangeで自動リロード（1回のみ）
+  let swReloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swReloading) return;
+    swReloading = true;
     location.reload();
   });
 }
