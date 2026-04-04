@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSVocab — CSVで作る自分だけの単語帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --text: #1a1a1a;
+    --text-sub: #6b6b6b;
+    --accent: #FF8C00;
+    --accent-light: #FFF3E0;
+    --card-bg: #ffffff;
+    --card-border: #f0ede8;
+    --section-bg: #f5f3ee;
+    --gradient-start: #FF8C00;
+    --gradient-end: #FF6B00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(255,140,0,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,107,0,0.05) 0%, transparent 50%);
+    z-index: 0;
+  }
+
+  .hero > * { position: relative; z-index: 1; }
+
+  .hero-icon {
+    width: 96px;
+    height: 96px;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 12px 40px rgba(255,140,0,0.25);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .hero-icon svg { width: 48px; height: 48px; }
+
+  .hero h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--text) 60%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-tagline {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    color: var(--text-sub);
+    margin-bottom: 2.5rem;
+    font-weight: 400;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    color: #fff;
+    text-decoration: none;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    box-shadow: 0 8px 30px rgba(255,140,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .hero-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255,140,0,0.4);
+  }
+
+  .hero-cta svg { width: 20px; height: 20px; }
+
+  .hero-sub {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-sub);
+  }
+
+  /* ─── Features ─── */
+  .features {
+    padding: 5rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 900;
+    margin-bottom: 3rem;
+    letter-spacing: -0.02em;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+  }
+
+  .feature-emoji {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .feature-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-card p {
+    font-size: 0.95rem;
+    color: var(--text-sub);
+    line-height: 1.6;
+  }
+
+  /* ─── Modes ─── */
+  .modes {
+    padding: 5rem 2rem;
+    background: var(--section-bg);
+  }
+
+  .modes-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .modes-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .mode-item {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--card-border);
+  }
+
+  .mode-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--accent-light);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+  }
+
+  .mode-item h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .mode-item p {
+    font-size: 0.9rem;
+    color: var(--text-sub);
+  }
+
+  /* ─── Screenshots placeholder ─── */
+  .screenshots {
+    padding: 5rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .screenshots-row {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  .screenshot-placeholder {
+    width: 200px;
+    height: 430px;
+    background: linear-gradient(135deg, #f0ede8, #e8e4dd);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--text-sub);
+    border: 2px dashed #d5d0c8;
+  }
+
+  /* ─── Privacy & Footer ─── */
+  .privacy-bar {
+    padding: 3rem 2rem;
+    background: var(--section-bg);
+    text-align: center;
+  }
+
+  .privacy-bar p {
+    font-size: 0.95rem;
+    color: var(--text-sub);
+    margin-bottom: 1rem;
+  }
+
+  .privacy-links {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .privacy-links a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+
+  .privacy-links a:hover {
+    text-decoration: underline;
+  }
+
+  footer {
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-sub);
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 600px) {
+    .features-grid,
+    .modes-list { grid-template-columns: 1fr; }
+    .screenshot-placeholder { width: 160px; height: 345px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-icon">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="6" width="32" height="36" rx="4" fill="white" opacity="0.9"/>
+      <line x1="14" y1="16" x2="34" y2="16" stroke="#FF8C00" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="14" y1="23" x2="30" y2="23" stroke="#FF8C00" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+      <line x1="14" y1="30" x2="26" y2="30" stroke="#FF8C00" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    </svg>
+  </div>
+  <h1>CSVocab</h1>
+  <p class="hero-tagline">CSVで作る、自分だけの単語帳</p>
+  <a href="#" class="hero-cta" id="appstore-link">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+    App Storeでダウンロード
+  </a>
+  <p class="hero-sub">無料 ・ 広告なし ・ ログイン不要</p>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <p class="section-label">Features</p>
+  <h2 class="section-title">あなたの学習に、あなたの教材を</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-emoji">📄</span>
+      <h3>CSVインポート</h3>
+      <p>CSVファイルを読み込むだけで、即座にフラッシュカードデッキが完成します。</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">📊</span>
+      <h3>学習の可視化</h3>
+      <p>カレンダーヒートマップとドーナツチャートで、学習の習慣と進捗を一目で把握できます。</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">🌙</span>
+      <h3>ダークモード</h3>
+      <p>目に優しいダークモード対応。夜の学習も快適に。</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">🔒</span>
+      <h3>プライバシー最優先</h3>
+      <p>データはすべて端末内に保存。アカウント登録不要。あなたのデータはあなただけのもの。</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">📸</span>
+      <h3>画像添付</h3>
+      <p>カードに画像を添付して、ビジュアルと一緒に記憶を定着させます。</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">☁️</span>
+      <h3>Google Driveバックアップ</h3>
+      <p>Google Driveとの同期で、端末間のデータ移行もワンタップ。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Study Modes -->
+<section class="modes">
+  <div class="modes-inner">
+    <p class="section-label">Study Modes</p>
+    <h2 class="section-title">4つのモードで、確実に覚える</h2>
+    <div class="modes-list">
+      <div class="mode-item">
+        <div class="mode-icon">🎯</div>
+        <h3>クイズ</h3>
+        <p>4択で素早く知識チェック</p>
+      </div>
+      <div class="mode-item">
+        <div class="mode-icon">⌨️</div>
+        <h3>タイピング</h3>
+        <p>入力で正確なスペルを習得</p>
+      </div>
+      <div class="mode-item">
+        <div class="mode-icon">🎧</div>
+        <h3>リスニング</h3>
+        <p>音声で聞き取り力を強化</p>
+      </div>
+      <div class="mode-item">
+        <div class="mode-icon">🔁</div>
+        <h3>ドリル</h3>
+        <p>間違えた問題だけ集中復習</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Screenshots -->
+<section class="screenshots">
+  <p class="section-label">Screenshots</p>
+  <h2 class="section-title">アプリの様子</h2>
+  <div class="screenshots-row">
+    <div class="screenshot-placeholder">ホーム画面</div>
+    <div class="screenshot-placeholder">クイズモード</div>
+    <div class="screenshot-placeholder">ヒートマップ</div>
+  </div>
+  <p style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-sub);">
+    ※ スクリーンショットは準備中です
+  </p>
+</section>
+
+<!-- Privacy -->
+<section class="privacy-bar">
+  <p>CSVocabはユーザーのデータを一切収集しません。すべてのデータは端末内に保存されます。</p>
+  <div class="privacy-links">
+    <!-- ▼ 以下のURLをGitHubの実際のURLに差し替えてください ▼ -->
+    <a href="https://karurosusann.github.io/Vocabulary-Learning-Tools/privacy.html" target="_blank">プライバシーポリシー</a>
+    <a href="https://karurosusann.github.io/Vocabulary-Learning-Tools/terms.html" target="_blank">利用規約</a>
+    <a href="https://github.com/karurosusann/Vocabulary-Learning-Tools" target="_blank">GitHub</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>&copy; 2026 CSVocab. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
