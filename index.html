@@ -5362,6 +5362,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div class="demo-list" style="gap:8px;">
       <button class="deck-edit-btn" onclick="closeExportPicker();showJsonExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> バックアップ・共有用</button>
       <button class="deck-edit-btn" onclick="closeExportPicker();showCsvExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> 一覧表示用（Excel・スプレッドシート）</button>
+      <button class="deck-edit-btn" onclick="closeExportPicker();showCopyExport();"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span> デッキ内容をコピー</button>
     </div>
   </div>
 </div>
@@ -5381,6 +5382,15 @@ body.dark-mode .gdrive-setup-hint code {
     <h3 style="text-align:center;margin-bottom:16px;">📦 JSONエクスポート</h3>
     <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">エクスポートするデッキを選択</p>
     <div class="demo-list" id="deckJsonExportList"></div>
+  </div>
+</div>
+
+<!-- Copy Export picker overlay -->
+<div class="confirm-overlay" id="copyExportOverlay" onclick="closeCopyExport()">
+  <div class="confirm-modal demo-picker-modal" onclick="event.stopPropagation()">
+    <h3 style="text-align:center;margin-bottom:16px;">📋 デッキ内容をコピー</h3>
+    <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-bottom:12px;">コピーするデッキを選択</p>
+    <div class="demo-list" id="copyExportDeckList"></div>
   </div>
 </div>
 
@@ -5457,12 +5467,12 @@ body.dark-mode .gdrive-setup-hint code {
 <!-- Deck Edit overlay -->
 <div class="deck-edit-overlay" id="deckEditOverlay" onclick="closeDeckEdit()">
   <div class="deck-edit-modal" onclick="event.stopPropagation()">
-    <h3 id="deckEditTitle">📖 デッキを編集</h3>
+    <h3 id="deckEditTitle">デッキを編集</h3>
     <div class="deck-edit-name-ce" id="deckEditNameInput" contenteditable="true" role="textbox" data-placeholder="デッキ名"></div>
     <button class="deck-edit-save-btn" onclick="saveDeckName()">保存</button>
     <div class="deck-edit-actions">
-      <button class="deck-edit-btn" onclick="closeDeckEdit();editDeckContent(activeDeckId)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span> デッキ内を編集</button>
       <button class="deck-edit-btn" onclick="closeDeckEdit();openReorderModal()"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></span> デッキの並べ替え</button>
+      <button class="deck-edit-btn" onclick="closeDeckEdit();editDeckContent(activeDeckId)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M17 3l4 4L7 21H3v-4L17 3z"/></svg></span> デッキ内を編集</button>
       <button class="deck-edit-btn danger" onclick="closeDeckEdit();confirmAction('このデッキの進捗をリセット', 'すべての単語が「新規」に戻ります。この操作は取り消せません。', doResetCurrentDeck)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></span> このデッキをリセット</button>
       <button class="deck-edit-btn danger" onclick="closeDeckEdit();deleteDeck(activeDeckId)"><span class="de-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span> このデッキを削除</button>
     </div>
@@ -7823,6 +7833,29 @@ function closeDeckEdit() {
   const el = document.getElementById('deckEditNameInput');
   if (el) el.blur();
   document.getElementById('deckEditOverlay').classList.remove('show');
+}
+function copyDeckAsText(deckId) {
+  closeCopyExport();
+  const deck = decks.find(d => d.id === (deckId || activeDeckId));
+  if (!deck || !deck.words.length) { showToast('コピーするカードがありません'); return; }
+  const text = deck.words.map(w => {
+    const e = w.english.includes(',') ? '"' + w.english + '"' : w.english;
+    const j = w.japanese.includes(',') ? '"' + w.japanese + '"' : w.japanese;
+    return e + ',' + j;
+  }).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(deck.words.length + '問をコピーしました');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast(deck.words.length + '問をコピーしました');
+  });
 }
 
 function editDeckContent(deckId) {
@@ -10612,7 +10645,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'deckJsonExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'pasteTextOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'deckJsonExportOverlay', 'copyExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'pasteTextOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
@@ -10757,6 +10790,25 @@ function showJsonExport() {
 
 function closeDeckJsonExport() {
   document.getElementById('deckJsonExportOverlay').classList.remove('show');
+}
+
+function showCopyExport() {
+  if (decks.length === 0) {
+    showToast('コピーするデッキがありません');
+    return;
+  }
+  const list = document.getElementById('copyExportDeckList');
+  let html = '';
+  decks.forEach(d => {
+    html += '<button class="demo-item" onclick="copyDeckAsText(\'' + d.id + '\')">' +
+      escapeHtml(d.name) + '<span>' + d.words.length + '問</span></button>';
+  });
+  list.innerHTML = html;
+  document.getElementById('copyExportOverlay').classList.add('show');
+}
+
+function closeCopyExport() {
+  document.getElementById('copyExportOverlay').classList.remove('show');
 }
 
 async function exportDeckAsJson(deckId) {
