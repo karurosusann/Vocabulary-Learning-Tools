@@ -5505,7 +5505,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.0';
+const APP_VERSION = 'v2.9.1';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -9741,7 +9741,7 @@ function animateLevelBars() {
   document.querySelectorAll('.lc-bar').forEach(bar => {
     const beforeW = parseInt(bar.dataset.before);
     const afterW = parseInt(bar.dataset.after);
-    bar.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+    bar.style.transition = 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
     bar.style.width = afterW + '%';
 
     // Animate counter
@@ -9750,7 +9750,7 @@ function animateLevelBars() {
       const from = parseInt(countEl.dataset.from);
       const to = parseInt(countEl.dataset.to);
       if (from !== to) {
-        const duration = 800;
+        const duration = 1200;
         const start = performance.now();
         function tick(now) {
           const t = Math.min((now - start) / duration, 1);
@@ -9765,7 +9765,7 @@ function animateLevelBars() {
 
   // Animate diff badges
   document.querySelectorAll('.lc-diff').forEach((el, i) => {
-    el.style.animation = `diffPop 0.4s ease ${0.6 + i * 0.15}s both`;
+    el.style.animation = `diffPop 0.4s ease ${1.0 + i * 0.15}s both`;
   });
 }
 
