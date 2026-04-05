@@ -562,13 +562,13 @@ body.dark-mode .bottom-nav {
   line-height: 1;
   margin-bottom: 2px;
   color: var(--gray-400);
-  transition: color 0.25s, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  transition: color 0.15s;
 }
 .bottom-nav-item .nav-label {
   font-size: 10px;
   font-weight: 600;
   color: var(--gray-400);
-  transition: color 0.25s;
+  transition: color 0.15s;
 }
 .bottom-nav-item.active .nav-label {
   color: var(--orange-500);
@@ -592,7 +592,6 @@ body.has-bottom-nav .app {
   margin-bottom: 12px;
   box-shadow: var(--shadow-sm);
   border: 1.5px solid var(--gray-200);
-  animation: fadeIn 0.4s cubic-bezier(0.2,0,0,1) both;
 }
 body.dark-mode .study-stats-card {
   background: #1e1a28;
@@ -1549,15 +1548,7 @@ body.dark-mode .legal-modal-body p { color: #aaa; }
 /* Screen transitions */
 .screen { display: none; animation: fadeIn 0.3s ease; position: relative; }
 .screen.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes deckCardIn { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.deck-cards-animate .deck-card { animation: deckCardIn 0.35s cubic-bezier(0.2, 0, 0, 1) both; }
-.deck-cards-animate .deck-card:nth-child(1) { animation-delay: 0s; }
-.deck-cards-animate .deck-card:nth-child(2) { animation-delay: 0.04s; }
-.deck-cards-animate .deck-card:nth-child(3) { animation-delay: 0.08s; }
-.deck-cards-animate .deck-card:nth-child(4) { animation-delay: 0.12s; }
-.deck-cards-animate .deck-card:nth-child(5) { animation-delay: 0.16s; }
-.deck-cards-animate .deck-card:nth-child(n+6) { animation-delay: 0.2s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Import screen */
 .import-dual-row {
@@ -1724,12 +1715,12 @@ body.dark-mode .legal-modal-body p { color: #aaa; }
   padding: 10px 14px;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.2,0,0,1), opacity 0.2s;
+  transition: all 0.2s;
   border: 2px solid var(--gray-200);
   flex-shrink: 0;
   min-width: 160px;
 }
-.deck-card:active { transform: scale(0.95); opacity: 0.7; }
+.deck-card:active { transform: scale(0.98); }
 .deck-card.active {
   border-color: var(--orange-400);
   box-shadow: 0 0 0 1px var(--orange-200);
@@ -1936,7 +1927,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   margin-bottom: 16px;
   transition: all 0.2s;
 }
-.deck-edit-save-btn:active { opacity: 0.7; transform: scale(0.95); }
+.deck-edit-save-btn:active { opacity: 0.8; transform: scale(0.98); }
 .deck-edit-actions {
   display: flex;
   flex-direction: column;
@@ -1959,7 +1950,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   text-align: left;
 }
 .deck-edit-btn:hover { background: var(--gray-100); }
-.deck-edit-btn:active { transform: scale(0.95); opacity: 0.7; }
+.deck-edit-btn:active { transform: scale(0.98); }
 .deck-edit-btn .de-icon {
   width: 24px;
   display: flex;
@@ -2140,7 +2131,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
-.action-btn:active { transform: scale(0.95); opacity: 0.7; }
+.action-btn:active { transform: scale(0.98); }
 .action-btn .icon {
   width: 60px;
   height: 60px;
@@ -3706,7 +3697,7 @@ body.dark-mode .quiz-count-slider {
   min-width: 80px;
   flex-shrink: 0;
 }
-.level-select-card:active { transform: scale(0.95); opacity: 0.7; }
+.level-select-card:active { transform: scale(0.97); }
 .level-select-card.selected {
   border-color: var(--orange-400);
   box-shadow: 0 0 0 1px var(--orange-200);
@@ -3835,7 +3826,7 @@ body.dark-mode .quiz-count-slider {
   position: fixed;
   bottom: 30px;
   left: 50%;
-  transform: translateX(-50%) translateY(16px);
+  transform: translateX(-50%);
   background: var(--gray-800);
   color: white;
   padding: 14px 24px;
@@ -3847,12 +3838,11 @@ body.dark-mode .quiz-count-slider {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s cubic-bezier(0.2,0,0,1), visibility 0.3s, transform 0.3s cubic-bezier(0.2,0,0,1);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .toast.show {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
 }
 
 /* Level badge colors */
@@ -3891,8 +3881,8 @@ body.dark-mode .quiz-count-slider {
   touch-action: auto;
 }
 @keyframes modalPop {
-  from { transform: scale(0.92); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.9); }
+  to { transform: scale(1); }
 }
 .confirm-modal .confirm-icon {
   font-size: 40px;
@@ -5505,7 +5495,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.2';
+const APP_VERSION = 'v2.8.0';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -8007,11 +7997,6 @@ function showScreen(name) {
   if (name === 'dashboard') {
     updateStudyStats();
     renderHeatmap();
-    const grid = document.getElementById('deckListGrid');
-    if (grid) {
-      grid.classList.add('deck-cards-animate');
-      setTimeout(() => grid.classList.remove('deck-cards-animate'), 600);
-    }
   }
   // Bottom nav visibility
   const navScreens = ['dashboard', 'wordlist', 'word-editor', 'listening'];
@@ -9746,7 +9731,7 @@ function animateLevelBars() {
   document.querySelectorAll('.lc-bar').forEach(bar => {
     const beforeW = parseInt(bar.dataset.before);
     const afterW = parseInt(bar.dataset.after);
-    bar.style.transition = 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+    bar.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
     bar.style.width = afterW + '%';
 
     // Animate counter
@@ -9755,7 +9740,7 @@ function animateLevelBars() {
       const from = parseInt(countEl.dataset.from);
       const to = parseInt(countEl.dataset.to);
       if (from !== to) {
-        const duration = 1200;
+        const duration = 800;
         const start = performance.now();
         function tick(now) {
           const t = Math.min((now - start) / duration, 1);
@@ -9770,7 +9755,7 @@ function animateLevelBars() {
 
   // Animate diff badges
   document.querySelectorAll('.lc-diff').forEach((el, i) => {
-    el.style.animation = `diffPop 0.4s ease ${1.0 + i * 0.15}s both`;
+    el.style.animation = `diffPop 0.4s ease ${0.6 + i * 0.15}s both`;
   });
 }
 
