@@ -5732,7 +5732,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.4';
+const APP_VERSION = 'v2.9.6';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -11657,6 +11657,7 @@ let csvTableAllData = {};
 let csvTableActiveTab = null;
 let csvTableSortCol = -1;
 let csvTableSortAsc = true;
+let csvTableSortPerTab = {};
 
 function exportDeckAsCSV(deckId) {
   const deck = decks.find(d => d.id === deckId);
@@ -11665,6 +11666,7 @@ function exportDeckAsCSV(deckId) {
   csvTableDeckId = deckId;
   csvTableActiveTab = deckId;
   csvTableAllData = {};
+  csvTableSortPerTab = {};
   csvTableAllData[deckId] = deck.words.map((w, i) => {
     const c = w.correctCount || 0;
     const wr = w.wrongCount || 0;
@@ -11685,6 +11687,7 @@ function exportAllDecksAsCSV() {
   closeCsvExport();
   csvTableDeckId = '__all__';
   csvTableAllData = {};
+  csvTableSortPerTab = {};
   decks.forEach(deck => {
     csvTableAllData[deck.id] = deck.words.map((w, i) => {
       const c = w.correctCount || 0;
@@ -11716,9 +11719,18 @@ function renderCsvTabs() {
 }
 
 function switchCsvTab(deckId) {
+  // Save current tab's sort state
+  csvTableSortPerTab[csvTableActiveTab] = { col: csvTableSortCol, asc: csvTableSortAsc };
   csvTableActiveTab = deckId;
-  csvTableSortCol = -1;
-  csvTableSortAsc = true;
+  // Restore target tab's sort state
+  const saved = csvTableSortPerTab[deckId];
+  if (saved) {
+    csvTableSortCol = saved.col;
+    csvTableSortAsc = saved.asc;
+  } else {
+    csvTableSortCol = -1;
+    csvTableSortAsc = true;
+  }
   const deck = decks.find(d => d.id === deckId);
   document.getElementById('csvTableTitle').textContent = deck ? deck.name : '';
   renderCsvTabs();
@@ -11727,18 +11739,7 @@ function switchCsvTab(deckId) {
 }
 
 function renderCsvTable() {
-  const data = [...(csvTableAllData[csvTableActiveTab] || [])];
-  if (csvTableSortCol >= 0) {
-    const keys = ['idx', 'q', 'a', 'level', 'correct', 'wrong', 'rate'];
-    const key = keys[csvTableSortCol];
-    data.sort((a, b) => {
-      let va = a[key], vb = b[key];
-      if (typeof va === 'string') return csvTableSortAsc ? va.localeCompare(vb, 'ja') : vb.localeCompare(va, 'ja');
-      if (va < vb) return csvTableSortAsc ? -1 : 1;
-      if (va > vb) return csvTableSortAsc ? 1 : -1;
-      return 0;
-    });
-  }
+  const data = getSortedCsvData();
   const headers = ['#', '問題', '解答', '習熟度', '正解', '不正解', '正答率'];
   let html = '<table><thead><tr>';
   headers.forEach((h, i) => {
@@ -11762,11 +11763,30 @@ function sortCsvTable(colIdx) {
     csvTableSortCol = colIdx;
     csvTableSortAsc = true;
   }
+  csvTableSortPerTab[csvTableActiveTab] = { col: csvTableSortCol, asc: csvTableSortAsc };
   renderCsvTable();
 }
 
 function closeCsvTable() {
   document.getElementById('csvTableOverlay').classList.remove('show');
+}
+
+function getSortedCsvData(tabId) {
+  const tid = tabId || csvTableActiveTab;
+  const data = [...(csvTableAllData[tid] || [])];
+  const sortState = tabId ? csvTableSortPerTab[tabId] : { col: csvTableSortCol, asc: csvTableSortAsc };
+  if (sortState && sortState.col >= 0) {
+    const keys = ['idx', 'q', 'a', 'level', 'correct', 'wrong', 'rate'];
+    const key = keys[sortState.col];
+    data.sort((a, b) => {
+      let va = a[key], vb = b[key];
+      if (typeof va === 'string') return sortState.asc ? va.localeCompare(vb, 'ja') : vb.localeCompare(va, 'ja');
+      if (va < vb) return sortState.asc ? -1 : 1;
+      if (va > vb) return sortState.asc ? 1 : -1;
+      return 0;
+    });
+  }
+  return data;
 }
 
 function downloadCsvFromTable() {
@@ -11783,17 +11803,13 @@ function downloadCsvFromTable() {
         }
         const wb = XLSX.utils.book_new();
         decks.forEach(deck => {
-          const rows = deck.words.map(w => {
-            const c = w.correctCount || 0;
-            const wr = w.wrongCount || 0;
-            const total = c + wr;
-            const lvl = { unlearned: '新規', weak: '要学習', fuzzy: 'あと一歩', mastered: 'マスター' }[w.level] || '新規';
-            return { '問題': w.english, '解答': w.japanese, '習熟度': lvl, '正解数': c, '不正解数': wr, '正答率': total > 0 ? Math.round((c / total) * 100) + '%' : '-' };
+          const sorted = getSortedCsvData(deck.id);
+          const rows = sorted.map(r => {
+            const rateStr = r.rate >= 0 ? r.rate + '%' : '-';
+            return { '問題': r.q, '解答': r.a, '習熟度': r.level, '正解数': r.correct, '不正解数': r.wrong, '正答率': rateStr };
           });
           const ws = XLSX.utils.json_to_sheet(rows);
-          // Set column widths
           ws['!cols'] = [{ wch: 28 }, { wch: 28 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 8 }];
-          // Enable auto-filter on header row
           ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: 5 } }) };
           const name = deck.name.length > 31 ? deck.name.slice(0, 31) : deck.name;
           XLSX.utils.book_append_sheet(wb, ws, name);
@@ -11802,17 +11818,14 @@ function downloadCsvFromTable() {
         showToast('📄 全デッキをExcelで保存しました');
       } catch(e) {
         console.error('XLSX export failed, falling back to CSV:', e);
-        // Fallback: single CSV
         const allHeader = 'デッキ,問題,解答,習熟度,正解数,不正解数,正答率';
         const rows = [];
         decks.forEach(deck => {
-          deck.words.forEach(w => {
-            const c = w.correctCount || 0;
-            const wr = w.wrongCount || 0;
-            const total = c + wr;
-            const rate = total > 0 ? Math.round((c / total) * 100) + '%' : '-';
-            const lvl = { unlearned: '新規', weak: '要学習', fuzzy: 'あと一歩', mastered: 'マスター' }[w.level] || '新規';
-            rows.push([deck.name, w.english, w.japanese, lvl, c, wr, rate].map(escapeCSVField).join(','));
+          const sorted = getSortedCsvData(deck.id);
+          const dn = deck.name;
+          sorted.forEach(r => {
+            const rateStr = r.rate >= 0 ? r.rate + '%' : '-';
+            rows.push([dn, r.q, r.a, r.level, r.correct, r.wrong, rateStr].map(escapeCSVField).join(','));
           });
         });
         const csv = bom + allHeader + '\n' + rows.join('\n');
@@ -11830,23 +11843,19 @@ function downloadCsvFromTable() {
     };
     doXlsx();
   } else {
-    const deck = decks.find(d => d.id === csvTableDeckId) || decks.find(d => d.id === csvTableActiveTab);
-    if (!deck) return;
+    const sorted = getSortedCsvData();
+    const deck = decks.find(d => d.id === csvTableDeckId);
     const header = '問題,解答,習熟度,正解数,不正解数,正答率';
-    const rows = deck.words.map(w => {
-      const c = w.correctCount || 0;
-      const wr = w.wrongCount || 0;
-      const total = c + wr;
-      const rate = total > 0 ? Math.round((c / total) * 100) + '%' : '-';
-      const lvl = { unlearned: '新規', weak: '要学習', fuzzy: 'あと一歩', mastered: 'マスター' }[w.level] || '新規';
-      return [w.english, w.japanese, lvl, c, wr, rate].map(escapeCSVField).join(',');
+    const rows = sorted.map(r => {
+      const rateStr = r.rate >= 0 ? r.rate + '%' : '-';
+      return [r.q, r.a, r.level, r.correct, r.wrong, rateStr].map(escapeCSVField).join(',');
     });
     const csv = bom + header + '\n' + rows.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = deck.name + '_' + date + '.csv';
+    a.download = (deck ? deck.name : 'csvocab') + '_' + date + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
