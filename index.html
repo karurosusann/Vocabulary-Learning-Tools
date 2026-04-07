@@ -665,6 +665,9 @@ body.dark-mode .stat-box {
   font-weight: 700;
   color: var(--gray-400);
   padding-bottom: 3px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .cal-dow.sun { color: var(--red-400); }
 .cal-dow.sat { color: var(--blue-400); }
@@ -5732,7 +5735,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.7';
+const APP_VERSION = 'v2.9.8';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -6031,7 +6034,7 @@ function renderHeatmap() {
     let cls = 'cal-dow';
     if (i === 0) cls += ' sun';
     if (i === 6) cls += ' sat';
-    html += `<div class="${cls}">${d}</div>`;
+    html += `<div class="${cls}" onclick="showWeekdaySummary(${year}, ${month}, ${i})">${d}</div>`;
   });
 
   // Empty cells before the 1st
@@ -6187,6 +6190,64 @@ function showMonthSummary(year, month) {
   }
   panel.classList.add('open');
   calDayPanelKey = monthKey;
+}
+
+function showWeekdaySummary(year, month, dowIndex) {
+  const panel = document.getElementById('monthSummaryPanel');
+  if (!panel) return;
+  const dowKey = 'dow-' + year + '-' + month + '-' + dowIndex;
+
+  // Toggle: if same weekday summary is already open, close it
+  if (panel.classList.contains('open') && calDayPanelKey === dowKey) {
+    panel.classList.remove('open');
+    calDayPanelKey = null;
+    return;
+  }
+
+  const log = getStudyLog();
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const dowNames = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+
+  // Iterate all days in this month that fall on the given day of week
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+
+  let totalStudied = 0, totalCorrect = 0, totalTime = 0, totalSessions = 0, activeDays = 0, matchDays = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(year, month, day);
+    if (d.getDay() !== dowIndex) continue;
+    matchDays++;
+    const key = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    const data = log[key];
+    if (data) {
+      totalStudied += data.studied || 0;
+      totalCorrect += data.correct || 0;
+      totalTime += data.timeSec || 0;
+      totalSessions += data.sessions || 0;
+      if (data.studied > 0) activeDays++;
+    }
+  }
+
+  const pct = totalStudied > 0 ? Math.round((totalCorrect / totalStudied) * 100) : 0;
+  const displayLabel = year + '年' + monthNames[month] + ' ' + dowNames[dowIndex];
+
+  if (totalStudied > 0) {
+    panel.innerHTML = `
+      <div class="cdp-date">${displayLabel} のまとめ</div>
+      <div class="cdp-row"><span class="cdp-label">該当日数</span><span class="cdp-value">${activeDays}/${matchDays}日</span></div>
+      <div class="cdp-row"><span class="cdp-label">問題数</span><span class="cdp-value">${totalStudied}問</span></div>
+      <div class="cdp-row"><span class="cdp-label">正答数</span><span class="cdp-value">${totalCorrect}問 (${pct}%)</span></div>
+      <div class="cdp-row"><span class="cdp-label">学習時間</span><span class="cdp-value">${formatStudyTime(totalTime)}</span></div>
+      <div class="cdp-row"><span class="cdp-label">セッション</span><span class="cdp-value">${totalSessions}回</span></div>
+    `;
+  } else {
+    panel.innerHTML = `
+      <div class="cdp-date">${displayLabel} のまとめ</div>
+      <div class="cdp-none">学習記録なし</div>
+    `;
+  }
+  panel.classList.add('open');
+  calDayPanelKey = dowKey;
 }
 
 // ============ GOOGLE DRIVE SYNC ============
