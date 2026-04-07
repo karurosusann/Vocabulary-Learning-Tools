@@ -3514,7 +3514,7 @@ body.dark-mode .sort-btn.active {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden;
+  overflow-y: auto;
 }
 body.has-bottom-nav #screen-listening.active {
   height: calc(100dvh - 70px - env(safe-area-inset-bottom, 0px));
@@ -5593,7 +5593,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.8.5';
+const APP_VERSION = 'v2.8.6';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
