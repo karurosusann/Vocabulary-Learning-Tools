@@ -1843,8 +1843,9 @@ body.dark-mode .legal-modal-body p { color: #aaa; }
 }
 .de-thumb-preview .de-thumb-placeholder {
   color: var(--gray-300);
-  font-size: 22px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .de-thumb-btns {
   display: flex;
@@ -5558,7 +5559,7 @@ body.dark-mode .gdrive-setup-hint code {
     <h3 id="deckEditTitle">デッキを編集</h3>
     <div class="de-thumb-area" id="deThumbArea">
       <div class="de-thumb-preview" id="deThumbPreview" onclick="pickDeckThumb()">
-        <span class="de-thumb-placeholder">🖼</span>
+        <span class="de-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
       </div>
       <div class="de-thumb-btns">
         <button class="de-thumb-btn" onclick="pickDeckThumb()">画像を選択</button>
@@ -6587,7 +6588,7 @@ function renderDeckThumbPreview(dataUrl) {
     preview.classList.add('has-img');
     removeBtn.style.display = '';
   } else {
-    preview.innerHTML = '<span class="de-thumb-placeholder">🖼</span>';
+    preview.innerHTML = '<span class="de-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>';
     preview.classList.remove('has-img');
     removeBtn.style.display = 'none';
   }
