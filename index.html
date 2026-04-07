@@ -1793,6 +1793,90 @@ body.dark-mode .legal-modal-body p { color: #aaa; }
   color: var(--gray-400);
 }
 
+/* ===== Deck thumbnail ===== */
+.dc-thumb {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--gray-100);
+  display: none;
+}
+.dc-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dc-thumb.has-img { display: block; }
+
+/* Deck edit modal thumbnail */
+.de-thumb-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.de-thumb-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--gray-100);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--gray-200);
+  cursor: pointer;
+  position: relative;
+}
+.de-thumb-preview.has-img {
+  border-style: solid;
+  border-color: var(--gray-200);
+}
+.de-thumb-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.de-thumb-preview .de-thumb-placeholder {
+  color: var(--gray-300);
+  font-size: 22px;
+  line-height: 1;
+}
+.de-thumb-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.de-thumb-btn {
+  border: none;
+  background: var(--gray-50);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.de-thumb-btn:active { opacity: 0.7; }
+.de-thumb-btn.remove { color: var(--red-400); }
+body.dark-mode .de-thumb-preview {
+  background: #2a2535;
+  border-color: #3a3545;
+}
+body.dark-mode .de-thumb-btn {
+  background: #2a2535;
+  color: var(--gray-400);
+}
+body.dark-mode .dc-thumb {
+  background: #2a2535;
+}
+
 /* ===== Deck long-press drag reorder ===== */
 .deck-card.deck-drag-source {
   opacity: 0.25;
@@ -5130,6 +5214,7 @@ body.dark-mode .gdrive-setup-hint code {
         </div>
       </div>
       <input type="file" id="imgFileInput" accept="image/*" style="display:none;" onchange="onImagePicked(event)">
+      <input type="file" id="thumbFileInput" accept="image/*" style="display:none;" onchange="onThumbPicked(event)">
       <div id="insertPositionRow" style="display:none;margin-bottom:14px;">
         <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:6px;">挿入位置</label>
         <select id="insertPosition" class="rename-input" style="margin-bottom:0;padding:10px 12px;font-size:14px;"></select>
@@ -5471,6 +5556,15 @@ body.dark-mode .gdrive-setup-hint code {
 <div class="deck-edit-overlay" id="deckEditOverlay" onclick="closeDeckEdit()">
   <div class="deck-edit-modal" onclick="event.stopPropagation()">
     <h3 id="deckEditTitle">デッキを編集</h3>
+    <div class="de-thumb-area" id="deThumbArea">
+      <div class="de-thumb-preview" id="deThumbPreview" onclick="pickDeckThumb()">
+        <span class="de-thumb-placeholder">🖼</span>
+      </div>
+      <div class="de-thumb-btns">
+        <button class="de-thumb-btn" onclick="pickDeckThumb()">画像を選択</button>
+        <button class="de-thumb-btn remove" id="deThumbRemoveBtn" onclick="removeDeckThumb()" style="display:none;">画像を削除</button>
+      </div>
+    </div>
     <div class="deck-edit-name-ce" id="deckEditNameInput" contenteditable="true" role="textbox" data-placeholder="デッキ名"></div>
     <button class="deck-edit-save-btn" onclick="saveDeckName()">保存</button>
     <div class="deck-edit-actions">
@@ -5498,7 +5592,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.8.4';
+const APP_VERSION = 'v2.8.5';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -6162,10 +6256,13 @@ async function gdriveUpload() {
 
     // Collect data (same as exportAllData)
     const imageIds = new Set();
-    decks.forEach(d => d.words.forEach(w => {
-      if (w.questionImageId) imageIds.add(w.questionImageId);
-      if (w.answerImageId) imageIds.add(w.answerImageId);
-    }));
+    decks.forEach(d => {
+      d.words.forEach(w => {
+        if (w.questionImageId) imageIds.add(w.questionImageId);
+        if (w.answerImageId) imageIds.add(w.answerImageId);
+      });
+      if (d.thumbnailId) imageIds.add(d.thumbnailId);
+    });
     const images = {};
     for (const id of imageIds) {
       const data = await loadImage(id);
@@ -6417,6 +6514,100 @@ function renderImgBox(boxId, dataUrl, target) {
 function removeEditImg(target) {
   if (target === 'question') { editImgQ = null; renderImgBox('imgBoxQ', null, 'question'); }
   else { editImgA = null; renderImgBox('imgBoxA', null, 'answer'); }
+}
+
+// ============ DECK THUMBNAIL ============
+let deckThumbDataUrl = null; // temp state for deck edit modal
+
+function resizeThumb(file, size, quality) {
+  size = size || 200;
+  quality = quality || 0.85;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        // Crop to square center
+        let sx = 0, sy = 0, sSize = Math.min(img.width, img.height);
+        sx = (img.width - sSize) / 2;
+        sy = (img.height - sSize) / 2;
+        canvas.width = size;
+        canvas.height = size;
+        canvas.getContext('2d').drawImage(img, sx, sy, sSize, sSize, 0, 0, size, size);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function pickDeckThumb() {
+  const input = document.getElementById('thumbFileInput');
+  input.value = '';
+  input.click();
+}
+
+async function onThumbPicked(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const dataUrl = await resizeThumb(file);
+  deckThumbDataUrl = dataUrl;
+  renderDeckThumbPreview(dataUrl);
+  // Save immediately to IndexedDB
+  const deck = decks.find(d => d.id === activeDeckId);
+  if (deck) {
+    const thumbId = 'thumb_' + deck.id;
+    deck.thumbnailId = thumbId;
+    await saveImage(thumbId, dataUrl);
+    saveState();
+    renderDeckList();
+  }
+}
+
+async function removeDeckThumb() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  if (!deck) return;
+  if (deck.thumbnailId) {
+    try { await deleteImage(deck.thumbnailId); } catch(e) {}
+    delete deck.thumbnailId;
+    saveState();
+  }
+  deckThumbDataUrl = null;
+  renderDeckThumbPreview(null);
+  renderDeckList();
+}
+
+function renderDeckThumbPreview(dataUrl) {
+  const preview = document.getElementById('deThumbPreview');
+  const removeBtn = document.getElementById('deThumbRemoveBtn');
+  if (dataUrl) {
+    preview.innerHTML = '<img src="' + dataUrl + '" draggable="false">';
+    preview.classList.add('has-img');
+    removeBtn.style.display = '';
+  } else {
+    preview.innerHTML = '<span class="de-thumb-placeholder">🖼</span>';
+    preview.classList.remove('has-img');
+    removeBtn.style.display = 'none';
+  }
+}
+
+async function loadDeckThumbForEdit(deckId) {
+  const deck = decks.find(d => d.id === deckId);
+  if (deck && deck.thumbnailId) {
+    try {
+      const data = await loadImage(deck.thumbnailId);
+      deckThumbDataUrl = data;
+      renderDeckThumbPreview(data);
+    } catch(e) {
+      deckThumbDataUrl = null;
+      renderDeckThumbPreview(null);
+    }
+  } else {
+    deckThumbDataUrl = null;
+    renderDeckThumbPreview(null);
+  }
 }
 
 // ============ IMAGE DRAG BETWEEN Q/A BOXES ============
@@ -7564,6 +7755,7 @@ function renderDeckList() {
     return `
       <div class="deck-card ${isActive ? 'active' : ''}" data-deck-id="${deck.id}" onclick="deckCardTap('${deck.id}')">
         <span class="dc-checkbox ${isChecked ? 'checked' : ''}"></span>
+        <div class="dc-thumb" id="dcThumb_${deck.id}"></div>
         <div class="dc-donut">${buildDonutSVG(counts, total)}${crownHtml}</div>
         <div class="deck-card-info">
           <div class="dc-name">${escapeHtml(deck.name)}</div>
@@ -7582,6 +7774,19 @@ function renderDeckList() {
   if (activeCard) {
     setTimeout(() => activeCard.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }), 50);
   }
+
+  // Lazy-load deck thumbnails
+  decks.forEach(deck => {
+    if (deck.thumbnailId) {
+      loadImage(deck.thumbnailId).then(data => {
+        const el = document.getElementById('dcThumb_' + deck.id);
+        if (el && data) {
+          el.innerHTML = '<img src="' + data + '" draggable="false">';
+          el.classList.add('has-img');
+        }
+      }).catch(() => {});
+    }
+  });
 }
 
 function deckCardTap(id) {
@@ -7821,6 +8026,8 @@ function openDeckEdit(id) {
     const text = (e.clipboardData || window.clipboardData).getData('text/plain');
     document.execCommand('insertText', false, text);
   };
+  // Load thumbnail preview
+  loadDeckThumbForEdit(id);
   document.getElementById('deckEditOverlay').classList.add('show');
   setTimeout(() => {
     el.focus();
@@ -7898,6 +8105,10 @@ function deleteDeck(id) {
         if (w.questionImageId) await deleteImage(w.questionImageId);
         if (w.answerImageId) await deleteImage(w.answerImageId);
       } catch(e) { console.error('Image delete failed:', e); }
+    }
+    // Delete deck thumbnail
+    if (deck.thumbnailId) {
+      try { await deleteImage(deck.thumbnailId); } catch(e) {}
     }
     const deletedIndex = decks.findIndex(d => d.id === id);
     decks = decks.filter(d => d.id !== id);
@@ -10719,10 +10930,13 @@ async function exportAllData() {
   }
   // Collect image IDs used by all decks
   const imageIds = new Set();
-  decks.forEach(d => d.words.forEach(w => {
-    if (w.questionImageId) imageIds.add(w.questionImageId);
-    if (w.answerImageId) imageIds.add(w.answerImageId);
-  }));
+  decks.forEach(d => {
+    d.words.forEach(w => {
+      if (w.questionImageId) imageIds.add(w.questionImageId);
+      if (w.answerImageId) imageIds.add(w.answerImageId);
+    });
+    if (d.thumbnailId) imageIds.add(d.thumbnailId);
+  });
   // Load images from IndexedDB
   const images = {};
   for (const id of imageIds) {
@@ -10823,6 +11037,7 @@ async function exportDeckAsJson(deckId) {
     if (w.questionImageId) imageIds.add(w.questionImageId);
     if (w.answerImageId) imageIds.add(w.answerImageId);
   });
+  if (deck.thumbnailId) imageIds.add(deck.thumbnailId);
   const images = {};
   for (const id of imageIds) {
     const data = await loadImage(id);
