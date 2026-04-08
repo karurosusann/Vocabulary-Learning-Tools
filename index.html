@@ -3432,7 +3432,7 @@ body.dark-mode .copy-menu-popup button {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   padding-right: 4px;
   padding-bottom: 8px;
 }
@@ -4315,7 +4315,7 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -4508,7 +4508,7 @@ body.dark-mode .bulk-action-btn.select-all {
   flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
 }
 #editWordOverlay.show {
@@ -5750,7 +5750,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.31';
+const APP_VERSION = 'v2.9.32';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
