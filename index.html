@@ -1200,6 +1200,7 @@ body.dark-mode .month-summary-panel {
   .deck-card .dc-name { font-size: 16px; }
   .deck-card .dc-meta { font-size: 12px; }
   .deck-card .dc-donut { width: 52px; height: 52px; }
+  .dc-thumb { width: 72px; height: 72px; border-radius: 12px; }
   .secondary-btn { padding: 16px; font-size: 16px; border-radius: 14px; }
   /* Action section */
   .action-section { margin-top: 8px; }
@@ -1929,10 +1930,10 @@ body.dark-mode .csv-table-tab.active { color: var(--orange-400); background: #1e
 
 /* ===== Deck thumbnail ===== */
 .dc-thumb {
-  width: 38px;
-  height: 38px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: var(--gray-100);
   display: none;
@@ -5749,7 +5750,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.30';
+const APP_VERSION = 'v2.9.31';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
