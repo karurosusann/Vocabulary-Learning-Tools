@@ -27,13 +27,13 @@ html.dark-mode {
 
 :root {
   --bg: #F8F9FA;
-  --orange-50: #FFF7ED;
-  --orange-100: #FFEDD5;
-  --orange-200: #FED7AA;
-  --orange-300: #FDBA74;
-  --orange-400: #FB923C;
-  --orange-500: #F97316;
-  --orange-600: #EA580C;
+  --orange-50: #E8F5E9;
+  --orange-100: #C8E6C9;
+  --orange-200: #A5D6A7;
+  --orange-300: #66BB6A;
+  --orange-400: #4CAF50;
+  --orange-500: #43A047;
+  --orange-600: #2E7D32;
   --green-400: #4ADE80;
   --green-500: #22C55E;
   --green-600: #16A34A;
@@ -67,10 +67,10 @@ body.dark-mode {
   --orange-50: #1a1520;
   --orange-100: #231e2a;
   --orange-200: #332a3d;
-  --orange-300: #FB923C;
-  --orange-400: #FB923C;
-  --orange-500: #F97316;
-  --orange-600: #EA580C;
+  --orange-300: #66BB6A;
+  --orange-400: #4CAF50;
+  --orange-500: #43A047;
+  --orange-600: #2E7D32;
   --green-400: #4ADE80;
   --green-500: #22C55E;
   --green-600: #16A34A;
@@ -631,7 +631,7 @@ body.dark-mode .stat-box {
   color: var(--orange-500);
 }
 .stat-box.streak .stat-value {
-  color: var(--green-500);
+  color: var(--red-400);
 }
 .heatmap-section {
   margin-top: 0;
@@ -688,10 +688,10 @@ body.dark-mode .heatmap-cell {
   background: #2a2535;
 }
 .heatmap-cell.studied {
-  background: rgba(249,115,22,0.25);
+  background: rgba(34,197,94,0.25);
 }
 body.dark-mode .heatmap-cell.studied {
-  background: rgba(249,115,22,0.3);
+  background: rgba(34,197,94,0.3);
 }
 .heatmap-cell .cal-day {
   font-size: 10px;
@@ -3417,7 +3417,7 @@ body.dark-mode .copy-menu-popup button {
 .filter-tab.weak.active { background: var(--blue-500); }
 .filter-tab.fuzzy.active { background: var(--yellow-500); }
 .filter-tab.bookmarked.active { background: var(--orange-500); }
-.filter-tab.mastered.active { background: var(--green-500); }
+.filter-tab.mastered.active { background: var(--red-400); }
 
 .word-items {
   display: flex;
@@ -3499,7 +3499,7 @@ body.dark-mode .sort-btn.active {
 .word-item .level-dot.weak { background: var(--blue-500); }
 .word-item .level-dot.fuzzy { background: var(--yellow-500); }
 .word-item .level-dot.bookmarked { background: var(--orange-500); }
-.word-item .level-dot.mastered { background: var(--green-500); }
+.word-item .level-dot.mastered { background: var(--red-400); }
 .word-num {
   font-size: 11px;
   color: var(--gray-400);
@@ -3942,7 +3942,7 @@ body.dark-mode .quiz-count-slider {
 .level-select-card.bookmarked .ls-label, .level-select-card.bookmarked .ls-count { color: var(--orange-500); }
 .level-select-card.weak .ls-label, .level-select-card.weak .ls-count { color: var(--blue-500); }
 .level-select-card.fuzzy .ls-label, .level-select-card.fuzzy .ls-count { color: var(--yellow-500); }
-.level-select-card.mastered .ls-label, .level-select-card.mastered .ls-count { color: var(--green-500); }
+.level-select-card.mastered .ls-label, .level-select-card.mastered .ls-count { color: var(--red-400); }
 .level-select-card.locked {
   opacity: 0.5;
   cursor: pointer;
@@ -4068,7 +4068,7 @@ body.dark-mode .quiz-count-slider {
 .badge-weak { background: var(--blue-50); color: var(--blue-500); }
 .badge-fuzzy { background: #FEF9C3; color: var(--yellow-500); }
 .badge-bookmarked { background: var(--orange-100); color: var(--orange-500); }
-.badge-mastered { background: #DCFCE7; color: var(--green-600); }
+.badge-mastered { background: #FEE2E2; color: var(--red-400); }
 
 /* Confirm modal */
 .confirm-overlay {
@@ -5542,7 +5542,7 @@ body.dark-mode .gdrive-setup-hint code {
     <div style="font-size:60px;margin-bottom:12px;">🎊</div>
     <h2 style="color:var(--orange-500);margin-bottom:8px;">完全制覇！</h2>
     <p style="font-size:15px;color:var(--gray-600);margin-bottom:4px;"><strong id="celebrationDeck"></strong></p>
-    <p style="font-size:28px;font-weight:900;color:var(--green-500);margin-bottom:8px;"><span id="celebrationCount">0</span>語 すべてマスター！</p>
+    <p style="font-size:28px;font-weight:900;color:var(--red-400);margin-bottom:8px;"><span id="celebrationCount">0</span>語 すべてマスター！</p>
     <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.6;">本当にすごい！あなたの努力の成果です。<br>この調子で次のデッキにも挑戦しよう！</p>
     <button class="result-btn" onclick="closeCelebration()">ありがとう！💪</button>
   </div>
@@ -5735,7 +5735,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.8';
+const APP_VERSION = 'v2.9.10';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -7930,7 +7930,7 @@ function buildDonutSVG(counts, total) {
   const p3 = p2 + weakPct;
 
   const pct = Math.round((counts.mastered / t) * 100);
-  return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #4CAF50 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #4285F4 ${p2}% ${p3}%, #E0E0E0 ${p3}% 100%);"></div>
+  return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #DC2626 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #4285F4 ${p2}% ${p3}%, #E0E0E0 ${p3}% 100%);"></div>
     <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">習得</span></div>`;
 }
 
@@ -8578,7 +8578,7 @@ function showLevelSelect() {
     { key: 'unlearned', icon: '📋', label: '新規', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔵', label: '要学習', count: counts.weak, cls: 'weak' },
     { key: 'fuzzy', icon: '🟡', label: 'あと一歩', count: counts.fuzzy, cls: 'fuzzy' },
-    { key: 'mastered', icon: '🟢', label: 'マスター', count: counts.mastered, cls: 'mastered' },
+    { key: 'mastered', icon: '🔴', label: 'マスター', count: counts.mastered, cls: 'mastered' },
   ];
 
   let html = '';
@@ -9997,7 +9997,7 @@ function showResult() {
   });
 
   const levelNames = { unlearned: '新規', weak: '要学習', fuzzy: 'あと一歩', mastered: 'マスター' };
-  const levelColors = { unlearned: 'var(--gray-400)', weak: 'var(--blue-500)', fuzzy: 'var(--yellow-500)', mastered: 'var(--green-500)' };
+  const levelColors = { unlearned: 'var(--gray-400)', weak: 'var(--blue-500)', fuzzy: 'var(--yellow-500)', mastered: 'var(--red-400)' };
   const levelOrder = ['mastered', 'fuzzy', 'weak', 'unlearned'];
 
   const totalWords = allWords.length || 1;
