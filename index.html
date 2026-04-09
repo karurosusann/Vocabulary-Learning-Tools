@@ -30,10 +30,10 @@ html.dark-mode {
   --orange-50: #E8F5E9;
   --orange-100: #C8E6C9;
   --orange-200: #A5D6A7;
-  --orange-300: #66BB6A;
-  --orange-400: #4CAF50;
-  --orange-500: #43A047;
-  --orange-600: #2E7D32;
+  --orange-300: #81C784;
+  --orange-400: #66BB6A;
+  --orange-500: #4CAF50;
+  --orange-600: #43A047;
   --green-400: #4ADE80;
   --green-500: #22C55E;
   --green-600: #16A34A;
@@ -68,10 +68,10 @@ body.dark-mode {
   --orange-50: #1a1520;
   --orange-100: #231e2a;
   --orange-200: #332a3d;
-  --orange-300: #66BB6A;
-  --orange-400: #4CAF50;
-  --orange-500: #43A047;
-  --orange-600: #2E7D32;
+  --orange-300: #81C784;
+  --orange-400: #66BB6A;
+  --orange-500: #4CAF50;
+  --orange-600: #43A047;
   --green-400: #4ADE80;
   --green-500: #22C55E;
   --green-600: #16A34A;
@@ -5750,7 +5750,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.31';
+const APP_VERSION = 'v2.9.34';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -8595,7 +8595,7 @@ function showLevelSelect() {
   const allUnlocked = allMastered || localStorage.getItem(unlockKey) === '1';
 
   const options = [
-    { key: 'all', icon: allUnlocked ? '👹' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allUnlocked },
+    { key: 'all', icon: allUnlocked ? '👑' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allUnlocked },
     { key: 'bookmarked', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="#F97316" stroke="#F97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
     { key: 'unlearned', icon: '📋', label: '新規', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔵', label: '要学習', count: counts.weak, cls: 'weak' },
@@ -11097,6 +11097,7 @@ function doResetCurrentDeck() {
   if (!deck) return;
   deck.words.forEach(w => { w.level = 'unlearned'; w.correctStreak = 0; });
   lsRemove('csvocab_allUnlocked_' + deck.id);
+  lsRemove('celebrated_' + deck.id);
   // Clear rotation positions for this deck
   Object.keys(quizPoolLastKey).forEach(k => {
     if (k.startsWith(deck.id + '_')) delete quizPoolLastKey[k];
@@ -11113,6 +11114,7 @@ function doResetAll() {
   decks.forEach(d => {
     lsRemove('mikan_deckSettings_' + d.id);
     lsRemove('csvocab_allUnlocked_' + d.id);
+    lsRemove('celebrated_' + d.id);
   });
   decks = [];
   activeDeckId = null;
