@@ -4872,6 +4872,11 @@ body.dark-mode .gdrive-setup-hint code {
     </div>
 
     <div class="import-dual-row">
+      <div class="import-area import-json-area" onclick="showPasteTextModal()">
+        <div class="import-icon" style="background:var(--gray-100);font-size:24px;line-height:1;">📋</div>
+        <h3>テキストを<br>貼り付けて追加</h3>
+        <p>CSVテキストから作成</p>
+      </div>
       <div class="import-area" id="dropZone">
         <div class="import-icon" style="background:var(--gray-100);"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="#F5C04A" stroke="#E0A820"/></svg></div>
         <h3>CSVファイルを<br>読み込む</h3>
@@ -4883,11 +4888,6 @@ body.dark-mode .gdrive-setup-hint code {
         <h3>他の端末から<br>データを移行</h3>
         <p>JSONファイルから復元</p>
         <input type="file" id="importJsonInitial" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
-      </div>
-      <div class="import-area import-json-area" onclick="showPasteTextModal()">
-        <div class="import-icon" style="background:var(--gray-100);font-size:24px;line-height:1;">📋</div>
-        <h3>テキストを<br>貼り付けて追加</h3>
-        <p>CSVテキストから作成</p>
       </div>
     </div>
 
@@ -5683,12 +5683,25 @@ body.dark-mode .gdrive-setup-hint code {
   <div class="confirm-modal" onclick="event.stopPropagation()" style="max-width:420px;width:92%;">
     <div class="confirm-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></div>
     <h3>テキストを貼り付けて追加</h3>
-    <p style="font-size:13px;color:var(--text-secondary);margin:4px 0 12px;line-height:1.5;">AIが生成したCSVテキストをそのまま貼り付けてください。<br><code style="font-size:12px;background:var(--bg-secondary);padding:2px 5px;border-radius:4px;">問題,答え</code> の形式に対応しています。</p>
+    <p style="font-size:13px;color:var(--text-secondary);margin:4px 0 12px;line-height:1.5;">CSVテキストをそのまま貼り付けてください。<br><code style="font-size:12px;background:var(--bg-secondary);padding:2px 5px;border-radius:4px;">問題,答え</code> の形式に対応しています。</p>
     <div id="pasteTextDeckName" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="デッキ名を入力" style="margin-bottom:10px;"></div>
     <textarea id="pasteTextArea" placeholder="ここにテキストを貼り付け&#10;例:&#10;apple,りんご&#10;cat,猫" style="width:100%;height:160px;border:1px solid var(--border-color);border-radius:10px;padding:12px;font-size:16px;font-family:inherit;resize:vertical;background:var(--bg-secondary);color:var(--text-primary);box-sizing:border-box;line-height:1.6;"></textarea>
     <div class="confirm-buttons" style="margin-top:14px;">
       <button class="confirm-cancel" onclick="closePasteTextModal()">キャンセル</button>
       <button class="confirm-danger" style="background:var(--orange-500);" onclick="importFromPasteText()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate Warning Overlay -->
+<div class="confirm-overlay" id="dupWarningOverlay" onclick="closeDupWarning()">
+  <div class="confirm-modal" onclick="event.stopPropagation()" style="max-width:460px;width:92%;">
+    <div class="confirm-icon">⚠️</div>
+    <h3>重複した問題が見つかりました</h3>
+    <div id="dupWarningList" style="max-height:260px;overflow-y:auto;margin:12px 0;text-align:left;"></div>
+    <div class="confirm-buttons" style="margin-top:14px;">
+      <button class="confirm-cancel" onclick="finalizeDupDeck(false)">すべて残す</button>
+      <button class="confirm-danger" style="background:#EF4444;" onclick="finalizeDupDeck(true)">チェック済みを削除</button>
     </div>
   </div>
 </div>
@@ -7713,6 +7726,19 @@ if (fileInputAdd) {
   });
 }
 
+function normalizeDupKey(str) {
+  let s = str.trim();
+  // fullwidth → halfwidth
+  s = s.replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  // katakana → hiragana
+  s = s.replace(/[\u30A1-\u30F6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  return s.toLowerCase();
+}
+
+let _pendingDupDeck = null;
+let _pendingDupWords = null;
+let _pendingDupInfos = null;
+
 function addDeckFromCSV(text, deckName) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   const delimiter = detectDelimiter(lines);
@@ -7730,19 +7756,109 @@ function addDeckFromCSV(text, deckName) {
     }
   }
 
-  if (words.length > 0) {
-    const delimNames = { '\t': 'タブ', ',': 'カンマ', '|': 'パイプ', ';': 'セミコロン' };
-    const deck = { id: generateId(), name: deckName, words };
-    decks.push(deck);
-    activeDeckId = deck.id;
-    saveState();
-    showScreen('dashboard');
-    renderDeckList();
-    updateDashboard();
-    showToast(`「${deckName}」に${words.length}語を追加しました！（${delimNames[delimiter] || delimiter}区切り）`);
-  } else {
+  if (words.length === 0) {
     showToast('単語が見つかりませんでした');
+    return;
   }
+
+  // Detect intra-deck duplicates
+  const seen = new Map();
+  const intraDups = [];
+  words.forEach((w, i) => {
+    const key = normalizeDupKey(w.english);
+    if (seen.has(key)) {
+      intraDups.push({ index: i, word: w, type: 'intra', origIndex: seen.get(key) });
+    } else {
+      seen.set(key, i);
+    }
+  });
+
+  // Detect cross-deck duplicates
+  const existingKeys = new Map();
+  for (const d of decks) {
+    for (const w of d.words) {
+      const key = normalizeDupKey(w.english);
+      if (!existingKeys.has(key)) existingKeys.set(key, d.name);
+    }
+  }
+  const crossDups = [];
+  words.forEach((w, i) => {
+    const key = normalizeDupKey(w.english);
+    if (existingKeys.has(key) && !intraDups.find(d => d.index === i)) {
+      crossDups.push({ index: i, word: w, type: 'cross', deckName: existingKeys.get(key) });
+    }
+  });
+
+  if (intraDups.length === 0 && crossDups.length === 0) {
+    commitDeck(deckName, words, delimiter);
+    return;
+  }
+
+  // Show duplicate warning
+  _pendingDupDeck = deckName;
+  _pendingDupWords = words;
+  _pendingDupInfos = { intraDups, crossDups, delimiter };
+  renderDupWarning(intraDups, crossDups);
+  document.getElementById('dupWarningOverlay').classList.add('show');
+}
+
+function renderDupWarning(intraDups, crossDups) {
+  let html = '';
+  if (intraDups.length > 0) {
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">デッキ内の重複（' + intraDups.length + '件）</div>';
+    for (const d of intraDups) {
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
+        + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
+        + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '</span></span></label>';
+    }
+  }
+  if (crossDups.length > 0) {
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin:' + (intraDups.length ? '12px' : '0') + ' 0 6px;">既存デッキとの重複（' + crossDups.length + '件）</div>';
+    for (const d of crossDups) {
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
+        + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
+        + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '（' + escapeHtml(d.deckName) + '）</span></span></label>';
+    }
+  }
+  document.getElementById('dupWarningList').innerHTML = html;
+}
+
+function closeDupWarning() {
+  document.getElementById('dupWarningOverlay').classList.remove('show');
+}
+
+function finalizeDupDeck(removeChecked) {
+  closeDupWarning();
+  if (!_pendingDupWords) return;
+  let words = _pendingDupWords;
+  if (removeChecked) {
+    const checkboxes = document.querySelectorAll('#dupWarningList input[type="checkbox"]:checked');
+    const removeSet = new Set();
+    checkboxes.forEach(cb => removeSet.add(parseInt(cb.dataset.dupIndex)));
+    words = words.filter((_, i) => !removeSet.has(i));
+  }
+  if (words.length === 0) {
+    showToast('すべて削除されたため、デッキは作成されませんでした');
+  } else {
+    commitDeck(_pendingDupDeck, words, _pendingDupInfos.delimiter);
+    const removed = _pendingDupWords.length - words.length;
+    if (removed > 0) showToast(removed + '件の重複を削除しました');
+  }
+  _pendingDupDeck = null;
+  _pendingDupWords = null;
+  _pendingDupInfos = null;
+}
+
+function commitDeck(deckName, words, delimiter) {
+  const delimNames = { '\t': 'タブ', ',': 'カンマ', '|': 'パイプ', ';': 'セミコロン' };
+  const deck = { id: generateId(), name: deckName, words };
+  decks.push(deck);
+  activeDeckId = deck.id;
+  saveState();
+  showScreen('dashboard');
+  renderDeckList();
+  updateDashboard();
+  showToast(`「${deckName}」に${words.length}語を追加しました！（${delimNames[delimiter] || delimiter}区切り）`);
 }
 
 // Auto-detect delimiter: try each candidate and pick the one that splits most lines into exactly 2 columns
@@ -11081,7 +11197,7 @@ function closeConfirm() {
 
 // Close all overlays - used after import to ensure clean state on iOS
 function closeAllOverlays() {
-  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'csvTableOverlay', 'deckJsonExportOverlay', 'copyExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'pasteTextOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
+  const overlayIds = ['settingsOverlay', 'confirmOverlay', 'renameOverlay', 'helpOverlay', 'demoPickerOverlay', 'exportPickerOverlay', 'csvExportOverlay', 'csvTableOverlay', 'deckJsonExportOverlay', 'copyExportOverlay', 'celebrationOverlay', 'editWordOverlay', 'reorderOverlay', 'deckEditOverlay', 'newDeckOverlay', 'createDeckOverlay', 'pasteTextOverlay', 'dupWarningOverlay', 'bulkMoveOverlay', 'gdriveOverlay'];
   overlayIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('show');
