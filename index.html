@@ -27,16 +27,16 @@ html.dark-mode {
 
 :root {
   --bg: #F8F9FA;
-  --orange-50: #FDFAF2;
-  --orange-100: #F7F0DD;
-  --orange-200: #EFE3C5;
-  --orange-300: #E2D1A6;
-  --orange-400: #D6C18C;
-  --orange-500: #C9B278;
-  --orange-600: #B89E62;
-  --green-400: #D6C18C;
-  --green-500: #C9B278;
-  --green-600: #B89E62;
+  --orange-50: #E8F5E9;
+  --orange-100: #C8E6C9;
+  --orange-200: #A5D6A7;
+  --orange-300: #81C784;
+  --orange-400: #66BB6A;
+  --orange-500: #4CAF50;
+  --orange-600: #43A047;
+  --green-400: #4ADE80;
+  --green-500: #22C55E;
+  --green-600: #16A34A;
   --blue-50: #EFF6FF;
   --blue-400: #60A5FA;
   --blue-500: #3B82F6;
@@ -68,13 +68,13 @@ body.dark-mode {
   --orange-50: #1a1520;
   --orange-100: #231e2a;
   --orange-200: #332a3d;
-  --orange-300: #E2D1A6;
-  --orange-400: #D6C18C;
-  --orange-500: #C9B278;
-  --orange-600: #B89E62;
-  --green-400: #D6C18C;
-  --green-500: #C9B278;
-  --green-600: #B89E62;
+  --orange-300: #81C784;
+  --orange-400: #66BB6A;
+  --orange-500: #4CAF50;
+  --orange-600: #43A047;
+  --green-400: #4ADE80;
+  --green-500: #22C55E;
+  --green-600: #16A34A;
   --blue-50: #1e1a2e;
   --blue-400: #60A5FA;
   --blue-500: #3B82F6;
@@ -934,7 +934,7 @@ body.dark-mode .listening-save-bar.active {
 .listening-answer {
   font-size: 18px;
   font-weight: 600;
-  color: var(--answer-color, #C9B278);
+  color: var(--answer-color, #22C55E);
   line-height: 1.5;
   min-height: 26px;
 }
@@ -2598,7 +2598,7 @@ body.dark-mode .deck-card .dc-checkbox.checked {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 32px;
   font-weight: 700;
-  color: var(--answer-color, #C9B278);
+  color: var(--answer-color, #22C55E);
   letter-spacing: -0.5px;
   line-height: 1.3;
   animation: revealFade 0.3s ease;
@@ -5298,7 +5298,7 @@ body.dark-mode .gdrive-setup-hint code {
         <div><div class="wf-text">フラッシュカード学習</div><div class="wf-sub">スワイプ・タイピングの2モード</div></div>
       </div>
       <div class="wf-item">
-        <div class="wf-icon" style="background:var(--orange-100);color:var(--green-600);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+        <div class="wf-icon" style="background:var(--green-100);color:var(--green-600);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
         <div><div class="wf-text">リスニングモード</div><div class="wf-sub">聞き流しで、ながら学習</div></div>
       </div>
     </div>
@@ -5405,7 +5405,7 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-badge" id="answerColorBadge" style="width:14px;height:14px;border-radius:50%;display:inline-block;"></span>
       </button>
       <div class="answer-color-picker" id="answerColorPicker" style="display:none;">
-        <button class="color-dot" style="background:#C9B278;" onclick="setAnswerColor('#C9B278')" title="クリーム"></button>
+        <button class="color-dot" style="background:#22C55E;" onclick="setAnswerColor('#22C55E')" title="グリーン"></button>
         <button class="color-dot" style="background:#EF4444;" onclick="setAnswerColor('#EF4444')" title="レッド"></button>
         <button class="color-dot" style="background:#EAB308;" onclick="setAnswerColor('#EAB308')" title="イエロー"></button>
         <button class="color-dot" style="background:#3B82F6;" onclick="setAnswerColor('#3B82F6')" title="ブルー"></button>
@@ -5762,7 +5762,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.35';
+const APP_VERSION = 'v2.9.34';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -5858,7 +5858,7 @@ function updateSettingsDarkUI() {
 
 // ============ ANSWER TEXT COLOR ============
 const ANSWER_COLOR_KEY = 'csvocab_answer_color';
-const DEFAULT_ANSWER_COLOR = '#C9B278';
+const DEFAULT_ANSWER_COLOR = '#22C55E';
 
 function setAnswerColor(color) {
   lsSet(ANSWER_COLOR_KEY, color);
@@ -8067,7 +8067,7 @@ function buildDonutSVG(counts, total) {
   const p3 = p2 + weakPct;
 
   const pct = Math.round((counts.mastered / t) * 100);
-  return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #B89E62 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #3B82F6 ${p2}% ${p3}%, #E0E0E0 ${p3}% 100%);"></div>
+  return `<div class="dc-conic" style="background: conic-gradient(from 0deg, #16A34A 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #3B82F6 ${p2}% ${p3}%, #E0E0E0 ${p3}% 100%);"></div>
     <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">習得</span></div>`;
 }
 
@@ -8651,7 +8651,7 @@ function launchConfetti() {
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const colors = ['#B89E62','#C9B278','#3B82F6','#EF4444','#FACC15','#A855F7','#EC4899'];
+  const colors = ['#4A9E3F','#22C55E','#3B82F6','#EF4444','#FACC15','#A855F7','#EC4899'];
   const pieces = [];
   for (let i = 0; i < 100; i++) {
     pieces.push({
