@@ -7761,31 +7761,40 @@ function addDeckFromCSV(text, deckName) {
     return;
   }
 
-  // Detect intra-deck duplicates
+  // Detect intra-deck duplicates (flag ALL occurrences including the first)
   const seen = new Map();
   const intraDups = [];
+  const intraDupOrigAdded = new Set();
   words.forEach((w, i) => {
     const key = normalizeDupKey(w.english);
     if (seen.has(key)) {
-      intraDups.push({ index: i, word: w, type: 'intra', origIndex: seen.get(key) });
+      // Add the first occurrence too if not yet added
+      const origIdx = seen.get(key);
+      if (!intraDupOrigAdded.has(origIdx)) {
+        intraDupOrigAdded.add(origIdx);
+        intraDups.push({ index: origIdx, word: words[origIdx], type: 'intra', origIndex: origIdx });
+      }
+      intraDups.push({ index: i, word: w, type: 'intra', origIndex: origIdx });
     } else {
       seen.set(key, i);
     }
   });
+  intraDups.sort((a, b) => a.index - b.index);
 
   // Detect cross-deck duplicates
   const existingKeys = new Map();
   for (const d of decks) {
     for (const w of d.words) {
       const key = normalizeDupKey(w.english);
-      if (!existingKeys.has(key)) existingKeys.set(key, d.name);
+      if (!existingKeys.has(key)) existingKeys.set(key, [d.name]);
+      else { const arr = existingKeys.get(key); if (!arr.includes(d.name)) arr.push(d.name); }
     }
   }
   const crossDups = [];
   words.forEach((w, i) => {
     const key = normalizeDupKey(w.english);
-    if (existingKeys.has(key) && !intraDups.find(d => d.index === i)) {
-      crossDups.push({ index: i, word: w, type: 'cross', deckName: existingKeys.get(key) });
+    if (existingKeys.has(key)) {
+      crossDups.push({ index: i, word: w, type: 'cross', deckName: existingKeys.get(key).join(', ') });
     }
   });
 
@@ -7806,19 +7815,40 @@ function renderDupWarning(intraDups, crossDups) {
   let html = '';
   if (intraDups.length > 0) {
     html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">デッキ内の重複（' + intraDups.length + '件）</div>';
+    // Group by origIndex
+    const groups = [];
+    const groupMap = new Map();
     for (const d of intraDups) {
-      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
-        + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
-        + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '</span></span></label>';
+      const gKey = d.origIndex;
+      if (!groupMap.has(gKey)) { const arr = []; groups.push(arr); groupMap.set(gKey, arr); }
+      groupMap.get(gKey).push(d);
     }
+    groups.forEach((group, gi) => {
+      if (gi > 0) html += '<div style="height:8px;border-top:2px solid var(--border-color);margin-top:8px;"></div>';
+      for (const d of group) {
+        html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
+          + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
+          + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '</span></span></label>';
+      }
+    });
   }
   if (crossDups.length > 0) {
     html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin:' + (intraDups.length ? '12px' : '0') + ' 0 6px;">既存デッキとの重複（' + crossDups.length + '件）</div>';
+    const cGroups = [];
+    const cMap = new Map();
     for (const d of crossDups) {
-      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
-        + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
-        + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '（' + escapeHtml(d.deckName) + '）</span></span></label>';
+      const gKey = normalizeDupKey(d.word.english);
+      if (!cMap.has(gKey)) { const arr = []; cGroups.push(arr); cMap.set(gKey, arr); }
+      cMap.get(gKey).push(d);
     }
+    cGroups.forEach((group, gi) => {
+      if (gi > 0) html += '<div style="height:8px;border-top:2px solid var(--border-color);margin-top:8px;"></div>';
+      for (const d of group) {
+        html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
+          + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
+          + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '（' + escapeHtml(d.deckName) + '）</span></span></label>';
+      }
+    });
   }
   document.getElementById('dupWarningList').innerHTML = html;
 }
