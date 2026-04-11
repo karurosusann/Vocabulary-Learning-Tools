@@ -12594,5 +12594,327 @@ if ('serviceWorker' in navigator) {
   <button onmousedown="doCopyQuiz('question')">問題文をコピー</button>
   <button id="copyMenuAnswerBtn" onmousedown="doCopyQuiz('answer')">答えをコピー</button>
 </div>
+<!-- PWA Install Guide -->
+<style>
+/* Floating Install Button */
+#pwaInstallFab {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--green-500, #22C55E);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  z-index: 99999;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+#pwaInstallFab:active { transform: scale(0.92); }
+#pwaInstallFab.show { display: flex; }
+#pwaInstallFab svg { width: 28px; height: 28px; fill: #fff; }
+
+/* Pulse animation */
+@keyframes pwa-pulse {
+  0% { box-shadow: 0 4px 14px rgba(0,0,0,0.3), 0 0 0 0 rgba(34,197,94,0.5); }
+  70% { box-shadow: 0 4px 14px rgba(0,0,0,0.3), 0 0 0 12px rgba(34,197,94,0); }
+  100% { box-shadow: 0 4px 14px rgba(0,0,0,0.3), 0 0 0 0 rgba(34,197,94,0); }
+}
+#pwaInstallFab.pulse { animation: pwa-pulse 2s ease-in-out 3; }
+
+/* Guide Overlay */
+#pwaGuideOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 100000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+#pwaGuideOverlay.show { display: flex; }
+
+#pwaGuideCard {
+  background: #1a1a2e;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  color: #e0e0e0;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+#pwaGuideCard h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #fff;
+  font-weight: 700;
+}
+#pwaGuideCard p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #b0b0b0;
+}
+#pwaGuideCard .pwa-steps {
+  text-align: left;
+  margin-bottom: 20px;
+}
+#pwaGuideCard .pwa-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+#pwaGuideCard .pwa-step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--green-500, #22C55E);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+#pwaGuideCard .pwa-step-text {
+  font-size: 14px;
+  line-height: 1.5;
+  padding-top: 3px;
+}
+#pwaGuideCard .pwa-step-text strong {
+  color: #fff;
+}
+/* Arrow indicator */
+#pwaGuideCard .pwa-arrow {
+  font-size: 32px;
+  margin: 8px 0;
+  color: var(--green-400, #4ADE80);
+}
+#pwaGuideClose {
+  background: var(--green-500, #22C55E);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+#pwaGuideClose:active { opacity: 0.8; }
+
+/* Safari share icon inline */
+.pwa-share-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  vertical-align: text-bottom;
+  margin: 0 2px;
+}
+</style>
+
+<button id="pwaInstallFab" onclick="showPwaGuide()" aria-label="アプリとして追加">
+  <svg viewBox="0 0 24 24"><path d="M12 2L12 14M12 2L8 6M12 2L16 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+</button>
+
+<div id="pwaGuideOverlay" onclick="closePwaGuide(event)">
+  <div id="pwaGuideCard"></div>
+</div>
+
+<script>
+(function() {
+  // --- PWA Install Guide Logic ---
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+
+  if (isStandalone) return; // Already PWA, do nothing
+
+  // Detect environment
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+
+  // In-app browser detection (Twitter/X, Instagram, Facebook, LINE, etc.)
+  const isInAppBrowser = /FBAN|FBAV|Instagram|Line\//i.test(ua)
+    || (/Twitter|X/i.test(ua) && !/Chrome|Safari/i.test(ua))
+    || (ua.includes('wv') && isAndroid);
+
+  // More specific Twitter in-app detection
+  const isTwitterInApp = /Twitter/i.test(ua) || (document.referrer && document.referrer.includes('t.co'));
+
+  const fab = document.getElementById('pwaInstallFab');
+  const overlay = document.getElementById('pwaGuideOverlay');
+  const card = document.getElementById('pwaGuideCard');
+
+  // Android beforeinstallprompt
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  // Show FAB after short delay
+  setTimeout(function() {
+    fab.classList.add('show');
+    setTimeout(function() { fab.classList.add('pulse'); }, 500);
+  }, 1500);
+
+  // Build guide content based on environment
+  function buildGuideContent() {
+    const shareIconSvg = '<svg class="pwa-share-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2v12M12 2l-4 4M12 2l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 14v5a1 1 0 001 1h14a1 1 0 001-1v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+    if (isInAppBrowser || isTwitterInApp) {
+      // In-app browser: guide to open in Safari/Chrome
+      if (isIOS) {
+        return `
+          <h3>📱 アプリとして使う</h3>
+          <p>快適に使うためにSafariで開いてください</p>
+          <div class="pwa-steps">
+            <div class="pwa-step">
+              <div class="pwa-step-num">1</div>
+              <div class="pwa-step-text">画面右下の <strong>「⋯」</strong> または <strong>「…」</strong> をタップ</div>
+            </div>
+            <div class="pwa-step">
+              <div class="pwa-step-num">2</div>
+              <div class="pwa-step-text"><strong>「Safariで開く」</strong> を選択</div>
+            </div>
+            <div class="pwa-step">
+              <div class="pwa-step-num">3</div>
+              <div class="pwa-step-text">Safariで開いたら、もう一度このボタンを押してホーム画面に追加！</div>
+            </div>
+          </div>
+          <div class="pwa-arrow">↓</div>
+          <p style="font-size:12px;color:#888;">※ アプリ内ブラウザではホーム画面に追加できません</p>
+        `;
+      } else {
+        return `
+          <h3>📱 アプリとして使う</h3>
+          <p>快適に使うためにChromeで開いてください</p>
+          <div class="pwa-steps">
+            <div class="pwa-step">
+              <div class="pwa-step-num">1</div>
+              <div class="pwa-step-text">右上の <strong>「⋮」</strong> メニューをタップ</div>
+            </div>
+            <div class="pwa-step">
+              <div class="pwa-step-num">2</div>
+              <div class="pwa-step-text"><strong>「Chromeで開く」</strong> または <strong>「ブラウザで開く」</strong> を選択</div>
+            </div>
+            <div class="pwa-step">
+              <div class="pwa-step-num">3</div>
+              <div class="pwa-step-text">Chromeで開いたら、もう一度このボタンを押してインストール！</div>
+            </div>
+          </div>
+          <p style="font-size:12px;color:#888;">※ アプリ内ブラウザではインストールできません</p>
+        `;
+      }
+    } else if (deferredPrompt) {
+      // Android Chrome: can install directly
+      return `
+        <h3>📱 ホーム画面に追加</h3>
+        <p>ワンタップでアプリのように使えます！</p>
+        <button id="pwaDirectInstall" style="background:var(--green-500,#22C55E);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:16px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px;">
+          インストール
+        </button>
+        <p style="font-size:12px;color:#888;">ホーム画面からすぐにアクセスできます</p>
+      `;
+    } else if (isIOS) {
+      // iOS Safari
+      return `
+        <h3>📱 ホーム画面に追加</h3>
+        <p>アプリのように使えます！</p>
+        <div class="pwa-steps">
+          <div class="pwa-step">
+            <div class="pwa-step-num">1</div>
+            <div class="pwa-step-text">画面下の共有ボタン ${shareIconSvg} をタップ</div>
+          </div>
+          <div class="pwa-step">
+            <div class="pwa-step-num">2</div>
+            <div class="pwa-step-text">メニューをスクロールして<br><strong>「ホーム画面に追加」</strong> をタップ</div>
+          </div>
+          <div class="pwa-step">
+            <div class="pwa-step-num">3</div>
+            <div class="pwa-step-text">右上の <strong>「追加」</strong> をタップして完了！</div>
+          </div>
+        </div>
+      `;
+    } else if (isAndroid) {
+      // Android Chrome without beforeinstallprompt
+      return `
+        <h3>📱 ホーム画面に追加</h3>
+        <p>アプリのように使えます！</p>
+        <div class="pwa-steps">
+          <div class="pwa-step">
+            <div class="pwa-step-num">1</div>
+            <div class="pwa-step-text">右上の <strong>「⋮」</strong> メニューをタップ</div>
+          </div>
+          <div class="pwa-step">
+            <div class="pwa-step-num">2</div>
+            <div class="pwa-step-text"><strong>「ホーム画面に追加」</strong> または <strong>「アプリをインストール」</strong> をタップ</div>
+          </div>
+          <div class="pwa-step">
+            <div class="pwa-step-num">3</div>
+            <div class="pwa-step-text"><strong>「追加」</strong> をタップして完了！</div>
+          </div>
+        </div>
+      `;
+    } else {
+      // Desktop or unknown
+      return `
+        <h3>📱 アプリとして追加</h3>
+        <p>ブラウザのメニューから「ホーム画面に追加」や「アプリとしてインストール」を選択してください。</p>
+      `;
+    }
+  }
+
+  window.showPwaGuide = function() {
+    card.innerHTML = buildGuideContent() + '<button id="pwaGuideClose" onclick="closePwaGuide()">閉じる</button>';
+    overlay.classList.add('show');
+    fab.classList.remove('pulse');
+
+    // Wire up direct install button if present
+    const directBtn = document.getElementById('pwaDirectInstall');
+    if (directBtn && deferredPrompt) {
+      directBtn.addEventListener('click', function() {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(result) {
+          if (result.outcome === 'accepted') {
+            fab.classList.remove('show');
+            overlay.classList.remove('show');
+          }
+          deferredPrompt = null;
+        });
+      });
+    }
+  };
+
+  window.closePwaGuide = function(e) {
+    if (e && e.target !== overlay && !e.target.id?.includes('pwaGuide')) return;
+    overlay.classList.remove('show');
+  };
+
+  // Auto-hide when becomes standalone
+  window.matchMedia('(display-mode: standalone)').addEventListener('change', function(e) {
+    if (e.matches) {
+      fab.classList.remove('show');
+      overlay.classList.remove('show');
+    }
+  });
+})();
+</script>
 </body>
 </html>
