@@ -1,11 +1,11 @@
 {
-  "name": "田中の一問一答",
-  "short_name": "田中の一問一答",
-  "description": "CSVで読み込み・一問一答で覚える単語帳アプリ",
+  "name": "CSVocab",
+  "short_name": "CSVocab",
+  "description": "CSVで読み込み・フラッシュカードで覚える暗記学習アプリ",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FFF5EB",
-  "theme_color": "#FF8C00",
+  "background_color": "#FFFFFF",
+  "theme_color": "#22C55E",
   "orientation": "portrait",
   "icons": [
     {
