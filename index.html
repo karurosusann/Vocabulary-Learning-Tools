@@ -5431,6 +5431,17 @@ body.dark-mode .gdrive-setup-hint code {
         <span class="menu-badge" id="gdriveBadge">未接続</span>
       </button>
       <div class="settings-menu-divider"></div>
+      <div class="settings-menu-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:6px;" id="storageUsageItem">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></span>
+          <span class="menu-label">ストレージ使用量</span>
+          <span class="menu-badge" id="storageUsageText" style="font-size:11px;">計算中...</span>
+        </div>
+        <div style="height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden;margin:0 4px;">
+          <div id="storageUsageBar" style="height:100%;width:0%;border-radius:3px;background:var(--primary);transition:width 0.5s ease;"></div>
+        </div>
+      </div>
+      <div class="settings-menu-divider"></div>
       <button class="settings-menu-item" onclick="closeSettings();showLegalModal('terms')">
         <span class="menu-icon" style="background:var(--gray-400);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
         <span class="menu-label">利用規約</span>
@@ -5694,15 +5705,16 @@ body.dark-mode .gdrive-setup-hint code {
 </div>
 
 <!-- Duplicate Warning Overlay -->
-<div class="confirm-overlay" id="dupWarningOverlay" onclick="closeDupWarning()">
+<div class="confirm-overlay" id="dupWarningOverlay" onclick="cancelDupWarning()">
   <div class="confirm-modal" onclick="event.stopPropagation()" style="max-width:460px;width:92%;">
     <div class="confirm-icon">⚠️</div>
-    <h3>重複した問題が見つかりました</h3>
+    <h3 id="dupWarningTitle">重複した問題が見つかりました</h3>
     <div id="dupWarningList" style="max-height:260px;overflow-y:auto;margin:12px 0;text-align:left;"></div>
     <div class="confirm-buttons" style="margin-top:14px;">
       <button class="confirm-cancel" onclick="finalizeDupDeck(false)">すべて残す</button>
       <button class="confirm-danger" style="background:#EF4444;" onclick="finalizeDupDeck(true)">チェック済みを削除</button>
     </div>
+    <button onclick="cancelDupWarning()" style="margin-top:10px;background:none;border:none;color:var(--text-secondary);font-size:13px;cursor:pointer;text-decoration:underline;width:100%;" id="dupWarningCancelBtn">追加しない</button>
   </div>
 </div>
 
@@ -5810,11 +5822,42 @@ function openSettings() {
   overlay.classList.add('show');
   updateSettingsDarkUI();
   updateAnswerColorUI(localStorage.getItem(ANSWER_COLOR_KEY) || DEFAULT_ANSWER_COLOR);
+  updateStorageUsage();
 }
 function closeSettings() {
   document.getElementById('settingsOverlay').classList.remove('show');
   const picker = document.getElementById('answerColorPicker');
   if (picker) picker.style.display = 'none';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+}
+
+async function updateStorageUsage() {
+  const textEl = document.getElementById('storageUsageText');
+  const barEl = document.getElementById('storageUsageBar');
+  if (!textEl || !barEl) return;
+  try {
+    if (navigator.storage && navigator.storage.estimate) {
+      const est = await navigator.storage.estimate();
+      const used = est.usage || 0;
+      const quota = est.quota || 0;
+      const pct = quota > 0 ? Math.min((used / quota) * 100, 100) : 0;
+      textEl.textContent = formatBytes(used) + ' / ' + formatBytes(quota);
+      barEl.style.width = Math.max(pct, 0.5) + '%';
+      barEl.style.background = pct > 80 ? 'var(--red-500)' : pct > 50 ? '#EAB308' : 'var(--primary)';
+    } else {
+      textEl.textContent = '取得不可';
+      barEl.style.width = '0%';
+    }
+  } catch(e) {
+    textEl.textContent = 'エラー';
+    barEl.style.width = '0%';
+  }
 }
 
 // ============ DARK MODE ============
@@ -7500,14 +7543,68 @@ function lsSet(key, value) {
 function lsRemove(key) {
   try { localStorage.removeItem(key); } catch(e) { console.warn('localStorage.removeItem failed:', key, e); }
 }
+
+// ============ DECK DATA DB (IndexedDB) ============
+const DECK_DB_NAME = 'csvocab_data';
+const DECK_DB_VERSION = 1;
+const DECK_STORE = 'state';
+let deckDB = null;
+
+function openDeckDB() {
+  return new Promise((resolve, reject) => {
+    if (deckDB) {
+      try { deckDB.transaction(DECK_STORE, 'readonly'); resolve(deckDB); return; } catch(e) {
+        try { deckDB.close(); } catch(e2) {} deckDB = null;
+      }
+    }
+    const req = indexedDB.open(DECK_DB_NAME, DECK_DB_VERSION);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(DECK_STORE, { keyPath: 'key' });
+    };
+    req.onsuccess = e => {
+      deckDB = e.target.result;
+      deckDB.onclose = () => { deckDB = null; };
+      deckDB.onversionchange = () => { deckDB.close(); deckDB = null; };
+      resolve(deckDB);
+    };
+    req.onerror = e => reject(e.target.error || e);
+    req.onblocked = () => {
+      setTimeout(() => openDeckDB().then(resolve).catch(reject), 200);
+    };
+  });
+}
+
+async function idbSetState(key, value) {
+  const db = await openDeckDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DECK_STORE, 'readwrite');
+    tx.objectStore(DECK_STORE).put({ key, value });
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+async function idbGetState(key) {
+  const db = await openDeckDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DECK_STORE, 'readonly');
+    const req = tx.objectStore(DECK_STORE).get(key);
+    req.onsuccess = () => resolve(req.result ? req.result.value : null);
+    req.onerror = e => reject(e);
+  });
+}
+
+// saveState — fire-and-forget async write to IndexedDB (callers don't need await)
 function saveState() {
-  try {
-    localStorage.setItem('mikan_decks', JSON.stringify(decks));
-    localStorage.setItem('mikan_activeDeck', activeDeckId);
-  } catch(e) {
+  const data = JSON.stringify(decks);
+  const id = activeDeckId;
+  Promise.all([
+    idbSetState('mikan_decks', data),
+    idbSetState('mikan_activeDeck', id)
+  ]).catch(e => {
     console.error('saveState failed:', e);
     showToast('⚠️ 保存に失敗しました。端末の容量が不足している可能性があります');
-  }
+  });
 }
 
 // Debounced save — batches rapid quiz answers into a single write
@@ -7553,9 +7650,9 @@ function loadDeckSettings(deckId) {
   }
   return null;
 }
-function loadState() {
+async function loadState() {
   try {
-    // Migration from old format
+    // === Migration: old single-array format in localStorage ===
     const oldWords = localStorage.getItem('mikan_words');
     if (oldWords) {
       const parsed = JSON.parse(oldWords);
@@ -7571,16 +7668,27 @@ function loadState() {
       }
     }
 
-    const saved = localStorage.getItem('mikan_decks');
+    // === Migration: localStorage → IndexedDB ===
+    const lsDecks = localStorage.getItem('mikan_decks');
+    if (lsDecks) {
+      // Data exists in localStorage — migrate to IndexedDB
+      await idbSetState('mikan_decks', lsDecks);
+      const lsActive = localStorage.getItem('mikan_activeDeck');
+      if (lsActive) await idbSetState('mikan_activeDeck', lsActive);
+      localStorage.removeItem('mikan_decks');
+      localStorage.removeItem('mikan_activeDeck');
+      console.log('Migrated deck data from localStorage to IndexedDB');
+    }
+
+    // === Load from IndexedDB ===
+    const saved = await idbGetState('mikan_decks');
     if (saved) {
       decks = JSON.parse(saved);
-      // Migrate old 'almost' level → 'mastered'
-      // Migrate: assign _id to words that don't have one
       decks.forEach(d => d.words.forEach(w => {
         if (w.level === 'almost') w.level = 'mastered';
         if (!w._id) w._id = generateId();
       }));
-      activeDeckId = localStorage.getItem('mikan_activeDeck');
+      activeDeckId = await idbGetState('mikan_activeDeck');
       if (decks.length > 0) {
         if (!activeDeckId || !decks.find(d => d.id === activeDeckId)) {
           activeDeckId = decks[0].id;
@@ -7632,18 +7740,134 @@ fileInput.addEventListener('change', (e) => {
   e.target.blur();
 });
 
+const _parsedQueue = [];
+let _fileQueueProcessing = false;
+
 function handleMultipleFiles(files) {
-  Array.from(files).forEach(file => handleFile(file));
+  const fileArr = Array.from(files);
+  let loaded = 0;
+  const parsed = new Array(fileArr.length);
+  fileArr.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const name = file.name.replace(/\.(csv|txt)$/i, '') || 'インポート';
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      const delimiter = detectDelimiter(lines);
+      const words = [];
+      for (const line of lines) {
+        const parts = parseCSVLine(line, delimiter);
+        if (parts.length >= 2) {
+          const english = parts[0].trim();
+          const japanese = parts[1].trim();
+          const HEADER_WORDS = ['問題','解答','答え','英語','日本語','韓国語','中国語','question','answer','word','meaning'];
+          if (english && japanese && !HEADER_WORDS.includes(english.toLowerCase())) {
+            words.push({ _id: generateId(), english, japanese, level: 'unlearned', correctStreak: 0 });
+          }
+        }
+      }
+      parsed[idx] = { deckName: name, words, delimiter };
+      loaded++;
+      if (loaded === fileArr.length) {
+        // All files parsed — enqueue valid ones and start processing
+        for (const p of parsed) {
+          if (p.words.length > 0) _parsedQueue.push(p);
+        }
+        processParsedQueue();
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function processParsedQueue() {
+  if (_fileQueueProcessing || _parsedQueue.length === 0) return;
+  _fileQueueProcessing = true;
+  const item = _parsedQueue.shift();
+  addDeckFromParsed(item.deckName, item.words, item.delimiter);
+  // If no duplicate warning was shown, process next immediately
+  if (!_pendingDupWords) {
+    _fileQueueProcessing = false;
+    processParsedQueue();
+  }
+}
+
+function addDeckFromParsed(deckName, words, delimiter) {
+  // Detect intra-deck duplicates (flag ALL occurrences including the first)
+  const seen = new Map();
+  const intraDups = [];
+  const intraDupOrigAdded = new Set();
+  words.forEach((w, i) => {
+    const key = normalizeDupKey(w.english);
+    if (seen.has(key)) {
+      const origIdx = seen.get(key);
+      if (!intraDupOrigAdded.has(origIdx)) {
+        intraDupOrigAdded.add(origIdx);
+        intraDups.push({ index: origIdx, word: words[origIdx], type: 'intra', origIndex: origIdx });
+      }
+      intraDups.push({ index: i, word: w, type: 'intra', origIndex: origIdx });
+    } else {
+      seen.set(key, i);
+    }
+  });
+  intraDups.sort((a, b) => a.index - b.index);
+
+  // Detect cross-deck duplicates (existing decks)
+  const existingKeys = new Map();
+  for (const d of decks) {
+    for (const w of d.words) {
+      const key = normalizeDupKey(w.english);
+      if (!existingKeys.has(key)) existingKeys.set(key, []);
+      const arr = existingKeys.get(key);
+      if (!arr.some(e => e.deckId === d.id)) arr.push({ deckName: d.name, deckId: d.id, wordId: w._id, english: w.english, japanese: w.japanese });
+    }
+  }
+  const crossDups = [];
+  words.forEach((w, i) => {
+    const key = normalizeDupKey(w.english);
+    if (existingKeys.has(key)) {
+      const matches = existingKeys.get(key);
+      crossDups.push({ index: i, word: w, type: 'cross', matches });
+    }
+  });
+
+  // Detect duplicates with other files in the same batch
+  const batchKeys = new Map();
+  _parsedQueue.forEach((q, qi) => {
+    for (const w of q.words) {
+      const key = normalizeDupKey(w.english);
+      if (!batchKeys.has(key)) batchKeys.set(key, []);
+      const arr = batchKeys.get(key);
+      if (!arr.some(e => e.queueIndex === qi)) arr.push({ deckName: q.deckName, queueIndex: qi, wordId: w._id, english: w.english, japanese: w.japanese });
+    }
+  });
+  const batchDups = [];
+  words.forEach((w, i) => {
+    const key = normalizeDupKey(w.english);
+    if (batchKeys.has(key)) {
+      const matches = batchKeys.get(key);
+      batchDups.push({ index: i, word: w, type: 'batch', matches });
+    }
+  });
+
+  if (intraDups.length === 0 && crossDups.length === 0 && batchDups.length === 0) {
+    commitDeck(deckName, words, delimiter);
+    return;
+  }
+
+  // Show duplicate warning
+  _pendingDupDeck = deckName;
+  _pendingDupWords = words;
+  _pendingDupInfos = { intraDups, crossDups, batchDups, delimiter };
+  renderDupWarning(intraDups, crossDups, batchDups);
+  document.getElementById('dupWarningTitle').textContent = '「' + deckName + '」に重複があります';
+  const cancelBtn = document.getElementById('dupWarningCancelBtn');
+  cancelBtn.textContent = _parsedQueue.length > 0 ? 'すべて追加しない（残り' + (_parsedQueue.length + 1) + 'デッキ）' : '追加しない';
+  document.getElementById('dupWarningOverlay').classList.add('show');
 }
 
 function handleFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const text = e.target.result;
-    const name = file.name.replace(/\.(csv|txt)$/i, '') || 'インポート';
-    addDeckFromCSV(text, name);
-  };
-  reader.readAsText(file, 'UTF-8');
+  handleMultipleFiles([file]);
 }
 
 function handleFilesAdd(files) {
@@ -7761,61 +7985,15 @@ function addDeckFromCSV(text, deckName) {
     return;
   }
 
-  // Detect intra-deck duplicates (flag ALL occurrences including the first)
-  const seen = new Map();
-  const intraDups = [];
-  const intraDupOrigAdded = new Set();
-  words.forEach((w, i) => {
-    const key = normalizeDupKey(w.english);
-    if (seen.has(key)) {
-      // Add the first occurrence too if not yet added
-      const origIdx = seen.get(key);
-      if (!intraDupOrigAdded.has(origIdx)) {
-        intraDupOrigAdded.add(origIdx);
-        intraDups.push({ index: origIdx, word: words[origIdx], type: 'intra', origIndex: origIdx });
-      }
-      intraDups.push({ index: i, word: w, type: 'intra', origIndex: origIdx });
-    } else {
-      seen.set(key, i);
-    }
-  });
-  intraDups.sort((a, b) => a.index - b.index);
-
-  // Detect cross-deck duplicates
-  const existingKeys = new Map();
-  for (const d of decks) {
-    for (const w of d.words) {
-      const key = normalizeDupKey(w.english);
-      if (!existingKeys.has(key)) existingKeys.set(key, [d.name]);
-      else { const arr = existingKeys.get(key); if (!arr.includes(d.name)) arr.push(d.name); }
-    }
-  }
-  const crossDups = [];
-  words.forEach((w, i) => {
-    const key = normalizeDupKey(w.english);
-    if (existingKeys.has(key)) {
-      crossDups.push({ index: i, word: w, type: 'cross', deckName: existingKeys.get(key).join(', ') });
-    }
-  });
-
-  if (intraDups.length === 0 && crossDups.length === 0) {
-    commitDeck(deckName, words, delimiter);
-    return;
-  }
-
-  // Show duplicate warning
-  _pendingDupDeck = deckName;
-  _pendingDupWords = words;
-  _pendingDupInfos = { intraDups, crossDups, delimiter };
-  renderDupWarning(intraDups, crossDups);
-  document.getElementById('dupWarningOverlay').classList.add('show');
+  addDeckFromParsed(deckName, words, delimiter);
 }
 
-function renderDupWarning(intraDups, crossDups) {
+function renderDupWarning(intraDups, crossDups, batchDups) {
+  batchDups = batchDups || [];
   let html = '';
+  const prevSections = () => intraDups.length || crossDups.length || batchDups.length;
   if (intraDups.length > 0) {
     html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">デッキ内の重複（' + intraDups.length + '件）</div>';
-    // Group by origIndex
     const groups = [];
     const groupMap = new Map();
     for (const d of intraDups) {
@@ -7834,19 +8012,29 @@ function renderDupWarning(intraDups, crossDups) {
   }
   if (crossDups.length > 0) {
     html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin:' + (intraDups.length ? '12px' : '0') + ' 0 6px;">既存デッキとの重複（' + crossDups.length + '件）</div>';
-    const cGroups = [];
-    const cMap = new Map();
-    for (const d of crossDups) {
-      const gKey = normalizeDupKey(d.word.english);
-      if (!cMap.has(gKey)) { const arr = []; cGroups.push(arr); cMap.set(gKey, arr); }
-      cMap.get(gKey).push(d);
-    }
-    cGroups.forEach((group, gi) => {
-      if (gi > 0) html += '<div style="height:8px;border-top:2px solid var(--border-color);margin-top:8px;"></div>';
-      for (const d of group) {
+    crossDups.forEach((d, di) => {
+      if (di > 0) html += '<div style="height:4px;border-top:2px solid var(--border-color);margin-top:4px;"></div>';
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;">'
+        + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
+        + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '（' + escapeHtml(_pendingDupDeck) + '）</span></span></label>';
+      for (const m of d.matches) {
         html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
-          + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
-          + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '（' + escapeHtml(d.deckName) + '）</span></span></label>';
+          + '<input type="checkbox" data-match-type="cross" data-match-deck-id="' + escapeHtml(m.deckId) + '" data-match-word-id="' + escapeHtml(m.wordId) + '" style="width:18px;height:18px;flex-shrink:0;">'
+          + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(m.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(m.japanese) + '（' + escapeHtml(m.deckName) + '）</span></span></label>';
+      }
+    });
+  }
+  if (batchDups.length > 0) {
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin:' + (intraDups.length || crossDups.length ? '12px' : '0') + ' 0 6px;">同時追加デッキとの重複（' + batchDups.length + '件）</div>';
+    batchDups.forEach((d, di) => {
+      if (di > 0) html += '<div style="height:4px;border-top:2px solid var(--border-color);margin-top:4px;"></div>';
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;">'
+        + '<input type="checkbox" checked data-dup-index="' + d.index + '" style="width:18px;height:18px;flex-shrink:0;">'
+        + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(d.word.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(d.word.japanese) + '（' + escapeHtml(_pendingDupDeck) + '）</span></span></label>';
+      for (const m of d.matches) {
+        html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:13px;cursor:pointer;">'
+          + '<input type="checkbox" data-match-type="batch" data-match-queue-index="' + m.queueIndex + '" data-match-word-id="' + escapeHtml(m.wordId) + '" style="width:18px;height:18px;flex-shrink:0;">'
+          + '<span style="color:var(--text-primary);word-break:break-all;">' + escapeHtml(m.english) + ' <span style="color:var(--text-secondary);">→ ' + escapeHtml(m.japanese) + '（' + escapeHtml(m.deckName) + '）</span></span></label>';
       }
     });
   }
@@ -7857,26 +8045,67 @@ function closeDupWarning() {
   document.getElementById('dupWarningOverlay').classList.remove('show');
 }
 
-function finalizeDupDeck(removeChecked) {
+function cancelDupWarning() {
   closeDupWarning();
-  if (!_pendingDupWords) return;
-  let words = _pendingDupWords;
+  _pendingDupDeck = null;
+  _pendingDupWords = null;
+  _pendingDupInfos = null;
+  _parsedQueue.length = 0;
+  _fileQueueProcessing = false;
+}
+
+function finalizeDupDeck(removeChecked) {
+  const pendingWords = _pendingDupWords;
+  const pendingDeck = _pendingDupDeck;
+  const pendingInfos = _pendingDupInfos;
+  closeDupWarning();
+  if (!pendingWords) return;
+  let words = pendingWords;
+  let matchRemoved = 0;
   if (removeChecked) {
     const checkboxes = document.querySelectorAll('#dupWarningList input[type="checkbox"]:checked');
     const removeSet = new Set();
-    checkboxes.forEach(cb => removeSet.add(parseInt(cb.dataset.dupIndex)));
+    checkboxes.forEach(cb => {
+      if (cb.dataset.dupIndex !== undefined) {
+        // Remove from current file
+        removeSet.add(parseInt(cb.dataset.dupIndex));
+      } else if (cb.dataset.matchType === 'cross') {
+        // Remove from existing deck
+        const deckId = cb.dataset.matchDeckId;
+        const wordId = cb.dataset.matchWordId;
+        const deck = decks.find(d => d.id === deckId);
+        if (deck) {
+          const before = deck.words.length;
+          deck.words = deck.words.filter(w => w._id !== wordId);
+          matchRemoved += before - deck.words.length;
+        }
+      } else if (cb.dataset.matchType === 'batch') {
+        // Remove from batch queue
+        const qi = parseInt(cb.dataset.matchQueueIndex);
+        const wordId = cb.dataset.matchWordId;
+        if (_parsedQueue[qi]) {
+          const before = _parsedQueue[qi].words.length;
+          _parsedQueue[qi].words = _parsedQueue[qi].words.filter(w => w._id !== wordId);
+          matchRemoved += before - _parsedQueue[qi].words.length;
+        }
+      }
+    });
     words = words.filter((_, i) => !removeSet.has(i));
   }
   if (words.length === 0) {
     showToast('すべて削除されたため、デッキは作成されませんでした');
   } else {
-    commitDeck(_pendingDupDeck, words, _pendingDupInfos.delimiter);
-    const removed = _pendingDupWords.length - words.length;
+    commitDeck(pendingDeck, words, pendingInfos.delimiter);
+    const removed = pendingWords.length - words.length + matchRemoved;
     if (removed > 0) showToast(removed + '件の重複を削除しました');
   }
+  if (matchRemoved > 0) saveState();
   _pendingDupDeck = null;
   _pendingDupWords = null;
   _pendingDupInfos = null;
+  // Resume processing next file in queue
+  _fileQueueProcessing = false;
+  processParsedQueue();
 }
 
 function commitDeck(deckName, words, delimiter) {
@@ -11234,6 +11463,11 @@ function closeAllOverlays() {
   });
   pendingConfirmAction = null;
   window._importData = null;
+  _pendingDupDeck = null;
+  _pendingDupWords = null;
+  _pendingDupInfos = null;
+  _fileQueueProcessing = false;
+  _parsedQueue.length = 0;
   restoreConfirmModal();
 }
 
@@ -11267,6 +11501,14 @@ function doResetAll() {
   savePoolLastKey();
   lsRemove('mikan_decks');
   lsRemove('mikan_activeDeck');
+  // Clear deck data from IndexedDB
+  try {
+    if (deckDB) { deckDB.close(); deckDB = null; }
+    const delReq2 = indexedDB.deleteDatabase(DECK_DB_NAME);
+    delReq2.onsuccess = () => {};
+    delReq2.onerror = () => { console.error('Deck DB delete error'); };
+    delReq2.onblocked = () => { console.warn('Deck DB delete blocked'); };
+  } catch(e) {}
   lsRemove(STUDY_LOG_KEY);
   // Clear image DB - close connection first, then delete
   try {
@@ -12512,7 +12754,9 @@ function closeLegalModal() {
 }
 
 // ============ INIT ============
-loadState();
+(async () => {
+  await loadState();
+})();
 
 // Welcome screen (first launch only)
 function dismissWelcome() {
