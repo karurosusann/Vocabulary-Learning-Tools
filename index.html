@@ -1666,7 +1666,7 @@ body.dark-mode .csv-table-tab.active { color: var(--orange-400); background: #1e
   padding: 6px 12px;
   border-radius: 20px;
   border: 1.5px solid var(--gray-200);
-  background: white;
+  background: #F3F4F6;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -1712,31 +1712,31 @@ body.dark-mode .csv-table-tab.active { color: var(--orange-400); background: #1e
 }
 .import-json-area {
   border-color: var(--gray-200);
-  border-style: dashed;
 }
 .import-json-area:hover {
-  border-color: var(--gray-400);
+  border-color: var(--gray-300);
 }
 .import-area {
   background: white;
   border-radius: var(--radius);
   padding: 32px 24px;
   text-align: center;
-  box-shadow: var(--shadow-md);
-  border: 2px dashed var(--orange-200);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  border: 1px solid #E5E7EB;
   cursor: pointer;
   transition: all 0.25s;
   position: relative;
   overflow: hidden;
 }
 .import-area:hover {
-  border-color: var(--orange-400);
+  border-color: var(--gray-300);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
 }
 .import-area.dragover {
   border-color: var(--orange-500);
   background: var(--orange-50);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 .import-icon {
   width: 64px;
@@ -4873,7 +4873,7 @@ body.dark-mode .gdrive-setup-hint code {
 
     <div class="import-dual-row">
       <div class="import-area import-json-area" onclick="showPasteTextModal()">
-        <div class="import-icon" style="background:var(--gray-100);font-size:24px;line-height:1;">📋</div>
+        <div class="import-icon" style="background:var(--gray-100);font-size:24px;line-height:1;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gray-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></div>
         <h3>テキストを<br>貼り付けて追加</h3>
         <p>CSVテキストから作成</p>
       </div>
@@ -4884,7 +4884,7 @@ body.dark-mode .gdrive-setup-hint code {
         <input type="file" id="fileInput" accept=".csv,.txt" multiple>
       </div>
       <div class="import-area import-json-area" onclick="document.getElementById('importJsonInitial').click()">
-        <div class="import-icon" style="background:var(--gray-100);">📲</div>
+        <div class="import-icon" style="background:var(--gray-100);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gray-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="7" height="16" rx="1.5"/><line x1="5.5" y1="17" x2="5.5" y2="17.01"/><rect x="15" y="4" width="7" height="16" rx="1.5"/><line x1="18.5" y1="17" x2="18.5" y2="17.01"/><line x1="10" y1="12" x2="14" y2="12"/><polyline points="12.5,9.5 14.5,12 12.5,14.5"/></svg></div>
         <h3>他の端末から<br>データを移行</h3>
         <p>JSONファイルから復元</p>
         <input type="file" id="importJsonInitial" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
@@ -4979,7 +4979,6 @@ body.dark-mode .gdrive-setup-hint code {
       </button>
     </div>
 
-    <input type="file" id="importJsonInput" accept=".json" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="importAllData(event)">
   </div>
 
   <!-- Screen: Level Select -->
@@ -5290,11 +5289,11 @@ body.dark-mode .gdrive-setup-hint code {
     <p class="welcome-tagline">CSVから、自分だけの問題集を</p>
     <div class="welcome-features">
       <div class="wf-item">
-        <div class="wf-icon" style="background:var(--orange-100);color:var(--orange-600);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="wf-icon" style="background:var(--green-100);color:var(--green-600);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
         <div><div class="wf-text">CSVインポート</div><div class="wf-sub">ファイルを選ぶだけでデッキ作成</div></div>
       </div>
       <div class="wf-item">
-        <div class="wf-icon" style="background:var(--blue-100);color:var(--blue-600);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="1" width="18" height="22" rx="3"/><text x="12" y="17" text-anchor="middle" fill="currentColor" stroke="none" style="font-size:14px;font-weight:700;">?</text></svg></div>
+        <div class="wf-icon" style="background:var(--green-100);color:var(--green-600);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="1" width="18" height="22" rx="3"/><text x="12" y="17" text-anchor="middle" fill="currentColor" stroke="none" style="font-size:14px;font-weight:700;">?</text></svg></div>
         <div><div class="wf-text">フラッシュカード学習</div><div class="wf-sub">スワイプ・タイピングの2モード</div></div>
       </div>
       <div class="wf-item">
@@ -5774,7 +5773,7 @@ body.dark-mode .gdrive-setup-hint code {
 
 <script>
 // ============ VERSION ============
-const APP_VERSION = 'v2.9.34';
+const APP_VERSION = 'v2.9.35';
 
 // ============ CAPACITOR NATIVE INTEGRATION ============
 const isCapacitor = typeof window.Capacitor !== 'undefined';
@@ -6069,10 +6068,6 @@ function renderHeatmap() {
   const year = heatmapYear;
   const month = heatmapMonth;
 
-  // Max for color scale (across all log data)
-  const values = Object.values(log).map(v => v.studied || 0);
-  const maxVal = Math.max(1, ...values);
-
   const todayStr = getTodayStr();
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -6119,7 +6114,6 @@ function renderHeatmap() {
     const studied = val > 0 ? ' studied' : '';
     const isToday = key === todayStr ? ' today' : '';
     const title = val > 0 ? `${key}: ${val}語` : key;
-    const cellDate = new Date(year, month, day);
     let mark = '';
     html += `<div class="heatmap-cell${studied}${isToday}" title="${title}" onclick="showCalDayPopup('${key}', event)"><span class="cal-day">${day}</span>${mark}</div>`;
   }
@@ -7519,12 +7513,17 @@ function stopAllAudio() {
   }
 }
 
-// Preload voices
+// Preload voices — some browsers return empty initially, so we retry via
+// onvoiceschanged and a 500ms fallback. Bail out as soon as voices are ready.
 if ('speechSynthesis' in window) {
   loadVoices();
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-  // Some browsers need a delay
-  setTimeout(loadVoices, 500);
+  if (!ttsVoicesLoaded) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      loadVoices();
+      if (ttsVoicesLoaded) window.speechSynthesis.onvoiceschanged = null;
+    };
+    setTimeout(() => { if (!ttsVoicesLoaded) loadVoices(); }, 500);
+  }
 }
 
 function getActiveDeck() {
@@ -7607,16 +7606,67 @@ function saveState() {
   });
 }
 
+// Emergency mirror — synchronous localStorage safety net written on unload.
+// IndexedDB writes are async and may not complete before the page is torn
+// down; if the mirror differs from IDB on next load, we restore from it.
+const EMERGENCY_KEY = 'csvocab_emergency_save';
+function writeEmergencyMirror() {
+  try {
+    localStorage.setItem(EMERGENCY_KEY, JSON.stringify({
+      decks: decks,
+      activeDeckId: activeDeckId,
+      ts: Date.now()
+    }));
+  } catch (e) {
+    console.warn('Emergency mirror write failed:', e);
+  }
+}
+
 // Debounced save — batches rapid quiz answers into a single write
 let _saveDebounceTimer = null;
 function saveStateSoon() {
   if (_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
   _saveDebounceTimer = setTimeout(() => { _saveDebounceTimer = null; saveState(); }, 1500);
 }
-// Flush any pending debounced save before page unload
-function flushPendingSave() { if (_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); _saveDebounceTimer = null; saveState(); } }
+// Flush any pending debounced save before page unload.
+// Writes the sync mirror first, then kicks the async IDB write best-effort.
+function flushPendingSave() {
+  if (_saveDebounceTimer) {
+    clearTimeout(_saveDebounceTimer);
+    _saveDebounceTimer = null;
+  }
+  writeEmergencyMirror();
+  saveState();
+}
 window.addEventListener('beforeunload', flushPendingSave);
 window.addEventListener('pagehide', flushPendingSave);
+// visibilitychange 'hidden' is the most reliable last moment on mobile —
+// the OS can kill a backgrounded tab before pagehide/beforeunload fire.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushPendingSave();
+});
+
+// Global error boundary — surface uncaught exceptions as toasts instead of
+// silently leaving the UI in a half-updated state. Also flush pending saves
+// so an error mid-operation doesn't strand queued changes.
+window.addEventListener('error', (e) => {
+  console.error('Uncaught error:', e.error || e.message);
+  try { flushPendingSave(); } catch(_) {}
+  try { showToast('⚠️ エラーが発生しました'); } catch(_) {}
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled rejection:', e.reason);
+  try { showToast('⚠️ 処理中にエラーが発生しました'); } catch(_) {}
+});
+
+// Esc closes the topmost visible overlay. Avoids calling closeAllOverlays()
+// because that also clears import queues and pending confirmations.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const overlays = document.querySelectorAll('[id$="Overlay"].show');
+  if (overlays.length === 0) return;
+  overlays[overlays.length - 1].classList.remove('show');
+});
 
 // Per-deck quiz settings persistence
 function saveDeckSettings(deckId) {
@@ -7689,14 +7739,46 @@ async function loadState() {
         if (!w._id) w._id = generateId();
       }));
       activeDeckId = await idbGetState('mikan_activeDeck');
-      if (decks.length > 0) {
-        if (!activeDeckId || !decks.find(d => d.id === activeDeckId)) {
-          activeDeckId = decks[0].id;
+    }
+
+    // === Emergency mirror recovery ===
+    // The mirror is written synchronously on unload. If it differs from
+    // what IDB returned, the last async IDB write didn't finish in time —
+    // restore from the mirror so no quiz progress is lost.
+    try {
+      const emergencyRaw = localStorage.getItem(EMERGENCY_KEY);
+      if (emergencyRaw) {
+        const emergency = JSON.parse(emergencyRaw);
+        if (emergency && Array.isArray(emergency.decks)) {
+          const mirrorJson = JSON.stringify(emergency.decks);
+          if (mirrorJson !== (saved || '')) {
+            decks = emergency.decks;
+            decks.forEach(d => d.words.forEach(w => {
+              if (w.level === 'almost') w.level = 'mastered';
+              if (!w._id) w._id = generateId();
+            }));
+            if (emergency.activeDeckId && decks.find(d => d.id === emergency.activeDeckId)) {
+              activeDeckId = emergency.activeDeckId;
+            }
+            saveState();
+            console.log('Recovered decks from emergency mirror');
+          }
         }
-        showScreen('dashboard');
-        renderDeckList();
-        updateDashboard();
+        localStorage.removeItem(EMERGENCY_KEY);
       }
+    } catch (e) {
+      console.warn('Emergency mirror recovery failed:', e);
+      try { localStorage.removeItem(EMERGENCY_KEY); } catch(e2) {}
+    }
+
+    // === Show dashboard if we have decks ===
+    if (decks.length > 0) {
+      if (!activeDeckId || !decks.find(d => d.id === activeDeckId)) {
+        activeDeckId = decks[0].id;
+      }
+      showScreen('dashboard');
+      renderDeckList();
+      updateDashboard();
     }
   } catch(e) {
     console.error('loadState failed:', e);
@@ -7750,7 +7832,9 @@ function handleMultipleFiles(files) {
   fileArr.forEach((file, idx) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target.result;
+      let text = e.target.result;
+      // Strip UTF-8 BOM — Excel-saved CSVs start with \uFEFF which String.trim() does NOT remove
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
       const name = file.name.replace(/\.(csv|txt)$/i, '') || 'インポート';
       const lines = text.split(/\r?\n/).filter(l => l.trim());
       const delimiter = detectDelimiter(lines);
@@ -7784,7 +7868,19 @@ function processParsedQueue() {
   if (_fileQueueProcessing || _parsedQueue.length === 0) return;
   _fileQueueProcessing = true;
   const item = _parsedQueue.shift();
-  addDeckFromParsed(item.deckName, item.words, item.delimiter);
+  try {
+    addDeckFromParsed(item.deckName, item.words, item.delimiter);
+  } catch (err) {
+    console.error('addDeckFromParsed failed:', err);
+    showToast('❌ デッキの取り込みに失敗しました');
+    // Reset dup-pending state so we don't wait on a modal that never shows
+    _pendingDupDeck = null;
+    _pendingDupWords = null;
+    _pendingDupInfos = null;
+    _fileQueueProcessing = false;
+    processParsedQueue();
+    return;
+  }
   // If no duplicate warning was shown, process next immediately
   if (!_pendingDupWords) {
     _fileQueueProcessing = false;
@@ -7866,9 +7962,6 @@ function addDeckFromParsed(deckName, words, delimiter) {
   document.getElementById('dupWarningOverlay').classList.add('show');
 }
 
-function handleFile(file) {
-  handleMultipleFiles([file]);
-}
 
 function handleFilesAdd(files) {
   if (!files || !files.length) return;
@@ -7964,6 +8057,7 @@ let _pendingDupWords = null;
 let _pendingDupInfos = null;
 
 function addDeckFromCSV(text, deckName) {
+  if (typeof text === 'string' && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   const delimiter = detectDelimiter(lines);
   const words = [];
@@ -7991,7 +8085,6 @@ function addDeckFromCSV(text, deckName) {
 function renderDupWarning(intraDups, crossDups, batchDups) {
   batchDups = batchDups || [];
   let html = '';
-  const prevSections = () => intraDups.length || crossDups.length || batchDups.length;
   if (intraDups.length > 0) {
     html += '<div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">デッキ内の重複（' + intraDups.length + '件）</div>';
     const groups = [];
@@ -8514,7 +8607,7 @@ function closeReorder() {
 function renderReorderList() {
   const list = document.getElementById('reorderList');
   list.innerHTML = decks.map((deck, i) => `
-    <div class="reorder-item" data-index="${i}">
+    <div class="reorder-item" data-index="${i}" data-deck-id="${escapeHtml(deck.id)}">
       <div class="ro-handle">☰</div>
       <div class="ro-name">${escapeHtml(deck.name)}</div>
       <div class="ro-count">${deck.words.length}問</div>
@@ -8588,10 +8681,9 @@ function initReorderDrag() {
     if (dragItem) {
       dragItem.classList.remove('dragging');
       dragItem.style.transform = '';
-      // Commit new order
+      // Commit new order — match by deck id, not name (duplicate names would corrupt order)
       const newOrder = [...list.querySelectorAll('.reorder-item')].map(item => {
-        const name = item.querySelector('.ro-name').textContent;
-        return decks.find(d => d.name === name);
+        return decks.find(d => d.id === item.dataset.deckId);
       }).filter(Boolean);
       if (newOrder.length === decks.length) {
         decks.length = 0;
@@ -8741,9 +8833,13 @@ function closeRename() {
 }
 
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 // Escape HTML and convert \n to <br> for display
 function escapeHtmlBr(str) {
@@ -8786,6 +8882,9 @@ function showScreen(name) {
   if (!screenEl) { console.error('Screen not found:', name); return; }
   screenEl.classList.add('active');
   window.scrollTo(0, 0);
+  // Hide FAB on import (home) screen
+  var fab = document.getElementById('pwaInstallFab');
+  if (fab) { if (name === 'import') fab.classList.add('hide-on-screen'); else fab.classList.remove('hide-on-screen'); }
   // Lock body scroll on fullscreen quiz screen only
   if (name === 'quiz') {
     document.documentElement.style.overflow = 'hidden';
@@ -8959,7 +9058,6 @@ function showLevelSelect() {
   });
 
   const allMastered = words.length > 0 && counts.mastered === words.length;
-  const noUnlearned = words.length > 0 && counts.unlearned === 0;
 
   // Permanently unlock "全て" once all words have been mastered
   const unlockKey = 'csvocab_allUnlocked_' + activeDeckId;
@@ -10540,7 +10638,6 @@ function showResult() {
 
 function animateLevelBars() {
   document.querySelectorAll('.lc-bar').forEach(bar => {
-    const beforeW = parseInt(bar.dataset.before);
     const afterW = parseInt(bar.dataset.after);
     bar.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
     bar.style.width = afterW + '%';
@@ -12448,8 +12545,41 @@ function showImportChoiceModal(data) {
   overlay.classList.add('show');
 }
 
+// Safe ID character set — matches generateId() output: base36 alphanumerics plus -/_.
+// Imported IDs outside this set are regenerated to prevent JS-context injection in
+// inline onclick handlers that use raw `'${deck.id}'` interpolation.
+const SAFE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+function sanitizeImportedIds(decks) {
+  if (!Array.isArray(decks)) return;
+  const idMap = new Map();
+  for (const deck of decks) {
+    if (!deck || typeof deck !== 'object') continue;
+    if (typeof deck.id !== 'string' || !SAFE_ID_RE.test(deck.id)) {
+      const oldId = deck.id;
+      deck.id = generateId();
+      if (typeof oldId === 'string') idMap.set(oldId, deck.id);
+    }
+    if (Array.isArray(deck.words)) {
+      for (const w of deck.words) {
+        if (!w || typeof w !== 'object') continue;
+        if (typeof w._id !== 'string' || !SAFE_ID_RE.test(w._id)) {
+          w._id = generateId();
+        }
+      }
+    }
+  }
+  return idMap;
+}
+
 async function applyImportData(data, mode) {
   try {
+    // Normalize IDs first — unsafe characters would allow XSS via inline onclick handlers
+    const idMap = sanitizeImportedIds(data.decks);
+    // If activeDeckId referenced a deck whose id was rewritten, update it
+    if (data.activeDeckId && idMap && idMap.has(data.activeDeckId)) {
+      data.activeDeckId = idMap.get(data.activeDeckId);
+    }
+
     if (mode === 'replace') {
       decks = data.decks;
       activeDeckId = data.activeDeckId || (decks.length > 0 ? decks[0].id : null);
@@ -12722,27 +12852,27 @@ function setupDragScroll(el) {
 const LEGAL_TERMS = `
 <h2>1. はじめに</h2><p>本利用規約（以下「本規約」）は、CSVocab（以下「本アプリ」）の利用条件を定めるものです。本アプリをご利用いただくことで、本規約に同意したものとみなします。</p>
 <h2>2. サービスの内容</h2><p>本アプリは、CSVファイルを取り込んでフラッシュカード形式で学習できる暗記学習ツールです。ユーザーは自身の学習目的に合わせて問題集を作成し、学習することができます。</p>
-<h2>3. 利用料金</h2><p>本アプリは無料でご利用いただけます。将来的に有料機能を追加する場合は、事前に告知いたします。</p>
+<h2>3. 利用料金</h2><p>本アプリは現在無料でご利用いただけます。将来的に有料機能（アプリ内課金、サブスクリプション等）を導入する場合があります。</p><p>有料機能を導入する際は、事前にアプリ内で告知いたします。料金・内容はアプリ内またはApp Store / Google Playの販売ページに表示され、購入後の返金は各プラットフォームのポリシーに従います。</p>
 <h2>4. ユーザーの責任</h2><p>ユーザーは、本アプリに取り込むコンテンツ（CSVファイル、画像等）について、著作権その他の権利を侵害しないよう自身の責任で管理するものとします。</p><p>本アプリに保存されるデータはユーザーの端末内に保管されます。データのバックアップはユーザー自身の責任で行ってください。</p>
-<h2>5. 禁止事項</h2><p>本アプリの逆コンパイル、リバースエンジニアリング、改変、再配布を禁止します。また、本アプリを違法な目的で使用することを禁止します。</p>
+<h2>5. 禁止事項</h2><p>以下の行為を禁止します。</p><p>・本アプリの逆コンパイル、リバースエンジニアリング、改変、再配布</p><p>・本アプリを違法な目的で使用すること</p><p>・<strong>第三者が著作権を有するコンテンツ（市販の教科書、参考書、問題集、単語帳等を含む）を、本アプリを通じて配布・共有・販売すること</strong></p><p>上記に違反した場合、開発者はユーザーのサービス利用を停止できるものとします。著作権侵害に起因する法的責任はすべて当該行為を行ったユーザーが負い、開発者は一切の責任を負いません。</p>
 <h2>6. 免責事項</h2><p>本アプリは現状有姿（AS IS）で提供されます。開発者は、本アプリの利用により生じたいかなる損害についても責任を負いません。</p><p>端末の故障、OSのアップデート、ブラウザのデータ消去等によるデータの喪失について、開発者は一切の責任を負いません。</p>
-<h2>7. サービスの変更・終了</h2><p>開発者は、事前の通知なく本アプリの内容を変更、または提供を終了することがあります。</p>
+<h2>7. サービスの変更・終了</h2><p>開発者は、事前の通知なく本アプリの内容を変更、または提供を終了することがあります。有料機能について重大な変更を行う場合は、合理的な期間を設けて事前に通知するよう努めます。</p>
 <h2>8. 規約の変更</h2><p>本規約は予告なく変更される場合があります。変更後も本アプリを継続して利用した場合、変更後の規約に同意したものとみなします。</p>
 <h2>9. お問い合わせ</h2><p>本規約に関するお問い合わせは、アプリ内の「ご意見・バグ報告」よりご連絡ください。</p>
-<p style="font-size:11px;color:var(--gray-400);margin-top:24px;">最終更新日: 2026年4月4日</p>`;
+<p style="font-size:11px;color:var(--gray-400);margin-top:24px;">最終更新日: 2026年4月11日</p>`;
 
 const LEGAL_PRIVACY = `
-<h2>1. 基本方針</h2><p>CSVocab（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めます。本アプリはユーザーの個人情報を収集・送信しません。</p>
+<h2>1. 基本方針</h2><p>CSVocab（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めます。</p>
 <h2>2. データの保存場所</h2><p>本アプリで作成・学習したすべてのデータ（デッキ、学習記録、設定等）は、ユーザーの端末内（localStorage および IndexedDB）にのみ保存されます。これらのデータが外部サーバーに自動的に送信されることはありません。</p>
-<h2>3. Google Drive 同期について</h2><p>本アプリにはGoogle Driveとの同期機能がありますが、これは完全に任意の機能です。ユーザーが自身のGoogleアカウントで明示的にログインし、同期操作を行った場合にのみ、ユーザー自身のGoogle Driveにデータが保存されます。</p><p>開発者がユーザーのGoogle Driveのデータにアクセスすることはありません。</p>
-<h2>4. アナリティクス・トラッキング</h2><p>本アプリは、アクセス解析ツールやトラッキングツールを一切使用していません。ユーザーの利用状況を収集・分析することはありません。</p>
-<h2>5. 広告</h2><p>本アプリには広告は表示されません。広告ネットワークへのデータ提供も行いません。</p>
-<h2>6. 第三者への提供</h2><p>本アプリはユーザーのデータを第三者に提供、販売、共有することはありません。</p>
+<h2>3. 収集する情報</h2><p>本アプリは、サービスの改善やユーザー体験の向上を目的として、以下の情報を収集する場合があります。</p><p>・利用状況に関する匿名の統計データ（アクセス解析）</p><p>・アプリ内課金に関する取引情報（課金処理はApp Store / Google Playを通じて行われ、開発者がクレジットカード情報等を直接取得することはありません）</p><p>情報の収集を開始・変更する場合は、本ポリシーを更新してアプリ内で通知いたします。</p>
+<h2>4. Google Drive 同期について</h2><p>本アプリにはGoogle Driveとの同期機能がありますが、これは完全に任意の機能です。ユーザーが自身のGoogleアカウントで明示的にログインし、同期操作を行った場合にのみ、ユーザー自身のGoogle Driveにデータが保存されます。</p><p>開発者がユーザーのGoogle Driveのデータにアクセスすることはありません。</p>
+<h2>5. 広告</h2><p>本アプリは広告を表示する場合があります。広告が表示される場合、広告配信事業者がCookieや端末識別子を用いて情報を収集することがあります。詳細は各広告配信事業者のプライバシーポリシーをご確認ください。</p>
+<h2>6. 第三者への提供</h2><p>本アプリは、法令に基づく場合を除き、ユーザーのデータを第三者に提供、販売、共有することはありません。</p>
 <h2>7. データの削除</h2><p>ユーザーはいつでもアプリ内の設定画面からすべてのデータを削除できます。また、ブラウザの設定からサイトデータを消去することでも、すべてのデータが削除されます。</p>
-<h2>8. 児童のプライバシー</h2><p>本アプリは年齢制限なくご利用いただけます。13歳未満のお子様が利用する場合は、保護者の方の監督のもとでご利用ください。本アプリは児童を含むいかなるユーザーからも個人情報を収集しません。</p>
+<h2>8. 児童のプライバシー</h2><p>本アプリは年齢制限なくご利用いただけます。13歳未満のお子様が利用する場合は、保護者の方の監督のもとでご利用ください。本アプリは児童を含むいかなるユーザーからも意図的に個人情報を収集しません。</p>
 <h2>9. ポリシーの変更</h2><p>本ポリシーは予告なく変更される場合があります。重要な変更がある場合は、アプリ内で通知いたします。</p>
 <h2>10. お問い合わせ</h2><p>本ポリシーに関するお問い合わせは、アプリ内の「ご意見・バグ報告」よりご連絡ください。</p>
-<p style="font-size:11px;color:var(--gray-400);margin-top:24px;">最終更新日: 2026年4月4日</p>`;
+<p style="font-size:11px;color:var(--gray-400);margin-top:24px;">最終更新日: 2026年4月11日</p>`;
 
 function showLegalModal(type) {
   document.getElementById('legalModalTitle').textContent = type === 'terms' ? '利用規約' : 'プライバシーポリシー';
@@ -12824,9 +12954,22 @@ if ('serviceWorker' in navigator) {
     });
   }).catch(() => {});
   // controllerchangeで自動リロード（1回のみ）
+  // Defer reload if the user is mid-task — otherwise quiz/editor state is lost.
+  // The new SW will simply take over on the next natural reload.
   let swReloading = false;
+  const UNSAFE_SCREENS = ['screen-quiz', 'screen-word-editor', 'screen-listening'];
+  function isUserMidTask() {
+    return UNSAFE_SCREENS.some(id => {
+      const el = document.getElementById(id);
+      return el && el.classList.contains('active');
+    });
+  }
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (swReloading) return;
+    if (isUserMidTask()) {
+      try { showToast('新しいバージョンがあります。次回起動時に適用されます'); } catch(_) {}
+      return;
+    }
     swReloading = true;
     location.reload();
   });
@@ -12863,6 +13006,7 @@ if ('serviceWorker' in navigator) {
 }
 #pwaInstallFab:active { transform: scale(0.92); }
 #pwaInstallFab.show { display: flex; }
+#pwaInstallFab.hide-on-screen { display: none !important; }
 #pwaInstallFab svg { width: 28px; height: 28px; fill: #fff; }
 
 /* Pulse animation */
@@ -12994,12 +13138,14 @@ if ('serviceWorker' in navigator) {
   const isAndroid = /Android/i.test(ua);
 
   // In-app browser detection (Twitter/X, Instagram, Facebook, LINE, etc.)
+  // Match specific app tokens — a bare /X/ matches "Mac OS X", "X11", etc.
   const isInAppBrowser = /FBAN|FBAV|Instagram|Line\//i.test(ua)
-    || (/Twitter|X/i.test(ua) && !/Chrome|Safari/i.test(ua))
+    || /Twitter for|TwitterAndroid/i.test(ua)
     || (ua.includes('wv') && isAndroid);
 
   // More specific Twitter in-app detection
-  const isTwitterInApp = /Twitter/i.test(ua) || (document.referrer && document.referrer.includes('t.co'));
+  const isTwitterInApp = /Twitter for|TwitterAndroid/i.test(ua)
+    || (document.referrer && document.referrer.includes('t.co'));
 
   const fab = document.getElementById('pwaInstallFab');
   const overlay = document.getElementById('pwaGuideOverlay');
@@ -13012,9 +13158,14 @@ if ('serviceWorker' in navigator) {
     deferredPrompt = e;
   });
 
-  // Show FAB after short delay
+  // Show FAB after short delay (hide on import/welcome screens)
   setTimeout(function() {
     fab.classList.add('show');
+    var importScreen = document.getElementById('screen-import');
+    var welcomeEl = document.getElementById('welcomeOverlay');
+    if ((importScreen && importScreen.classList.contains('active')) || (welcomeEl && welcomeEl.style.display !== 'none')) {
+      fab.classList.add('hide-on-screen');
+    }
     setTimeout(function() { fab.classList.add('pulse'); }, 500);
   }, 1500);
 
